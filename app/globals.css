@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #4ecdc4;
+  --color-secondary: #b5bc7a;
+  --color-bg-dark: #595f5a;
+  --color-bg-light: #f5f5f0;
+}
+
+body {
+  @apply antialiased text-brand-dark bg-brand-light;
+}
