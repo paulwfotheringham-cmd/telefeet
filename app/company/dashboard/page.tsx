@@ -77,11 +77,10 @@ export default async function CompanyDashboardPage() {
         <section aria-label="Company quick actions">
           <h2 className="sr-only">Company quick actions</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            {companyTiles.map((title, index) => (
-              <div
-                key={title}
-                className="group relative overflow-hidden rounded-2xl border border-brand-line bg-brand-panel text-inherit shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] ring-1 ring-brand-gold/10 transition hover:border-brand-gold/45 hover:shadow-card"
-              >
+            {companyTiles.map((title, index) => {
+              const tileClass =
+                "group relative overflow-hidden rounded-2xl border border-brand-line bg-brand-panel text-inherit shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] ring-1 ring-brand-gold/10 transition hover:border-brand-gold/45 hover:shadow-card";
+              const tileLabel = (
                 <div className="relative z-10 flex min-h-[120px] flex-col items-center justify-center gap-2 px-4 py-5 text-center">
                   <span className="font-mono text-[10px] text-brand-gold/55">
                     {String(index + 1).padStart(2, "0")}
@@ -90,8 +89,26 @@ export default async function CompanyDashboardPage() {
                     {title}
                   </p>
                 </div>
-              </div>
-            ))}
+              );
+
+              if (title === "Scheduled appointments") {
+                return (
+                  <Link
+                    key={title}
+                    href="/company/dashboard/scheduled-appointments"
+                    className={`${tileClass} no-underline`}
+                  >
+                    {tileLabel}
+                  </Link>
+                );
+              }
+
+              return (
+                <div key={title} className={tileClass}>
+                  {tileLabel}
+                </div>
+              );
+            })}
           </div>
         </section>
 
