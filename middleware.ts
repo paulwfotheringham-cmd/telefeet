@@ -110,11 +110,7 @@ export async function middleware(request: NextRequest) {
       return response;
     }
     if (profile.role === "company") {
-      if (!viewAs) {
-        return NextResponse.redirect(
-          new URL(portalDashboardPath("company"), request.url),
-        );
-      }
+      if (!viewAs) return response;
       const ok = await hasAffiliateProfile(viewAs);
       if (!ok) {
         return NextResponse.redirect(

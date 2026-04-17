@@ -38,10 +38,6 @@ export default async function AffiliateDashboardPage({
   const isCompanyView =
     role === "company" && typeof viewAs === "string" && viewAs.length > 0;
 
-  if (role === "company" && !isCompanyView) {
-    redirect("/company/dashboard");
-  }
-
   let bannerLabel: string | null = null;
   if (isCompanyView && viewAs) {
     bannerLabel = await getAffiliateDisplayName(viewAs);
@@ -50,6 +46,16 @@ export default async function AffiliateDashboardPage({
   const displayName =
     profile?.full_name?.trim() ||
     (isCompanyView ? "TeleFeet staff" : "Affiliate clinician");
+  const affiliateTiles = [
+    { title: "Check calendar", href: "/affiliate/dashboard/calendar" },
+    { title: "Check appointments", href: "/affiliate/dashboard/appointments" },
+    {
+      title: "Outstanding tasks",
+      href: "/affiliate/dashboard/outstanding-tasks",
+    },
+    { title: "Billing", href: "/affiliate/dashboard/billing" },
+    { title: "Profile", href: "/affiliate/dashboard/profile" },
+  ] as const;
 
   return (
     <div className="min-h-screen bg-brand-ink text-brand-cream">
@@ -82,21 +88,28 @@ export default async function AffiliateDashboardPage({
           />
         </header>
 
-        <section className="grid gap-4 rounded-2xl border border-brand-line bg-brand-surface p-6 shadow-card ring-1 ring-brand-gold/10">
+        <section aria-label="Affiliate quick actions" className="space-y-4">
           <h2 className="text-xl font-semibold text-brand-cream">
-            Practice overview
+            Practice dashboard
           </h2>
-          <p className="text-brand-cream/80">
-            Dashboard modules will be wired to Supabase as workflows are defined.
-          </p>
-          {!isCompanyView ? (
-            <Link
-              href="/affiliate/login"
-              className="w-fit text-brand-gold underline-offset-4 transition hover:text-brand-goldHi hover:underline"
-            >
-              Login help
-            </Link>
-          ) : null}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            {affiliateTiles.map((tile, index) => (
+              <Link
+                key={tile.title}
+                href={tile.href}
+                className="group relative overflow-hidden rounded-2xl border border-brand-line bg-brand-panel text-inherit shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] ring-1 ring-brand-gold/10 transition hover:border-brand-gold/45 hover:shadow-card"
+              >
+                <div className="relative z-10 flex min-h-[120px] flex-col items-center justify-center gap-2 px-4 py-5 text-center">
+                  <span className="font-mono text-[10px] text-brand-gold/55">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <p className="text-sm font-semibold leading-snug text-brand-cream">
+                    {tile.title}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
         </section>
       </div>
     </div>

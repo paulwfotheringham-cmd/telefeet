@@ -2,12 +2,14 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { TelefeetMark } from "@/components/telefeet-mark";
 import { SignOutButton } from "@/components/sign-out-button";
+import { AFFILIATE_COMPANY_OPTIONS } from "@/lib/mock/affiliate-profiles";
 import { createClient } from "@/lib/supabase/server";
 import {
   listAffiliatesForCompany,
   listCareHomesForCompany,
 } from "@/lib/data/company-dashboard";
 import type { PortalRole } from "@/lib/types/profile";
+import { AffiliateSelector } from "./affiliate-selector";
 
 export default async function CompanyDashboardPage() {
   const supabase = createClient();
@@ -49,7 +51,9 @@ export default async function CompanyDashboardPage() {
   const companyTiles = [
     "Patient database",
     "Scheduled appointments",
+    "TeleFeet call",
     "Outstanding Tasks",
+    "Reporting",
   ] as const;
 
   return (
@@ -76,7 +80,7 @@ export default async function CompanyDashboardPage() {
 
         <section aria-label="Company quick actions">
           <h2 className="sr-only">Company quick actions</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
             {companyTiles.map((title, index) => {
               const tileClass =
                 "group relative overflow-hidden rounded-2xl border border-brand-line bg-brand-panel text-inherit shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] ring-1 ring-brand-gold/10 transition hover:border-brand-gold/45 hover:shadow-card";
@@ -96,6 +100,39 @@ export default async function CompanyDashboardPage() {
                   <Link
                     key={title}
                     href="/company/dashboard/scheduled-appointments"
+                    className={`${tileClass} no-underline`}
+                  >
+                    {tileLabel}
+                  </Link>
+                );
+              }
+              if (title === "Patient database") {
+                return (
+                  <Link
+                    key={title}
+                    href="/company/dashboard/patient-database"
+                    className={`${tileClass} no-underline`}
+                  >
+                    {tileLabel}
+                  </Link>
+                );
+              }
+              if (title === "TeleFeet call") {
+                return (
+                  <Link
+                    key={title}
+                    href="/company/dashboard/telefeet-call"
+                    className={`${tileClass} no-underline`}
+                  >
+                    {tileLabel}
+                  </Link>
+                );
+              }
+              if (title === "Reporting") {
+                return (
+                  <Link
+                    key={title}
+                    href="/company/dashboard/reporting"
                     className={`${tileClass} no-underline`}
                   >
                     {tileLabel}
@@ -166,27 +203,22 @@ export default async function CompanyDashboardPage() {
                 {affiliates.length} partners
               </span>
             </div>
-            <ul className="mt-6 space-y-2">
+            <AffiliateSelector
+              options={AFFILIATE_COMPANY_OPTIONS.map(({ slug, name }) => ({
+                slug,
+                name,
+              }))}
+            />
+            <ul className="mt-4 space-y-2">
               {affiliates.length === 0 ? (
                 <li className="rounded-lg bg-brand-panel px-3 py-4 text-sm text-brand-muted">
-                  No affiliates found yet. Add affiliate profiles with an{" "}
-                  <code className="rounded bg-brand-ink px-1 text-brand-cream">
-                    affiliate_id
-                  </code>{" "}
-                  in Supabase.
+                  No linked affiliate users found in Supabase yet.
                 </li>
               ) : (
-                affiliates.map((aff) => (
-                  <li key={aff.id}>
-                    <Link
-                      href={`/affiliate/dashboard?viewAs=${encodeURIComponent(aff.id)}`}
-                      className="flex items-center justify-between rounded-xl border border-brand-line bg-brand-panel px-4 py-3 text-sm font-medium text-brand-cream transition hover:border-brand-gold/45 hover:bg-brand-surface"
-                    >
-                      <span>{aff.label}</span>
-                      <span className="text-xs font-normal text-brand-muted">
-                        {aff.memberCount} seat{aff.memberCount === 1 ? "" : "s"}
-                      </span>
-                    </Link>
+                affiliates.slice(0, 3).map((aff) => (
+                  <li key={aff.id} className="rounded-lg bg-brand-panel px-3 py-3 text-sm text-brand-muted">
+                    Linked profile: {aff.label} ({aff.memberCount} seat
+                    {aff.memberCount === 1 ? "" : "s"})
                   </li>
                 ))
               )}
