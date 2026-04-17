@@ -56,6 +56,7 @@ export default async function ClientDashboardPage({
     "Select Patient",
     "Add Patient",
     "View all scheduled appointments",
+    "Book new telehealth call",
     "Profile",
     "Outstanding tasks",
   ] as const;
@@ -64,6 +65,14 @@ export default async function ClientDashboardPage({
     isCompanyView && viewAs
       ? `/client/dashboard/add-patient/intake?viewAs=${encodeURIComponent(viewAs)}`
       : "/client/dashboard/add-patient/intake";
+  const scheduledAppointmentsHref =
+    isCompanyView && viewAs
+      ? `/client/dashboard/scheduled-appointments?viewAs=${encodeURIComponent(viewAs)}`
+      : "/client/dashboard/scheduled-appointments";
+  const bookTelehealthHref =
+    isCompanyView && viewAs
+      ? `/client/dashboard/book-telehealth-call?viewAs=${encodeURIComponent(viewAs)}`
+      : "/client/dashboard/book-telehealth-call";
 
   const signOutClass =
     "rounded-full border border-[#d4af37]/50 bg-black/60 px-6 py-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-white shadow-[0_0_20px_-4px_rgba(212,175,55,0.35)] backdrop-blur-sm transition hover:border-[#e8c766] hover:text-[#e8c766]";
@@ -166,6 +175,30 @@ export default async function ClientDashboardPage({
                   <Link
                     key={title}
                     href={addPatientHref}
+                    className={`${tileClass} no-underline`}
+                  >
+                    {label}
+                  </Link>
+                );
+              }
+
+              if (title === "View all scheduled appointments") {
+                return (
+                  <Link
+                    key={title}
+                    href={scheduledAppointmentsHref}
+                    className={`${tileClass} no-underline`}
+                  >
+                    {label}
+                  </Link>
+                );
+              }
+
+              if (title === "Book new telehealth call") {
+                return (
+                  <Link
+                    key={title}
+                    href={bookTelehealthHref}
                     className={`${tileClass} no-underline`}
                   >
                     {label}
