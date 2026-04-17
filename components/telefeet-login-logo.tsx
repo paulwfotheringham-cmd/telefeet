@@ -1,17 +1,16 @@
 /**
- * Login card logo: static asset, fixed height box so any aspect ratio scales cleanly
- * (avoids Next/Image layout quirks that can make wide logos look like tiny previews).
+ * Official TeleFeet wordmark (teal + BY FOOTWORX on black) above portal titles.
+ * Asset: /telefeet-wordmark-login.png — not the page hero image.
  */
 export function TelefeetLoginLogo() {
   return (
-    <div className="relative mx-auto mb-3 h-[52px] w-full max-w-[260px]">
-      {/* eslint-disable-next-line @next/next/no-img-element -- small static branding asset */}
+    <div className="mx-auto mb-4 w-full max-w-[280px] overflow-hidden rounded-xl shadow-sm ring-1 ring-black/15">
+      {/* eslint-disable-next-line @next/next/no-img-element -- static branding from /public */}
       <img
-        src="/logo-telefeet-on-light.png"
+        src="/telefeet-wordmark-login.png"
         alt="TeleFeet by Footworx"
-        className="h-full w-full object-contain object-top"
-        width={280}
-        height={80}
+        className="mx-auto block h-auto max-h-[52px] w-full object-contain object-center"
+        loading="eager"
         decoding="async"
       />
     </div>

@@ -14,7 +14,7 @@ export function BrandLogo({ className = "", size = "md" }: Props) {
   return (
     // eslint-disable-next-line @next/next/no-img-element -- static asset from /public
     <img
-      src="/logo-telefeet-on-light.png"
+      src="/telefeet-wordmark-on-light.png"
       alt="TeleFeet by Footworx"
       width={280}
       height={80}
