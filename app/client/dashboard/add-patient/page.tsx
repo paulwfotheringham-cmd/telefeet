@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { PortalRole } from "@/lib/types/profile";
 
-type SearchParams = { viewAs?: string };
+type SearchParams = { viewAs?: string; patient?: string };
 
 /**
  * Legacy URL `/client/dashboard/add-patient` → guided intake.
@@ -33,16 +33,16 @@ export default async function AddPatientPage({
   }
 
   const viewAs = searchParams.viewAs;
+  const patient =
+    typeof searchParams.patient === "string" && searchParams.patient.length > 0
+      ? searchParams.patient
+      : null;
   const isCompanyView =
     role === "company" && typeof viewAs === "string" && viewAs.length > 0;
 
-  if (role === "company" && !isCompanyView) {
-    redirect("/company/dashboard");
-  }
-
-  const q =
-    isCompanyView && viewAs
-      ? `?viewAs=${encodeURIComponent(viewAs)}`
-      : "";
+  const nextParams = new URLSearchParams();
+  if (isCompanyView && viewAs) nextParams.set("viewAs", viewAs);
+  if (patient) nextParams.set("patient", patient);
+  const q = nextParams.toString() ? `?${nextParams.toString()}` : "";
   redirect(`/client/dashboard/add-patient/intake${q}`);
 }

@@ -49,10 +49,6 @@ export default async function ScheduledAppointmentsPage({
   const isCompanyView =
     role === "company" && typeof viewAs === "string" && viewAs.length > 0;
 
-  if (role === "company" && !isCompanyView) {
-    redirect("/company/dashboard");
-  }
-
   let bannerLabel: string | null = null;
   if (isCompanyView && viewAs) {
     bannerLabel = await getCareHomeDisplayName(viewAs);

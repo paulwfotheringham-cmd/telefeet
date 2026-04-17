@@ -47,9 +47,9 @@ export default async function ClientDashboardPage({
     bannerLabel = await getCareHomeDisplayName(viewAs);
   }
 
-  const displayName =
-    profile?.full_name?.trim() ||
-    (isCompanyView ? "TeleFeet staff" : "Care home team member");
+  const displayName = isCompanyView
+    ? profile?.full_name?.trim() || "TeleFeet staff"
+    : "Demo Client";
 
   const dashboardTiles = [
     "Select Patient",
@@ -120,8 +120,7 @@ export default async function ClientDashboardPage({
     ? `?${queryParams.toString()}`
     : "";
 
-  const addPatientHref =
-    `/client/dashboard/add-patient/intake${querySuffix}`;
+  const addPatientHref = `/client/dashboard/add-patient${querySuffix}`;
   const scheduledAppointmentsHref = `/client/dashboard/scheduled-appointments${querySuffix}`;
   const bookTelehealthHref = `/client/dashboard/book-telehealth-call${querySuffix}`;
   const telefeetCallHref = `/client/dashboard/telefeet-call${querySuffix}`;

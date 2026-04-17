@@ -8,7 +8,7 @@ import { TelefeetMark } from "@/components/telefeet-mark";
 import { ViewAsBanner } from "@/components/view-as-banner";
 import { TelefeetCallRoom } from "./call-room";
 
-type SearchParams = { viewAs?: string };
+type SearchParams = { viewAs?: string; patient?: string };
 
 export default async function TelefeetCallPage({
   searchParams,
@@ -36,22 +36,24 @@ export default async function TelefeetCallPage({
   }
 
   const viewAs = searchParams.viewAs;
+  const patientName =
+    typeof searchParams.patient === "string" && searchParams.patient.length > 0
+      ? searchParams.patient
+      : null;
   const isCompanyView =
     role === "company" && typeof viewAs === "string" && viewAs.length > 0;
-
-  if (role === "company" && !isCompanyView) {
-    redirect("/company/dashboard");
-  }
 
   let bannerLabel: string | null = null;
   if (isCompanyView && viewAs) {
     bannerLabel = await getCareHomeDisplayName(viewAs);
   }
 
-  const backHref =
-    isCompanyView && viewAs
-      ? `/client/dashboard?viewAs=${encodeURIComponent(viewAs)}`
-      : "/client/dashboard";
+  const backParams = new URLSearchParams();
+  if (isCompanyView && viewAs) backParams.set("viewAs", viewAs);
+  if (patientName) backParams.set("patient", patientName);
+  const backHref = backParams.toString()
+    ? `/client/dashboard?${backParams.toString()}`
+    : "/client/dashboard";
 
   return (
     <div className="min-h-screen bg-black text-white">
