@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { listCareHomesForCompany } from "@/lib/data/company-dashboard";
 import { createClient } from "@/lib/supabase/server";
 import type { PortalRole } from "@/lib/types/profile";
 
@@ -40,8 +41,14 @@ export default async function AddPatientPage({
   const isCompanyView =
     role === "company" && typeof viewAs === "string" && viewAs.length > 0;
 
+  let resolvedViewAs = viewAs ?? null;
+  if (role === "company" && !resolvedViewAs) {
+    const homes = await listCareHomesForCompany();
+    resolvedViewAs = homes[0]?.id ?? null;
+  }
+
   const nextParams = new URLSearchParams();
-  if (isCompanyView && viewAs) nextParams.set("viewAs", viewAs);
+  if (role === "company" && resolvedViewAs) nextParams.set("viewAs", resolvedViewAs);
   if (patient) nextParams.set("patient", patient);
   const q = nextParams.toString() ? `?${nextParams.toString()}` : "";
   redirect(`/client/dashboard/add-patient/intake${q}`);

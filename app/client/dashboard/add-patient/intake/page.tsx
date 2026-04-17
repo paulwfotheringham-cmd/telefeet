@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { TelefeetMark } from "@/components/telefeet-mark";
 import { SignOutButton } from "@/components/sign-out-button";
 import { ViewAsBanner } from "@/components/view-as-banner";
+import { listCareHomesForCompany } from "@/lib/data/company-dashboard";
 import { createClient } from "@/lib/supabase/server";
 import { getCareHomeDisplayName } from "@/lib/data/entities";
 import type { PortalRole } from "@/lib/types/profile";
@@ -36,18 +37,28 @@ export default async function AddPatientIntakePage({
   }
 
   const viewAs = searchParams.viewAs;
-  const isCompanyView =
-    role === "company" && typeof viewAs === "string" && viewAs.length > 0;
+  let resolvedViewAs =
+    typeof viewAs === "string" && viewAs.length > 0 ? viewAs : null;
+  if (role === "company" && !resolvedViewAs) {
+    const homes = await listCareHomesForCompany();
+    resolvedViewAs = homes[0]?.id ?? null;
+    if (resolvedViewAs) {
+      redirect(
+        `/client/dashboard/add-patient/intake?viewAs=${encodeURIComponent(resolvedViewAs)}`,
+      );
+    }
+  }
+  const isCompanyView = role === "company" && Boolean(resolvedViewAs);
 
   let bannerLabel: string | null = null;
-  if (isCompanyView && viewAs) {
-    bannerLabel = await getCareHomeDisplayName(viewAs);
+  if (isCompanyView && resolvedViewAs) {
+    bannerLabel = await getCareHomeDisplayName(resolvedViewAs);
   }
 
   const canUseIntake =
     role === "client"
       ? Boolean(profile?.care_home_id)
-      : isCompanyView && Boolean(viewAs);
+      : isCompanyView && Boolean(resolvedViewAs);
 
   return (
     <div className="min-h-screen bg-brand-ink text-brand-cream">
@@ -65,8 +76,8 @@ export default async function AddPatientIntakePage({
             <div>
               <Link
                 href={
-                  isCompanyView && viewAs
-                    ? `/client/dashboard?viewAs=${encodeURIComponent(viewAs)}`
+                  isCompanyView && resolvedViewAs
+                    ? `/client/dashboard?viewAs=${encodeURIComponent(resolvedViewAs)}`
                     : "/client/dashboard"
                 }
                 className="text-sm font-medium text-brand-gold underline-offset-4 transition hover:text-brand-goldHi hover:underline"
@@ -92,7 +103,7 @@ export default async function AddPatientIntakePage({
 
         {canUseIntake ? (
           <AddPatientIntakeChat
-            viewAsCareHomeId={isCompanyView && viewAs ? viewAs : null}
+            viewAsCareHomeId={isCompanyView && resolvedViewAs ? resolvedViewAs : null}
           />
         ) : (
           <div className="mx-auto max-w-md rounded-2xl border border-amber-700/40 bg-amber-950/35 px-5 py-4 text-sm text-amber-100">
