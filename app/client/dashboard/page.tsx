@@ -52,6 +52,7 @@ export default async function ClientDashboardPage({
 
   const dashboardTiles = [
     "Select Patient",
+    "Add Patient",
     "View all scheduled appointments",
     "Profile",
     "Outstanding tasks",
@@ -66,7 +67,7 @@ export default async function ClientDashboardPage({
         />
       ) : null}
 
-      <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10">
+      <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-10">
         <header className="flex flex-col justify-between gap-4 border-b border-brand-dark/10 pb-6 md:flex-row md:items-center">
           <div>
             <p className="text-sm font-medium uppercase tracking-wide text-brand-dark/60">
@@ -84,7 +85,7 @@ export default async function ClientDashboardPage({
 
         <section aria-label="Dashboard shortcuts">
           <h2 className="sr-only">Quick actions</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
             {dashboardTiles.map((title) => (
               <div
                 key={title}
