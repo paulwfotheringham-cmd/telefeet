@@ -11,6 +11,3 @@ export const portalLoginInput =
 
 export const portalLoginSubmit =
   "mt-1 w-full rounded-xl bg-brand-primary px-4 py-2.5 text-sm font-semibold text-brand-dark shadow-sm transition hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-60";
-
-export const portalLoginLogoClass =
-  "mx-auto mb-3 h-auto max-h-[56px] w-auto max-w-[min(100%,260px)] object-contain object-top";

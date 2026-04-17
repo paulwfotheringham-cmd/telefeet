@@ -1,15 +1,14 @@
 "use client";
 
-import Image from "next/image";
 import { useFormState, useFormStatus } from "react-dom";
 import { signInToPortal, type SignInState } from "@/app/auth/actions";
 import {
   portalLoginCard,
   portalLoginInput,
   portalLoginLabel,
-  portalLoginLogoClass,
   portalLoginSubmit,
 } from "@/components/portal-login-styles";
+import { TelefeetLoginLogo } from "@/components/telefeet-login-logo";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -32,20 +31,10 @@ export function ClientLoginForm() {
       <input type="hidden" name="portal" value="client" />
 
       <div className="mb-5 text-center">
-        <Image
-          src="/logo-telefeet-on-light.png"
-          alt="TeleFeet by Footworx"
-          width={280}
-          height={80}
-          priority
-          className={portalLoginLogoClass}
-        />
+        <TelefeetLoginLogo />
         <h1 className="text-base font-semibold tracking-tight text-brand-dark">
           Care home portal
         </h1>
-        <p className="mt-1 text-xs leading-relaxed text-brand-dark/65">
-          The details your team shared with you.
-        </p>
       </div>
 
       <div className="flex flex-col gap-3">
