@@ -43,9 +43,9 @@ export default async function AffiliateDashboardPage({
     bannerLabel = await getAffiliateDisplayName(viewAs);
   }
 
-  const displayName =
-    profile?.full_name?.trim() ||
-    (isCompanyView ? "TeleFeet staff" : "Affiliate clinician");
+  const displayName = isCompanyView
+    ? profile?.full_name?.trim() || "TeleFeet staff"
+    : "Affiliate Member";
   const affiliateTiles = [
     { title: "Check calendar", href: "/affiliate/dashboard/calendar" },
     { title: "Check appointments", href: "/affiliate/dashboard/appointments" },
@@ -69,7 +69,7 @@ export default async function AffiliateDashboardPage({
       <div className="mx-auto flex max-w-4xl flex-col gap-8 px-4 py-10">
         <header className="flex flex-col justify-between gap-4 border-b border-brand-line pb-6 md:flex-row md:items-center">
           <div className="flex flex-col gap-4 md:flex-row md:items-start">
-            <TelefeetMark className="h-11 w-auto shrink-0 opacity-95" />
+            <TelefeetMark className="h-14 w-auto shrink-0 opacity-95" />
             <div>
             <p className="text-sm font-medium uppercase tracking-wide text-brand-muted">
               Affiliate portal
