@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { TelefeetLoginLogo } from "@/components/telefeet-login-logo";
 import { TelefeetMark } from "@/components/telefeet-mark";
 import { SignOutButton } from "@/components/sign-out-button";
 import { ViewAsBanner } from "@/components/view-as-banner";
@@ -57,6 +56,7 @@ export default async function ClientDashboardPage({
     "Add Patient",
     "View all scheduled appointments",
     "Book new telehealth call",
+    "TeleFeet call",
     "Profile",
     "Outstanding tasks",
   ] as const;
@@ -73,6 +73,10 @@ export default async function ClientDashboardPage({
     isCompanyView && viewAs
       ? `/client/dashboard/book-telehealth-call?viewAs=${encodeURIComponent(viewAs)}`
       : "/client/dashboard/book-telehealth-call";
+  const telefeetCallHref =
+    isCompanyView && viewAs
+      ? `/client/dashboard/telefeet-call?viewAs=${encodeURIComponent(viewAs)}`
+      : "/client/dashboard/telefeet-call";
 
   const signOutClass =
     "rounded-full border border-[#d4af37]/50 bg-black/60 px-6 py-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-white shadow-[0_0_20px_-4px_rgba(212,175,55,0.35)] backdrop-blur-sm transition hover:border-[#e8c766] hover:text-[#e8c766]";
@@ -114,9 +118,6 @@ export default async function ClientDashboardPage({
               <div className="flex flex-col items-center gap-6 border-b border-white/10 pb-8 sm:flex-row sm:items-center sm:gap-8 sm:border-b-0 sm:pb-0">
                 <div className="relative shrink-0 rounded-2xl border border-[#d4af37]/30 bg-black/40 p-3 ring-1 ring-[#d4af37]/15">
                   <TelefeetMark className="h-14 w-auto opacity-100 sm:h-16" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <TelefeetLoginLogo variant="inline" />
                 </div>
               </div>
               <div className="space-y-3">
@@ -199,6 +200,18 @@ export default async function ClientDashboardPage({
                   <Link
                     key={title}
                     href={bookTelehealthHref}
+                    className={`${tileClass} no-underline`}
+                  >
+                    {label}
+                  </Link>
+                );
+              }
+
+              if (title === "TeleFeet call") {
+                return (
+                  <Link
+                    key={title}
+                    href={telefeetCallHref}
                     className={`${tileClass} no-underline`}
                   >
                     {label}
