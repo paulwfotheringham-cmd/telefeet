@@ -17,7 +17,7 @@ export function SignOutButton({ redirectPortal, className }: Props) {
         type="submit"
         className={
           className ??
-          "rounded-lg border border-brand-dark/20 bg-white px-4 py-2 text-sm font-medium text-brand-dark shadow-sm hover:bg-brand-light"
+          "rounded-xl border border-brand-line bg-transparent px-5 py-2.5 text-sm font-medium tracking-wide text-brand-cream transition hover:border-brand-gold/50 hover:bg-brand-panel"
         }
       >
         Sign out

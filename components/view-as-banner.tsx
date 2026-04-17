@@ -7,15 +7,16 @@ type Props = {
 
 export function ViewAsBanner({ entityLabel, exitHref }: Props) {
   return (
-    <div className="border-b border-brand-secondary/40 bg-brand-secondary/25 px-4 py-3 text-center text-brand-dark">
-      <p className="text-base font-semibold md:text-lg">
-        Viewing as: {entityLabel}{" "}
-        <span className="text-brand-dark/60">—</span>{" "}
+    <div className="border-b border-brand-gold/25 bg-gradient-to-r from-brand-gold/10 via-brand-gold/5 to-brand-gold/10 px-4 py-3.5 text-center text-brand-cream">
+      <p className="text-sm font-medium tracking-wide md:text-base">
+        <span className="text-brand-muted">Viewing as</span>{" "}
+        <span className="font-semibold text-brand-goldHi">{entityLabel}</span>
+        <span className="text-brand-muted"> · </span>
         <Link
           href={exitHref}
-          className="text-brand-primary underline decoration-2 underline-offset-4 hover:text-brand-dark"
+          className="font-semibold text-brand-gold underline decoration-brand-gold/50 underline-offset-4 transition hover:text-brand-goldHi"
         >
-          Exit View
+          Exit view
         </Link>
       </p>
     </div>

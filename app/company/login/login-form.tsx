@@ -9,6 +9,7 @@ import {
   portalLoginSubmit,
 } from "@/components/portal-login-styles";
 import { TelefeetLoginLogo } from "@/components/telefeet-login-logo";
+import { TelefeetMark } from "@/components/telefeet-mark";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -27,11 +28,12 @@ export function CompanyLoginForm() {
       <input type="hidden" name="portal" value="company" />
 
       <div className="mb-5 text-center">
+        <TelefeetMark className="mx-auto mb-3 h-12 w-auto" />
         <TelefeetLoginLogo />
-        <h2 className="text-base font-semibold tracking-tight text-brand-dark">
+        <h2 className="text-base font-semibold tracking-tight text-brand-cream">
           TeleFeet internal
         </h2>
-        <p className="mt-1 text-xs leading-relaxed text-brand-dark/65">
+        <p className="mt-1 text-xs leading-relaxed text-brand-muted">
           Staff access only. Activity may be audited.
         </p>
       </div>
@@ -61,7 +63,7 @@ export function CompanyLoginForm() {
 
       {state.error ? (
         <p
-          className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-800"
+          className="mt-3 rounded-lg border border-red-900/60 bg-red-950/50 px-3 py-2 text-xs text-red-200"
           role="alert"
         >
           {state.error}

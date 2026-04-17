@@ -3,12 +3,11 @@
 @tailwind utilities;
 
 :root {
-  --color-primary: #4ecdc4;
-  --color-secondary: #b5bc7a;
-  --color-bg-dark: #595f5a;
-  --color-bg-light: #f5f5f0;
+  --brand-ink: #050505;
+  --brand-gold: #d4af37;
+  --brand-cream: #f2ebe0;
 }
 
 body {
-  @apply antialiased text-brand-dark bg-brand-light;
+  @apply min-h-screen antialiased bg-black text-white;
 }

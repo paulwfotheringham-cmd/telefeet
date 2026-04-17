@@ -5,13 +5,13 @@ type Props = {
 };
 
 /**
- * Shared full-viewport faded hero (same asset as client login) for portal login pages.
+ * Login hero: photo under a rich black + warm gold veil.
  */
 export function LoginHeroShell({ children }: Props) {
   return (
     <div className="relative flex min-h-screen flex-col">
       <div
-        className="pointer-events-none absolute inset-0 bg-gradient-to-br from-brand-light via-[#eef5f3] to-brand-light"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-br from-brand-ink via-brand-surface to-brand-ink"
         aria-hidden
       />
       <div className="pointer-events-none absolute inset-0">
@@ -21,11 +21,15 @@ export function LoginHeroShell({ children }: Props) {
           fill
           priority
           sizes="100vw"
-          className="object-cover opacity-[0.71]"
+          className="object-cover opacity-[0.35]"
           aria-hidden
         />
         <div
-          className="absolute inset-0 bg-gradient-to-b from-brand-light/82 via-brand-light/52 to-brand-light/80"
+          className="absolute inset-0 bg-gradient-to-b from-brand-ink/92 via-brand-ink/78 to-brand-ink/94"
+          aria-hidden
+        />
+        <div
+          className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(212,175,55,0.12)_0%,_transparent_55%)]"
           aria-hidden
         />
       </div>

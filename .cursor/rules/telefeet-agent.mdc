@@ -1,0 +1,20 @@
+---
+description: TeleFeet — always verify build and finish the job without asking
+alwaysApply: true
+---
+
+# TeleFeet agent workflow
+
+## After code changes
+
+- **Always** run `npm run build` from the project root when you have changed application code, config, or styles. Do this **before** ending the turn; if the build fails, fix the errors and run it again until it passes.
+- Run `npm run lint` when you touched files that could introduce lint issues (or when the build reports lint failures).
+
+## Completeness
+
+- Do **not** end with “say if you want X” for steps that are clearly part of the same goal (e.g. branded `/` after a theme pass, or fixing broken tokens after a palette change). **Implement** those steps unless blocked by missing secrets, credentials, or an explicit product decision.
+- Prefer **explicit** Tailwind tokens: `brand-ink`, `brand-surface`, `brand-panel`, `brand-line`, `brand-gold`, `brand-goldHi`, `brand-goldLo`, `brand-cream`, `brand-muted`. Do not reintroduce removed aliases like `brand-dark` / `brand-light` / `brand-primary` unless they exist again in `tailwind.config.ts`.
+
+## Scope
+
+- Stay within the user’s request; avoid unrelated refactors. Verification (build/lint) is not scope creep—it is required.

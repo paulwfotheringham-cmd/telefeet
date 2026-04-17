@@ -9,6 +9,7 @@ import {
   portalLoginSubmit,
 } from "@/components/portal-login-styles";
 import { TelefeetLoginLogo } from "@/components/telefeet-login-logo";
+import { TelefeetMark } from "@/components/telefeet-mark";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -31,8 +32,9 @@ export function ClientLoginForm() {
       <input type="hidden" name="portal" value="client" />
 
       <div className="mb-5 text-center">
+        <TelefeetMark className="mx-auto mb-3 h-12 w-auto" />
         <TelefeetLoginLogo />
-        <h1 className="text-base font-semibold tracking-tight text-brand-dark">
+        <h1 className="text-base font-semibold tracking-tight text-brand-cream">
           Care home portal
         </h1>
       </div>
@@ -62,7 +64,7 @@ export function ClientLoginForm() {
 
       {state.error ? (
         <p
-          className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-800"
+          className="mt-3 rounded-lg border border-red-900/60 bg-red-950/50 px-3 py-2 text-xs text-red-200"
           role="alert"
         >
           {state.error}
