@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useFormState, useFormStatus } from "react-dom";
 import { signInToPortal, type SignInState } from "@/app/auth/actions";
 
@@ -27,6 +28,14 @@ export function ClientLoginForm() {
       <input type="hidden" name="portal" value="client" />
 
       <div className="mb-4 text-center">
+        <Image
+          src="/logo-telefeet.png"
+          alt="TeleFeet by Footworx"
+          width={280}
+          height={80}
+          priority
+          className="mx-auto mb-3 h-auto max-h-[52px] w-auto max-w-[min(100%,240px)] object-contain object-top"
+        />
         <h1 className="text-base font-semibold tracking-tight text-brand-dark">
           Care home portal
         </h1>
