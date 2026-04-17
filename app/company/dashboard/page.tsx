@@ -46,6 +46,11 @@ export default async function CompanyDashboardPage() {
   }
 
   const displayName = profile?.full_name?.trim() || "Team member";
+  const companyTiles = [
+    "Patient database",
+    "Scheduled appointments",
+    "Outstanding Tasks",
+  ] as const;
 
   return (
     <div className="min-h-screen bg-brand-ink text-brand-cream">
@@ -68,6 +73,27 @@ export default async function CompanyDashboardPage() {
           </div>
           <SignOutButton redirectPortal="company" />
         </header>
+
+        <section aria-label="Company quick actions">
+          <h2 className="sr-only">Company quick actions</h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {companyTiles.map((title, index) => (
+              <div
+                key={title}
+                className="group relative overflow-hidden rounded-2xl border border-brand-line bg-brand-panel text-inherit shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] ring-1 ring-brand-gold/10 transition hover:border-brand-gold/45 hover:shadow-card"
+              >
+                <div className="relative z-10 flex min-h-[120px] flex-col items-center justify-center gap-2 px-4 py-5 text-center">
+                  <span className="font-mono text-[10px] text-brand-gold/55">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <p className="text-sm font-semibold leading-snug text-brand-cream">
+                    {title}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
 
         <div className="grid gap-6 md:grid-cols-2">
           <section className="flex flex-col rounded-2xl border border-brand-line bg-brand-surface p-6 shadow-card ring-1 ring-brand-gold/10">

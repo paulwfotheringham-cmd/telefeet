@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { TelefeetMark } from "@/components/telefeet-mark";
 import { SignOutButton } from "@/components/sign-out-button";
 import { ViewAsBanner } from "@/components/view-as-banner";
 import { createClient } from "@/lib/supabase/server";
 import { getCareHomeDisplayName } from "@/lib/data/entities";
 import type { PortalRole } from "@/lib/types/profile";
+import { SelectPatientDropdown } from "./select-patient-dropdown";
 
-type SearchParams = { viewAs?: string };
+type SearchParams = { viewAs?: string; patient?: string };
 
 export default async function ClientDashboardPage({
   searchParams,
@@ -35,12 +35,12 @@ export default async function ClientDashboardPage({
   }
 
   const viewAs = searchParams.viewAs;
+  const selectedPatient =
+    typeof searchParams.patient === "string" && searchParams.patient.length > 0
+      ? searchParams.patient
+      : null;
   const isCompanyView =
     role === "company" && typeof viewAs === "string" && viewAs.length > 0;
-
-  if (role === "company" && !isCompanyView) {
-    redirect("/company/dashboard");
-  }
 
   let bannerLabel: string | null = null;
   if (isCompanyView && viewAs) {
@@ -60,23 +60,71 @@ export default async function ClientDashboardPage({
     "Profile",
     "Outstanding tasks",
   ] as const;
+  const patientOptions = [
+    "James Whitfield",
+    "Marcus Delgado",
+    "Owen Brennan",
+    "Theo Nakamura",
+    "Rafael Okonkwo",
+    "Elliot Sorensen",
+    "Darius Flemming",
+    "Caleb Voss",
+    "Nolan Ashworth",
+    "Idris Castellano",
+    "Benji Hartwell",
+    "Sebastien Morel",
+    "Fletcher Quincy",
+    "Remy Oduya",
+    "Anton Phelps",
+    "Gideon Stroud",
+    "Leandro Farrow",
+    "Cormac Adeyemi",
+    "Jasper Villanueva",
+    "Declan Morrow",
+    "Hugo Szymanski",
+    "Tariq Elsworth",
+    "Alistair Fontes",
+    "Zane Kowalczyk",
+    "Piero Lundqvist",
+    "Simone Halvorsen",
+    "Priya Wentworth",
+    "Celeste Obi",
+    "Maeve Calderon",
+    "Ingrid Afolabi",
+    "Delia Marchetti",
+    "Zoe Fairbanks",
+    "Amara Lindqvist",
+    "Nadia Brennan",
+    "Sylvie Okonjo",
+    "Camille Whitmore",
+    "Rosaline Chukwu",
+    "Beatrix Salgado",
+    "Thalia Nkrumah",
+    "Esme Johansson",
+    "Lydia Osei",
+    "Margot Delacroix",
+    "Imani Forsythe",
+    "Petra Yamamoto",
+    "Wren Castellanos",
+    "Solene Adebayo",
+    "Fiona Driscoll",
+    "Anika Holbrook",
+    "Tessa Morgenstern",
+    "Vivienne Okafor",
+  ] as const;
+
+  const queryParams = new URLSearchParams();
+  if (isCompanyView && viewAs) queryParams.set("viewAs", viewAs);
+  if (selectedPatient) queryParams.set("patient", selectedPatient);
+  const querySuffix = queryParams.toString()
+    ? `?${queryParams.toString()}`
+    : "";
 
   const addPatientHref =
-    isCompanyView && viewAs
-      ? `/client/dashboard/add-patient/intake?viewAs=${encodeURIComponent(viewAs)}`
-      : "/client/dashboard/add-patient/intake";
-  const scheduledAppointmentsHref =
-    isCompanyView && viewAs
-      ? `/client/dashboard/scheduled-appointments?viewAs=${encodeURIComponent(viewAs)}`
-      : "/client/dashboard/scheduled-appointments";
-  const bookTelehealthHref =
-    isCompanyView && viewAs
-      ? `/client/dashboard/book-telehealth-call?viewAs=${encodeURIComponent(viewAs)}`
-      : "/client/dashboard/book-telehealth-call";
-  const telefeetCallHref =
-    isCompanyView && viewAs
-      ? `/client/dashboard/telefeet-call?viewAs=${encodeURIComponent(viewAs)}`
-      : "/client/dashboard/telefeet-call";
+    `/client/dashboard/add-patient/intake${querySuffix}`;
+  const scheduledAppointmentsHref = `/client/dashboard/scheduled-appointments${querySuffix}`;
+  const bookTelehealthHref = `/client/dashboard/book-telehealth-call${querySuffix}`;
+  const telefeetCallHref = `/client/dashboard/telefeet-call${querySuffix}`;
 
   const signOutClass =
     "rounded-full border border-[#d4af37]/50 bg-black/60 px-6 py-2.5 text-xs font-semibold uppercase tracking-[0.2em] text-white shadow-[0_0_20px_-4px_rgba(212,175,55,0.35)] backdrop-blur-sm transition hover:border-[#e8c766] hover:text-[#e8c766]";
@@ -116,8 +164,15 @@ export default async function ClientDashboardPage({
           <div className="flex flex-col justify-between gap-8 md:flex-row md:items-start">
             <div className="flex min-w-0 flex-1 flex-col gap-8">
               <div className="flex flex-col items-center gap-6 border-b border-white/10 pb-8 sm:flex-row sm:items-center sm:gap-8 sm:border-b-0 sm:pb-0">
-                <div className="relative shrink-0 rounded-2xl border border-[#d4af37]/30 bg-black/40 p-3 ring-1 ring-[#d4af37]/15">
-                  <TelefeetMark className="h-14 w-auto opacity-100 sm:h-16" />
+                <div className="relative w-full max-w-[300px] shrink-0 overflow-hidden rounded-2xl border border-[#d4af37]/30 bg-black/40 p-3 ring-1 ring-[#d4af37]/15">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- static branding from /public */}
+                  <img
+                    src="/telefeet-wordmark-login.png"
+                    alt="TeleFeet by Footworx"
+                    className="block h-auto w-full object-contain object-left"
+                    loading="eager"
+                    decoding="async"
+                  />
                 </div>
               </div>
               <div className="space-y-3">
@@ -166,6 +221,12 @@ export default async function ClientDashboardPage({
                   <p className="text-sm font-medium leading-snug tracking-wide text-white">
                     {title}
                   </p>
+                  {title === "Select Patient" ? (
+                    <SelectPatientDropdown
+                      options={patientOptions}
+                      selectedPatient={selectedPatient}
+                    />
+                  ) : null}
                 </div>
               );
               const tileClass =

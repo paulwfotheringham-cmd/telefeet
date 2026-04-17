@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type PatientOption = {
   id: string;
@@ -9,6 +9,7 @@ type PatientOption = {
 
 type Props = {
   patients: PatientOption[];
+  initialPatientName: string | null;
 };
 
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -53,11 +54,24 @@ function daysForMonth(value: string): Array<number | null> {
   return grid;
 }
 
-export function ScheduledAppointmentsCalendar({ patients }: Props) {
+export function ScheduledAppointmentsCalendar({
+  patients,
+  initialPatientName,
+}: Props) {
   const [selectedPatient, setSelectedPatient] = useState<string>("all");
   const [selectedMonth, setSelectedMonth] = useState<string>(monthValue(new Date()));
   const months = useMemo(() => monthChoices(), []);
   const days = useMemo(() => daysForMonth(selectedMonth), [selectedMonth]);
+
+  useEffect(() => {
+    if (!initialPatientName) return;
+    const match = patients.find(
+      (p) => p.fullName.toLowerCase() === initialPatientName.toLowerCase(),
+    );
+    if (match) {
+      setSelectedPatient(match.id);
+    }
+  }, [initialPatientName, patients]);
 
   return (
     <div className="space-y-6">

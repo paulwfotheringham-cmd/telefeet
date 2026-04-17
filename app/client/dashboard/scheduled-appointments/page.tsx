@@ -9,7 +9,7 @@ import { TelefeetMark } from "@/components/telefeet-mark";
 import { ViewAsBanner } from "@/components/view-as-banner";
 import { ScheduledAppointmentsCalendar } from "./calendar-view";
 
-type SearchParams = { viewAs?: string };
+type SearchParams = { viewAs?: string; patient?: string };
 
 type PatientOption = {
   id: string;
@@ -42,6 +42,10 @@ export default async function ScheduledAppointmentsPage({
   }
 
   const viewAs = searchParams.viewAs;
+  const patientName =
+    typeof searchParams.patient === "string" && searchParams.patient.length > 0
+      ? searchParams.patient
+      : null;
   const isCompanyView =
     role === "company" && typeof viewAs === "string" && viewAs.length > 0;
 
@@ -54,10 +58,12 @@ export default async function ScheduledAppointmentsPage({
     bannerLabel = await getCareHomeDisplayName(viewAs);
   }
 
-  const backHref =
-    isCompanyView && viewAs
-      ? `/client/dashboard?viewAs=${encodeURIComponent(viewAs)}`
-      : "/client/dashboard";
+  const backParams = new URLSearchParams();
+  if (isCompanyView && viewAs) backParams.set("viewAs", viewAs);
+  if (patientName) backParams.set("patient", patientName);
+  const backHref = backParams.toString()
+    ? `/client/dashboard?${backParams.toString()}`
+    : "/client/dashboard";
 
   let patients: PatientOption[] = [];
   if (role === "client") {
@@ -109,7 +115,10 @@ export default async function ScheduledAppointmentsPage({
           <SignOutButton redirectPortal={isCompanyView ? "company" : "client"} />
         </header>
 
-        <ScheduledAppointmentsCalendar patients={patients} />
+        <ScheduledAppointmentsCalendar
+          patients={patients}
+          initialPatientName={patientName}
+        />
       </div>
     </div>
   );
