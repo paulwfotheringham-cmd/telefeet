@@ -96,12 +96,22 @@ export default async function AddPatientIntakePage({
           />
         ) : (
           <div className="mx-auto max-w-md rounded-2xl border border-amber-700/40 bg-amber-950/35 px-5 py-4 text-sm text-amber-100">
-            Your account is not linked to a care home, so you cannot add
-            patients yet. Ask your TeleFeet administrator to set{" "}
-            <code className="rounded bg-brand-ink/80 px-1 text-brand-cream">
-              care_home_id
-            </code>{" "}
-            on your profile in Supabase.
+            {role === "company" ? (
+              <>
+                Select a care home first from the company dashboard, then open{" "}
+                <span className="font-medium text-amber-200">Add Patient</span>{" "}
+                from that client view.
+              </>
+            ) : (
+              <>
+                Your account is not linked to a care home, so you cannot add
+                patients yet. Ask your TeleFeet administrator to set{" "}
+                <code className="rounded bg-brand-ink/80 px-1 text-brand-cream">
+                  care_home_id
+                </code>{" "}
+                on your profile in Supabase.
+              </>
+            )}
           </div>
         )}
       </div>
