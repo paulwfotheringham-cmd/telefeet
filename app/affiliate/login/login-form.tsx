@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useFormState, useFormStatus } from "react-dom";
 import { signInToPortal, type SignInState } from "@/app/auth/actions";
 
@@ -26,6 +27,14 @@ export function AffiliateLoginForm() {
     >
       <input type="hidden" name="portal" value="affiliate" />
       <div className="mb-8 flex flex-col items-center gap-3 text-center">
+        <Image
+          src="/logo-telefeet-on-light.png"
+          alt="TeleFeet by Footworx"
+          width={280}
+          height={80}
+          priority
+          className="mx-auto h-auto max-h-[52px] w-auto max-w-[min(100%,240px)] object-contain object-top"
+        />
         <div>
           <h2 className="text-lg font-semibold text-brand-dark">
             Affiliate podiatrist portal

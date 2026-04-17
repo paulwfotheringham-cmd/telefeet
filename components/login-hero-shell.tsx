@@ -9,7 +9,7 @@ type Props = {
  */
 export function LoginHeroShell({ children }: Props) {
   return (
-    <div className="relative flex min-h-[calc(100vh-3.75rem)] flex-col">
+    <div className="relative flex min-h-screen flex-col">
       <div
         className="pointer-events-none absolute inset-0 bg-gradient-to-br from-brand-light via-[#eef5f3] to-brand-light"
         aria-hidden
@@ -21,7 +21,7 @@ export function LoginHeroShell({ children }: Props) {
           fill
           priority
           sizes="100vw"
-          className="object-cover opacity-[0.42]"
+          className="object-cover opacity-[0.71]"
           aria-hidden
         />
         <div

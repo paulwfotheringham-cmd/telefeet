@@ -29,7 +29,7 @@ export function ClientLoginForm() {
 
       <div className="mb-4 text-center">
         <Image
-          src="/logo-telefeet.png"
+          src="/logo-telefeet-on-light.png"
           alt="TeleFeet by Footworx"
           width={280}
           height={80}
