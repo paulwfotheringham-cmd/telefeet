@@ -4,12 +4,12 @@ import { AffiliateLoginForm } from "./login-form";
 export default function AffiliateLoginPage() {
   return (
     <LoginHeroShell>
-      <div className="mb-8 max-w-xl text-center">
-        <p className="text-sm text-brand-dark/75">
+      <div className="flex w-full max-w-[320px] flex-col gap-4">
+        <p className="text-left text-sm leading-relaxed text-brand-dark/75">
           Secure access for Footworx partner podiatrists.
         </p>
+        <AffiliateLoginForm />
       </div>
-      <AffiliateLoginForm />
     </LoginHeroShell>
   );
 }

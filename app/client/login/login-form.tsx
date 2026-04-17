@@ -3,6 +3,13 @@
 import Image from "next/image";
 import { useFormState, useFormStatus } from "react-dom";
 import { signInToPortal, type SignInState } from "@/app/auth/actions";
+import {
+  portalLoginCard,
+  portalLoginInput,
+  portalLoginLabel,
+  portalLoginLogoClass,
+  portalLoginSubmit,
+} from "@/components/portal-login-styles";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -10,7 +17,7 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="mt-1 w-full rounded-xl bg-brand-primary px-4 py-2.5 text-sm font-semibold text-brand-dark shadow-sm transition hover:brightness-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+      className={portalLoginSubmit}
     >
       {pending ? "Signing in…" : "Sign in"}
     </button>
@@ -21,20 +28,17 @@ export function ClientLoginForm() {
   const [state, formAction] = useFormState(signInToPortal, {});
 
   return (
-    <form
-      action={formAction}
-      className="w-full max-w-[320px] rounded-2xl border border-brand-dark/10 bg-white p-6 shadow-lg shadow-brand-dark/5"
-    >
+    <form action={formAction} className={portalLoginCard}>
       <input type="hidden" name="portal" value="client" />
 
-      <div className="mb-4 text-center">
+      <div className="mb-5 text-center">
         <Image
           src="/logo-telefeet-on-light.png"
           alt="TeleFeet by Footworx"
           width={280}
           height={80}
           priority
-          className="mx-auto mb-3 h-auto max-h-[52px] w-auto max-w-[min(100%,240px)] object-contain object-top"
+          className={portalLoginLogoClass}
         />
         <h1 className="text-base font-semibold tracking-tight text-brand-dark">
           Care home portal
@@ -45,24 +49,24 @@ export function ClientLoginForm() {
       </div>
 
       <div className="flex flex-col gap-3">
-        <label className="flex flex-col gap-1 text-xs font-medium text-brand-dark">
+        <label className={portalLoginLabel}>
           Email
           <input
             name="email"
             type="email"
             autoComplete="username"
             required
-            className="rounded-lg border border-brand-dark/15 bg-brand-light px-3 py-2 text-sm text-brand-dark outline-none transition placeholder:text-brand-dark/35 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/25"
+            className={portalLoginInput}
           />
         </label>
-        <label className="flex flex-col gap-1 text-xs font-medium text-brand-dark">
+        <label className={portalLoginLabel}>
           Password
           <input
             name="password"
             type="password"
             autoComplete="current-password"
             required
-            className="rounded-lg border border-brand-dark/15 bg-brand-light px-3 py-2 text-sm text-brand-dark outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/25"
+            className={portalLoginInput}
           />
         </label>
       </div>

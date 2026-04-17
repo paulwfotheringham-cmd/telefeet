@@ -25,11 +25,11 @@ export function LoginHeroShell({ children }: Props) {
           aria-hidden
         />
         <div
-          className="absolute inset-0 bg-gradient-to-b from-brand-light/90 via-brand-light/65 to-brand-light/88"
+          className="absolute inset-0 bg-gradient-to-b from-brand-light/82 via-brand-light/52 to-brand-light/80"
           aria-hidden
         />
       </div>
-      <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col items-center justify-center px-4 py-10">
+      <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col items-start justify-center px-6 py-10 md:px-10 lg:pl-16 lg:pr-8">
         {children}
       </div>
     </div>
