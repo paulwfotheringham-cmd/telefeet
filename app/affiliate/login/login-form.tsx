@@ -26,8 +26,6 @@ export function AffiliateLoginForm() {
     >
       <input type="hidden" name="portal" value="affiliate" />
       <div className="mb-8 flex flex-col items-center gap-3 text-center">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo.svg" alt="TeleFeet" width={96} height={40} />
         <div>
           <h2 className="text-lg font-semibold text-brand-dark">
             Affiliate podiatrist portal

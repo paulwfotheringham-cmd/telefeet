@@ -27,14 +27,6 @@ export function ClientLoginForm() {
       <input type="hidden" name="portal" value="client" />
 
       <div className="mb-4 text-center">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/logo-client.png"
-          alt="TeleFeet"
-          className="mx-auto mb-3 h-auto w-[120px] object-contain"
-          width={120}
-          height={48}
-        />
         <h1 className="text-base font-semibold tracking-tight text-brand-dark">
           Care home portal
         </h1>
