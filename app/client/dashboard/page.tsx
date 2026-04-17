@@ -50,6 +50,13 @@ export default async function ClientDashboardPage({
     profile?.full_name?.trim() ||
     (isCompanyView ? "TeleFeet staff" : "Care home team member");
 
+  const dashboardTiles = [
+    "Select Patient",
+    "View all scheduled appointments",
+    "Profile",
+    "Outstanding tasks",
+  ] as const;
+
   return (
     <div className="min-h-screen bg-brand-light">
       {isCompanyView && bannerLabel ? (
@@ -59,7 +66,7 @@ export default async function ClientDashboardPage({
         />
       ) : null}
 
-      <div className="mx-auto flex max-w-4xl flex-col gap-8 px-4 py-10">
+      <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10">
         <header className="flex flex-col justify-between gap-4 border-b border-brand-dark/10 pb-6 md:flex-row md:items-center">
           <div>
             <p className="text-sm font-medium uppercase tracking-wide text-brand-dark/60">
@@ -69,25 +76,35 @@ export default async function ClientDashboardPage({
               Hello, {displayName}
             </h1>
             <p className="mt-2 text-lg text-brand-dark/80">
-              This is where nurse workflows will live — appointments, notes, and
-              telehealth visits.
+              Appointments, notes, and telehealth visits from one place.
             </p>
           </div>
           <SignOutButton redirectPortal={isCompanyView ? "company" : "client"} />
         </header>
 
-        <section className="grid gap-4 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-brand-dark/5">
-          <h2 className="text-xl font-semibold text-brand-dark">Today</h2>
-          <p className="text-brand-dark/80">
-            Dashboard content will appear here as features are enabled.
-          </p>
+        <section aria-label="Dashboard shortcuts">
+          <h2 className="sr-only">Quick actions</h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {dashboardTiles.map((title) => (
+              <div
+                key={title}
+                className="flex min-h-[120px] flex-col items-center justify-center rounded-2xl border border-brand-dark/10 bg-white px-3 py-5 text-center shadow-sm ring-1 ring-brand-dark/5 transition hover:border-brand-primary/35 hover:shadow-md"
+              >
+                <p className="text-sm font-semibold leading-snug text-brand-dark">
+                  {title}
+                </p>
+              </div>
+            ))}
+          </div>
           {!isCompanyView ? (
-            <Link
-              href="/client/login"
-              className="text-brand-primary underline-offset-4 hover:underline"
-            >
-              Need help signing in?
-            </Link>
+            <p className="mt-6 text-center text-sm text-brand-dark/65">
+              <Link
+                href="/client/login"
+                className="text-brand-primary underline-offset-4 hover:underline"
+              >
+                Need help signing in?
+              </Link>
+            </p>
           ) : null}
         </section>
       </div>
