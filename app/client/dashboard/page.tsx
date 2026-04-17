@@ -56,6 +56,7 @@ export default async function ClientDashboardPage({
     "Add Patient",
     "View all scheduled appointments",
     "Book new telehealth call",
+    "Book a visit to my facility",
     "TeleFeet call",
     "Profile",
     "Outstanding tasks",
@@ -123,6 +124,7 @@ export default async function ClientDashboardPage({
   const addPatientHref = `/client/dashboard/add-patient${querySuffix}`;
   const scheduledAppointmentsHref = `/client/dashboard/scheduled-appointments${querySuffix}`;
   const bookTelehealthHref = `/client/dashboard/book-telehealth-call${querySuffix}`;
+  const bookFacilityVisitHref = `/client/dashboard/book-facility-visit${querySuffix}`;
   const telefeetCallHref = `/client/dashboard/telefeet-call${querySuffix}`;
 
   const signOutClass =
@@ -260,6 +262,18 @@ export default async function ClientDashboardPage({
                   <Link
                     key={title}
                     href={bookTelehealthHref}
+                    className={`${tileClass} no-underline`}
+                  >
+                    {label}
+                  </Link>
+                );
+              }
+
+              if (title === "Book a visit to my facility") {
+                return (
+                  <Link
+                    key={title}
+                    href={bookFacilityVisitHref}
                     className={`${tileClass} no-underline`}
                   >
                     {label}

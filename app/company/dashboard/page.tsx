@@ -199,9 +199,17 @@ export default async function CompanyDashboardPage() {
                   Partner podiatrists in the Footworx network.
                 </p>
               </div>
-              <span className="rounded-full border border-brand-goldLo/40 bg-brand-goldLo/15 px-3 py-1 text-xs font-semibold text-brand-goldHi">
-                {affiliates.length} partners
-              </span>
+              <div className="flex flex-col items-end gap-2">
+                <span className="rounded-full border border-brand-goldLo/40 bg-brand-goldLo/15 px-3 py-1 text-xs font-semibold text-brand-goldHi">
+                  {affiliates.length} partners
+                </span>
+                <Link
+                  href="/company/dashboard/affiliates"
+                  className="rounded-lg border border-brand-gold/35 bg-brand-gold/10 px-3 py-1.5 text-xs font-semibold text-brand-goldHi transition hover:border-brand-gold/55 hover:bg-brand-gold/20"
+                >
+                  Affiliates
+                </Link>
+              </div>
             </div>
             <AffiliateSelector
               options={AFFILIATE_COMPANY_OPTIONS.map(({ slug, name }) => ({
