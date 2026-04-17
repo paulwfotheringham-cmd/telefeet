@@ -8,7 +8,6 @@ import {
   portalLoginLabel,
   portalLoginSubmit,
 } from "@/components/portal-login-styles";
-import { TelefeetLoginLogo } from "@/components/telefeet-login-logo";
 import { TelefeetMark } from "@/components/telefeet-mark";
 
 function SubmitButton() {
@@ -33,7 +32,6 @@ export function ClientLoginForm() {
 
       <div className="mb-5 text-center">
         <TelefeetMark className="mx-auto mb-3 h-12 w-auto" />
-        <TelefeetLoginLogo />
         <h1 className="text-base font-semibold tracking-tight text-brand-cream">
           Care home portal
         </h1>
