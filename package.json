@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "verify": "next build",
+    "test:funquiz": "npx tsx scripts/validate-funquiz.ts",
     "db:migrate": "node scripts/apply-migration.mjs",
     "db:seed": "node scripts/seed-demo-users.mjs",
     "db:setup": "node scripts/apply-migration.mjs && node scripts/seed-demo-users.mjs",
@@ -16,13 +17,14 @@
   "dependencies": {
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.47.10",
+    "@upstash/redis": "^1.39.0",
     "next": "14.2.18",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@types/pg": "^8.11.10",
     "@types/node": "^20.17.6",
+    "@types/pg": "^8.11.10",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "autoprefixer": "^10.4.20",

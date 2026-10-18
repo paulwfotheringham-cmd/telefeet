@@ -5,8 +5,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "TeleFeet by Footworx",
-  description: "Telehealth platform for Footworx",
+  title: "Fun Quiz",
+  description: "Two-player multiplayer general knowledge quiz",
 };
 
 export default function RootLayout({
