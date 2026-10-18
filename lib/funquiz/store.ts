@@ -1,31 +1,7 @@
-import { Redis } from "@upstash/redis";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { dbRowsToRoom, roomToDbRows, type FunquizPlayerRow, type FunquizRoomRow } from "./db-mapper";
+import { broadcastRoomSync } from "./realtime-server";
 import type { QuizRoom } from "./types";
-import { ROOM_TTL_SECONDS } from "./constants";
-
-const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
-const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
-
-function redisKey(code: string) {
-  return `funquiz:room:${code.toUpperCase()}`;
-}
-
-let redis: Redis | null = null;
-
-function getRedis(): Redis | null {
-  if (!redisUrl || !redisToken) return null;
-  if (!redis) {
-    redis = new Redis({ url: redisUrl, token: redisToken });
-  }
-  return redis;
-}
-
-type MemoryEntry = { room: QuizRoom; expiresAt: number };
-
-const memoryRooms = new Map<string, MemoryEntry>();
-
-function allowDevMemoryStore(): boolean {
-  return process.env.NODE_ENV !== "production" && !getRedis();
-}
 
 export class QuizStoreUnavailableError extends Error {
   constructor(message: string) {
@@ -34,54 +10,107 @@ export class QuizStoreUnavailableError extends Error {
   }
 }
 
+function assertSupabaseConfigured(): void {
+  if (
+    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    !process.env.SUPABASE_SERVICE_ROLE_KEY
+  ) {
+    throw new QuizStoreUnavailableError(
+      "Fun Quiz storage requires NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.",
+    );
+  }
+}
+
 export function isQuizStoreConfigured(): boolean {
-  return Boolean(getRedis()) || allowDevMemoryStore();
-}
-
-export function quizStoreMode(): "redis" | "memory" | "none" {
-  if (getRedis()) return "redis";
-  if (allowDevMemoryStore()) return "memory";
-  return "none";
-}
-
-export async function saveRoom(room: QuizRoom): Promise<void> {
-  const key = redisKey(room.code);
-  const payload = JSON.stringify(room);
-  const client = getRedis();
-  if (client) {
-    await client.set(key, payload, { ex: ROOM_TTL_SECONDS });
-    return;
-  }
-  if (allowDevMemoryStore()) {
-    memoryRooms.set(key, {
-      room,
-      expiresAt: Date.now() + ROOM_TTL_SECONDS * 1000,
-    });
-    return;
-  }
-  throw new QuizStoreUnavailableError(
-    "Multiplayer storage is not configured. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN on Vercel.",
+  return Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY,
   );
+}
+
+export function quizStoreMode(): "supabase" | "none" {
+  return isQuizStoreConfigured() ? "supabase" : "none";
+}
+
+async function purgeExpiredRoom(code: string): Promise<void> {
+  const supabase = createAdminClient();
+  await supabase.from("funquiz_rooms").delete().eq("code", code.toUpperCase());
 }
 
 export async function loadRoom(code: string): Promise<QuizRoom | null> {
-  const key = redisKey(code);
-  const client = getRedis();
-  if (client) {
-    const raw = await client.get<string>(key);
-    if (!raw) return null;
-    return typeof raw === "string" ? (JSON.parse(raw) as QuizRoom) : (raw as QuizRoom);
+  assertSupabaseConfigured();
+  const supabase = createAdminClient();
+  const normalized = code.toUpperCase();
+
+  await supabase.rpc("funquiz_purge_expired_rooms");
+
+  const { data: roomRow, error: roomError } = await supabase
+    .from("funquiz_rooms")
+    .select("*")
+    .eq("code", normalized)
+    .maybeSingle();
+
+  if (roomError) {
+    throw new Error(roomError.message);
   }
-  if (allowDevMemoryStore()) {
-    const entry = memoryRooms.get(key);
-    if (!entry) return null;
-    if (Date.now() > entry.expiresAt) {
-      memoryRooms.delete(key);
-      return null;
+  if (!roomRow) {
+    return null;
+  }
+
+  const row = roomRow as FunquizRoomRow;
+  if (new Date(row.expires_at).getTime() < Date.now()) {
+    await purgeExpiredRoom(normalized);
+    return null;
+  }
+
+  const { data: playerRows, error: playerError } = await supabase
+    .from("funquiz_players")
+    .select("*")
+    .eq("room_code", normalized);
+
+  if (playerError) {
+    throw new Error(playerError.message);
+  }
+
+  return dbRowsToRoom(row, (playerRows ?? []) as FunquizPlayerRow[]);
+}
+
+export async function saveRoom(room: QuizRoom): Promise<void> {
+  assertSupabaseConfigured();
+  const supabase = createAdminClient();
+  const { room: roomInsert, players } = roomToDbRows(room);
+
+  const existing = await supabase
+    .from("funquiz_rooms")
+    .select("created_at")
+    .eq("code", roomInsert.code)
+    .maybeSingle();
+
+  const createdAt =
+    existing.data?.created_at ?? new Date(room.createdAt).toISOString();
+
+  const { error: roomError } = await supabase.from("funquiz_rooms").upsert({
+    ...roomInsert,
+    created_at: createdAt,
+  });
+
+  if (roomError) {
+    throw new Error(roomError.message);
+  }
+
+  const { error: deletePlayersError } = await supabase
+    .from("funquiz_players")
+    .delete()
+    .eq("room_code", roomInsert.code);
+  if (deletePlayersError) {
+    throw new Error(deletePlayersError.message);
+  }
+
+  if (players.length > 0) {
+    const { error: playerError } = await supabase.from("funquiz_players").insert(players);
+    if (playerError) {
+      throw new Error(playerError.message);
     }
-    return entry.room;
   }
-  throw new QuizStoreUnavailableError(
-    "Multiplayer storage is not configured. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN on Vercel.",
-  );
+
+  await broadcastRoomSync(roomInsert.code);
 }

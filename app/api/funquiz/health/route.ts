@@ -8,6 +8,5 @@ export async function GET() {
   return NextResponse.json({
     ok: isQuizStoreConfigured(),
     store: mode,
-    productionRequiresRedis: process.env.NODE_ENV === "production" && mode !== "redis",
   });
 }

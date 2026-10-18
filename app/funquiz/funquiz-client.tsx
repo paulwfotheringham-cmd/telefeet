@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 import type { ClientRoomState } from "@/lib/funquiz/types";
 
 const PLAYER_ID_KEY = "funquiz-player-id";
@@ -42,13 +43,11 @@ export function FunQuizClient() {
     if (saved) setName(saved);
     fetch("/api/funquiz/health")
       .then((r) => r.json())
-      .then((h: { productionRequiresRedis?: boolean; store?: string }) => {
-        if (h.productionRequiresRedis) {
+      .then((h: { ok?: boolean; store?: string }) => {
+        if (!h.ok || h.store === "none") {
           setStoreWarning(
-            "Production multiplayer needs Upstash Redis (UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN).",
+            "Multiplayer storage is unavailable. Supabase must be configured on the server.",
           );
-        } else if (h.store === "memory") {
-          setStoreWarning("Using in-memory storage (local dev only).");
         }
       })
       .catch(() => {});
@@ -73,8 +72,22 @@ export function FunQuizClient() {
   useEffect(() => {
     if (screen !== "game" || !code) return;
     poll();
-    const id = setInterval(poll, 1200);
+    const id = setInterval(poll, 3000);
     return () => clearInterval(id);
+  }, [screen, code, poll]);
+
+  useEffect(() => {
+    if (screen !== "game" || !code) return;
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`funquiz:${code.toUpperCase()}`)
+      .on("broadcast", { event: "sync" }, () => {
+        void poll();
+      })
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
   }, [screen, code, poll]);
 
   const persistName = (n: string) => {
