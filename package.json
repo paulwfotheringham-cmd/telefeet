@@ -10,6 +10,7 @@
     "verify": "next build",
     "test:funquiz": "npx tsx scripts/validate-funquiz.ts && npx tsx scripts/funquiz-flow.test.ts && npx tsx scripts/supabase-host-check.test.ts",
     "db:migrate:funquiz": "node scripts/apply-funquiz-migration.mjs",
+    "bootstrap:funquiz:prod": "node scripts/funquiz-production-bootstrap.mjs",
     "db:migrate": "node scripts/apply-migration.mjs",
     "db:seed": "node scripts/seed-demo-users.mjs",
     "db:setup": "node scripts/apply-migration.mjs && node scripts/seed-demo-users.mjs",
