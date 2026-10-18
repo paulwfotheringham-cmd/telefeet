@@ -41,8 +41,6 @@ export async function loadRoom(code: string): Promise<QuizRoom | null> {
   const supabase = createAdminClient();
   const normalized = code.toUpperCase();
 
-  await supabase.rpc("funquiz_purge_expired_rooms");
-
   const { data: roomRow, error: roomError } = await supabase
     .from("funquiz_rooms")
     .select("*")
