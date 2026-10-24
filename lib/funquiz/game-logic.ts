@@ -7,7 +7,10 @@ import {
   ROOM_CODE_LENGTH,
   TAKE_TURNS_QUESTIONS_PER_PLAYER,
 } from "./constants";
-import { getQuestionByBankId, QUIZ_QUESTIONS, toPublicQuestion } from "./questions";
+import type { QuizCategoryId } from "./categories";
+import { categoryTitle } from "./categories";
+import { selectQuestionIdsForCategory } from "./question-selection";
+import { getQuestionByBankId, toPublicQuestion } from "./questions";
 import type {
   AnswerLogEntry,
   ClientRoomState,
@@ -35,20 +38,15 @@ function shuffleInPlace<T>(arr: T[]): T[] {
   return arr;
 }
 
-export function allocateQuestionsForGame(): {
+export function allocateQuestionsForGame(quizCategoryId: QuizCategoryId): {
   questionOrder: number[];
   hostQuestionOrder: number[];
   guestQuestionOrder: number[];
 } {
-  if (QUIZ_QUESTIONS.length < QUESTIONS_PER_GAME) {
-    throw new Error(
-      `Question bank has ${QUIZ_QUESTIONS.length} questions; need at least ${QUESTIONS_PER_GAME}.`,
-    );
-  }
-  const pool = Array.from({ length: QUIZ_QUESTIONS.length }, (_, i) => i);
-  shuffleInPlace(pool);
-  const questionOrder = pool.slice(0, QUESTIONS_PER_GAME);
-  const hostQuestionOrder = shuffleInPlace(questionOrder.slice(0, TAKE_TURNS_QUESTIONS_PER_PLAYER));
+  const questionOrder = selectQuestionIdsForCategory(quizCategoryId);
+  const hostQuestionOrder = shuffleInPlace(
+    questionOrder.slice(0, TAKE_TURNS_QUESTIONS_PER_PLAYER),
+  );
   const guestQuestionOrder = shuffleInPlace(
     questionOrder.slice(TAKE_TURNS_QUESTIONS_PER_PLAYER, QUESTIONS_PER_GAME),
   );
@@ -67,12 +65,14 @@ export function createRoom(
   hostName: string,
   code: string,
   gameMode: GameMode,
+  quizCategoryId: QuizCategoryId,
 ): QuizRoom {
   const now = Date.now();
   return {
     code,
     hostId,
     gameMode,
+    quizCategoryId,
     sessionId: newSessionId(),
     phase: "lobby",
     questionIndex: 0,
@@ -140,7 +140,7 @@ export function startGame(room: QuizRoom, playerId: string): QuizRoom {
     throw new Error("Game already started");
   }
 
-  const allocated = allocateQuestionsForGame();
+  const allocated = allocateQuestionsForGame(room.quizCategoryId);
   const guestId = guestPlayerId(room);
   if (!guestId) {
     throw new Error("Waiting for a second player");
@@ -179,7 +179,12 @@ export function startGame(room: QuizRoom, playerId: string): QuizRoom {
   };
 }
 
-export function resetRoomForNewGame(room: QuizRoom, playerId: string, gameMode: GameMode): QuizRoom {
+export function resetRoomForNewGame(
+  room: QuizRoom,
+  playerId: string,
+  gameMode: GameMode,
+  quizCategoryId: QuizCategoryId,
+): QuizRoom {
   if (playerId !== room.hostId) {
     throw new Error("Only the host can start a new game");
   }
@@ -189,6 +194,7 @@ export function resetRoomForNewGame(room: QuizRoom, playerId: string, gameMode: 
   return {
     ...room,
     gameMode,
+    quizCategoryId,
     sessionId: newSessionId(),
     phase: "lobby",
     questionIndex: 0,
@@ -237,6 +243,7 @@ function submitTakeTurns(room: QuizRoom, playerId: string, choiceIndex: number):
 
   const bankId = bankIdForTakeTurn(room, room.turnIndex);
   const q = getQuestionByBankId(bankId);
+  assertValidChoiceIndex(choiceIndex, q.options.length);
   const correct = choiceIndex === q.correctIndex;
   const entry: AnswerLogEntry = {
     sessionId: room.sessionId,
@@ -302,6 +309,7 @@ function submitPlayTogether(room: QuizRoom, playerId: string, choiceIndex: numbe
 
   const bankId = room.questionOrder[room.questionIndex]!;
   const q = getQuestionByBankId(bankId);
+  assertValidChoiceIndex(choiceIndex, q.options.length);
   const correct = choiceIndex === q.correctIndex;
   const entry: AnswerLogEntry = {
     sessionId: room.sessionId,
@@ -329,10 +337,13 @@ function submitPlayTogether(room: QuizRoom, playerId: string, choiceIndex: numbe
   };
 }
 
-export function submitAnswer(room: QuizRoom, playerId: string, choiceIndex: number): QuizRoom {
-  if (choiceIndex < 0 || choiceIndex > 2) {
+function assertValidChoiceIndex(choiceIndex: number, optionCount: number): void {
+  if (choiceIndex < 0 || choiceIndex >= optionCount || !Number.isInteger(choiceIndex)) {
     throw new Error("Invalid answer");
   }
+}
+
+export function submitAnswer(room: QuizRoom, playerId: string, choiceIndex: number): QuizRoom {
   if (room.gameMode === GAME_MODE_TAKE_TURNS) {
     return submitTakeTurns(room, playerId, choiceIndex);
   }
@@ -423,6 +434,8 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
       code: room.code,
       hostId: room.hostId,
       gameMode: room.gameMode,
+      quizCategoryId: room.quizCategoryId,
+      quizCategoryTitle: categoryTitle(room.quizCategoryId),
       phase: room.phase,
       questionIndex: room.questionIndex,
       totalQuestions: QUESTIONS_PER_GAME,
@@ -504,6 +517,8 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
     code: room.code,
     hostId: room.hostId,
     gameMode: room.gameMode,
+    quizCategoryId: room.quizCategoryId,
+    quizCategoryTitle: categoryTitle(room.quizCategoryId),
     phase: room.phase,
     questionIndex: room.questionIndex,
     totalQuestions: QUESTIONS_PER_GAME,
@@ -544,6 +559,6 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
 }
 
 /** @deprecated use allocateQuestionsForGame in tests */
-export function shuffleQuestionOrder(): number[] {
-  return allocateQuestionsForGame().questionOrder;
+export function shuffleQuestionOrder(quizCategoryId: QuizCategoryId): number[] {
+  return allocateQuestionsForGame(quizCategoryId).questionOrder;
 }

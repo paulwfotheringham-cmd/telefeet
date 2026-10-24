@@ -1,3 +1,5 @@
+import { isQuizCategoryId } from "./categories";
+import { QUIZ_CATEGORY_GENERAL_KNOWLEDGE } from "./categories";
 import type { AnswerLogEntry, GameMode, QuizPhase, QuizPlayer, QuizRoom } from "./types";
 import {
   GAME_MODE_PLAY_TOGETHER,
@@ -16,6 +18,7 @@ export type FunquizRoomRow = {
   expires_at: string;
   players_snapshot?: unknown;
   game_mode?: GameMode;
+  quiz_category?: string;
   session_id?: string;
   turn_index?: number;
   active_player_id?: string | null;
@@ -127,6 +130,7 @@ export function roomToDbRows(room: QuizRoom): {
       expires_at: expiresAt,
       players_snapshot: playerRows,
       game_mode: room.gameMode,
+      quiz_category: room.quizCategoryId,
       session_id: room.sessionId,
       turn_index: room.turnIndex,
       active_player_id: room.activePlayerId,
@@ -150,6 +154,10 @@ export function dbRowsToRoom(roomRow: FunquizRoomRow, playerRows: FunquizPlayerR
     code: roomRow.code,
     hostId: roomRow.host_id,
     gameMode: roomRow.game_mode ?? GAME_MODE_PLAY_TOGETHER,
+    quizCategoryId:
+      roomRow.quiz_category && isQuizCategoryId(roomRow.quiz_category)
+        ? roomRow.quiz_category
+        : QUIZ_CATEGORY_GENERAL_KNOWLEDGE,
     sessionId: roomRow.session_id ?? "legacy",
     phase: roomRow.phase,
     questionIndex: roomRow.question_index,

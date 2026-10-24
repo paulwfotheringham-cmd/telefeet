@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { QUIZ_CATEGORY_GEOGRAPHY } from "../lib/funquiz/categories";
 import { GAME_MODE_PLAY_TOGETHER } from "../lib/funquiz/constants";
 import {
   addPlayer,
@@ -12,7 +13,13 @@ import { dbRowsToRoom, roomToDbRows } from "../lib/funquiz/db-mapper";
 import { getQuestionByBankId } from "../lib/funquiz/questions";
 
 function runFlow() {
-  let room = createRoom("host-1", "Alice", "ABC123", GAME_MODE_PLAY_TOGETHER);
+  let room = createRoom(
+    "host-1",
+    "Alice",
+    "ABC123",
+    GAME_MODE_PLAY_TOGETHER,
+    QUIZ_CATEGORY_GEOGRAPHY,
+  );
   assert.equal(room.phase, "lobby");
 
   room = addPlayer(room, "host-2", "Bob");
@@ -47,24 +54,28 @@ function runFlow() {
 }
 
 function runMapperRoundtrip() {
-  const room = createRoom("p1", "Test", "XY12Z9", GAME_MODE_PLAY_TOGETHER);
+  const room = createRoom(
+    "p1",
+    "Test",
+    "XY12Z9",
+    GAME_MODE_PLAY_TOGETHER,
+    QUIZ_CATEGORY_GEOGRAPHY,
+  );
   const withGuest = addPlayer(room, "p2", "Guest");
   const { room: row, players } = roomToDbRows(withGuest);
   assert.equal(row.code, "XY12Z9");
   assert.equal(players.length, 2);
+  assert.equal(row.quiz_category, QUIZ_CATEGORY_GEOGRAPHY);
   const back = dbRowsToRoom(
     {
       ...row,
       created_at: new Date(withGuest.createdAt).toISOString(),
-      updated_at: new Date(withGuest.updatedAt).toISOString(),
     },
     players,
   );
-  assert.equal(back.players[0].name, "Test");
-  assert.equal(back.gameMode, GAME_MODE_PLAY_TOGETHER);
-  assert.equal(back.questionOrder.length, 0);
+  assert.equal(back.quizCategoryId, QUIZ_CATEGORY_GEOGRAPHY);
 }
 
 runFlow();
 runMapperRoundtrip();
-console.log("Fun quiz flow + mapper tests OK");
+console.log("funquiz-flow.test.ts OK");

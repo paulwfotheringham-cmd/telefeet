@@ -1,10 +1,15 @@
 import assert from "node:assert/strict";
 import {
+  QUIZ_CATEGORY_GEOGRAPHY,
+  QUIZ_CATEGORY_SPACE,
+} from "../lib/funquiz/categories";
+import {
   GAME_MODE_PLAY_TOGETHER,
   GAME_MODE_TAKE_TURNS,
   QUESTIONS_PER_GAME,
   TAKE_TURNS_QUESTIONS_PER_PLAYER,
 } from "../lib/funquiz/constants";
+import { getQuestionByBankId } from "../lib/funquiz/questions";
 import {
   addPlayer,
   allocateQuestionsForGame,
@@ -16,10 +21,13 @@ import {
   tickRoom,
   toClientState,
 } from "../lib/funquiz/game-logic";
-import { getQuestionByBankId } from "../lib/funquiz/questions";
 
 function runAllocation() {
-  const { questionOrder, hostQuestionOrder, guestQuestionOrder } = allocateQuestionsForGame();
+  const { questionOrder, hostQuestionOrder, guestQuestionOrder } =
+    allocateQuestionsForGame(QUIZ_CATEGORY_SPACE);
+  for (const id of questionOrder) {
+    assert.equal(getQuestionByBankId(id).categoryId, QUIZ_CATEGORY_SPACE);
+  }
   assert.equal(questionOrder.length, QUESTIONS_PER_GAME);
   assert.equal(hostQuestionOrder.length, TAKE_TURNS_QUESTIONS_PER_PLAYER);
   assert.equal(guestQuestionOrder.length, TAKE_TURNS_QUESTIONS_PER_PLAYER);
@@ -33,7 +41,13 @@ function runAllocation() {
 }
 
 function runTakeTurnsFlow() {
-  let room = createRoom("host", "Host", "TT0001", GAME_MODE_TAKE_TURNS);
+  let room = createRoom(
+    "host",
+    "Host",
+    "TT0001",
+    GAME_MODE_TAKE_TURNS,
+    QUIZ_CATEGORY_GEOGRAPHY,
+  );
   room = addPlayer(room, "guest", "Guest");
   room = startGame(room, "host");
   assert.equal(room.activePlayerId, "host");
@@ -79,7 +93,13 @@ function runTakeTurnsFlow() {
 }
 
 function runPlayTogetherHostOnlySubmit() {
-  let room = createRoom("host", "Host", "PT0001", GAME_MODE_PLAY_TOGETHER);
+  let room = createRoom(
+    "host",
+    "Host",
+    "PT0001",
+    GAME_MODE_PLAY_TOGETHER,
+    QUIZ_CATEGORY_GEOGRAPHY,
+  );
   room = addPlayer(room, "guest", "Guest");
   room = startGame(room, "host");
   assert.throws(() => submitAnswer(room, "guest", 0), /creator/i);
@@ -96,7 +116,13 @@ function runPlayTogetherHostOnlySubmit() {
 }
 
 function runPlayTogetherTickToFinish() {
-  let room = createRoom("host", "H", "PT0002", GAME_MODE_PLAY_TOGETHER);
+  let room = createRoom(
+    "host",
+    "H",
+    "PT0002",
+    GAME_MODE_PLAY_TOGETHER,
+    QUIZ_CATEGORY_SPACE,
+  );
   room = addPlayer(room, "guest", "G");
   room = startGame(room, "host");
   for (let i = 0; i < QUESTIONS_PER_GAME; i++) {
@@ -112,14 +138,21 @@ function runPlayTogetherTickToFinish() {
 }
 
 function runNewGameReset() {
-  let room = createRoom("host", "H", "NG0001", GAME_MODE_PLAY_TOGETHER);
+  let room = createRoom(
+    "host",
+    "H",
+    "NG0001",
+    GAME_MODE_PLAY_TOGETHER,
+    QUIZ_CATEGORY_GEOGRAPHY,
+  );
   room = addPlayer(room, "guest", "G");
   room = startGame(room, "host");
   room = { ...room, phase: "finished" as const };
   const prevSession = room.sessionId;
-  room = resetRoomForNewGame(room, "host", GAME_MODE_TAKE_TURNS);
+  room = resetRoomForNewGame(room, "host", GAME_MODE_TAKE_TURNS, QUIZ_CATEGORY_SPACE);
   assert.equal(room.phase, "lobby");
   assert.equal(room.gameMode, GAME_MODE_TAKE_TURNS);
+  assert.equal(room.quizCategoryId, QUIZ_CATEGORY_SPACE);
   assert.notEqual(room.sessionId, prevSession);
   assert.equal(room.answerLog.length, 0);
 }

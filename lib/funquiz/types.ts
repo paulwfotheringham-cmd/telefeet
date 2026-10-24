@@ -1,4 +1,10 @@
+import type { QuizCategoryId } from "./categories";
+
 export type GameMode = "take_turns" | "play_together";
+
+export type QuizOptionList =
+  | readonly [string, string, string]
+  | readonly [string, string, string, string];
 
 export type QuizPhase = "lobby" | "question" | "reveal" | "finished";
 
@@ -23,6 +29,7 @@ export type QuizRoom = {
   code: string;
   hostId: string;
   gameMode: GameMode;
+  quizCategoryId: QuizCategoryId;
   sessionId: string;
   phase: QuizPhase;
   questionIndex: number;
@@ -43,8 +50,9 @@ export type QuizRoom = {
 export type PublicQuizQuestion = {
   id: number;
   prompt: string;
-  options: [string, string, string];
+  options: QuizOptionList;
   category: string;
+  outlineImageUrl?: string;
 };
 
 export type ResultRow = {
@@ -56,7 +64,7 @@ export type ResultRow = {
   correctIndex: number;
   correct: boolean;
   prompt: string;
-  options: [string, string, string];
+  options: QuizOptionList;
   chosenLabel: string | null;
   correctLabel: string;
 };
@@ -65,6 +73,8 @@ export type ClientRoomState = {
   code: string;
   hostId: string;
   gameMode: GameMode;
+  quizCategoryId: QuizCategoryId;
+  quizCategoryTitle: string;
   phase: QuizPhase;
   questionIndex: number;
   totalQuestions: number;

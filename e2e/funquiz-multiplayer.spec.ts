@@ -5,6 +5,7 @@ const BASE_URL = process.env.FUNQUIZ_E2E_BASE_URL ?? "http://127.0.0.1:3000";
 async function fillNameAndCreatePlayTogether(page: Page, name: string) {
   await page.getByPlaceholder("Enter your name").fill(name);
   await page.getByRole("button", { name: "Game 2 — Play together" }).click();
+  await page.getByRole("button", { name: "Geography", exact: true }).click();
   await page.getByRole("button", { name: "Create room" }).click();
   await expect(page.getByText("Waiting room")).toBeVisible({ timeout: 15_000 });
 }

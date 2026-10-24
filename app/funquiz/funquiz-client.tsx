@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { QUIZ_CATEGORIES } from "@/lib/funquiz/categories";
+import type { QuizCategoryId } from "@/lib/funquiz/categories";
 import {
   GAME_MODE_PLAY_TOGETHER,
   GAME_MODE_TAKE_TURNS,
@@ -77,7 +79,9 @@ export function FunQuizClient() {
   const [name, setName] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [selectedMode, setSelectedMode] = useState<GameMode | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<QuizCategoryId | null>(null);
   const [newGameMode, setNewGameMode] = useState<GameMode | null>(null);
+  const [newGameCategory, setNewGameCategory] = useState<QuizCategoryId | null>(null);
   const [roomState, setRoomState] = useState<ClientRoomState | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -155,6 +159,10 @@ export function FunQuizClient() {
       setError("Select a game mode before creating a room.");
       return;
     }
+    if (!selectedCategory) {
+      setError("Choose a quiz category before creating a room.");
+      return;
+    }
     const activePlayerId = resolvePlayerId();
     if (!playerId) setPlayerId(activePlayerId);
     persistName(name.trim());
@@ -167,6 +175,7 @@ export function FunQuizClient() {
           playerId: activePlayerId,
           playerName: name.trim(),
           gameMode: selectedMode,
+          quizCategory: selectedCategory,
         }),
       });
       const state = await parseState(res);
@@ -257,19 +266,24 @@ export function FunQuizClient() {
   };
 
   const startNewGame = async () => {
-    if (!roomState?.code || !newGameMode) return;
+    if (!roomState?.code || !newGameMode || !newGameCategory) return;
     setBusy(true);
     setError(null);
     try {
       const res = await fetch(`/api/funquiz/room/${roomState.code}/new-game`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ playerId, gameMode: newGameMode }),
+        body: JSON.stringify({
+          playerId,
+          gameMode: newGameMode,
+          quizCategory: newGameCategory,
+        }),
       });
       const state = await parseState(res);
       if (state) {
         setRoomState(state);
         setNewGameMode(null);
+        setNewGameCategory(null);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not start new game");
@@ -289,6 +303,7 @@ export function FunQuizClient() {
     setRoomState(null);
     setError(null);
     setNewGameMode(null);
+    setNewGameCategory(null);
   };
 
   if (screen === "home") {
@@ -358,9 +373,32 @@ export function FunQuizClient() {
             </button>
           </div>
 
+          {selectedMode ? (
+            <>
+              <p className="mt-6 text-sm font-medium text-slate-200">Choose your quiz</p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {QUIZ_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setSelectedCategory(cat.id)}
+                    className={`rounded-xl border p-3 text-left transition ${
+                      selectedCategory === cat.id
+                        ? "border-violet-400 bg-violet-950/50 ring-1 ring-violet-400/40"
+                        : "border-white/10 bg-black/30 hover:border-violet-400/40"
+                    }`}
+                  >
+                    <p className="text-xs font-semibold text-violet-200">{cat.title}</p>
+                    <p className="mt-1 text-[11px] leading-snug text-slate-400">{cat.description}</p>
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : null}
+
           <button
             type="button"
-            disabled={busy}
+            disabled={busy || !selectedMode || !selectedCategory}
             onClick={createRoom}
             className="mt-6 w-full rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 py-3.5 text-sm font-semibold text-white shadow-lg shadow-violet-700/30 transition hover:brightness-110 disabled:opacity-60"
           >
@@ -420,7 +458,7 @@ export function FunQuizClient() {
       <header className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-violet-300">
-            Room {roomState.code} · {gameModeLabel(gameMode)}
+            Room {roomState.code} · {roomState.quizCategoryTitle} · {gameModeLabel(gameMode)}
           </p>
           <h1 className="text-2xl font-bold text-white">Fun Quiz</h1>
         </div>
@@ -462,6 +500,10 @@ export function FunQuizClient() {
         <section className="mt-8 flex flex-1 flex-col rounded-3xl border border-white/10 bg-slate-900/70 p-6">
           <h2 className="text-lg font-semibold text-white">Waiting room</h2>
           <p className="mt-2 text-sm text-slate-300">
+            Quiz:{" "}
+            <strong className="text-violet-200">{roomState.quizCategoryTitle}</strong>
+          </p>
+          <p className="mt-1 text-sm text-slate-300">
             Mode: <strong className="text-violet-200">{gameModeLabel(gameMode)}</strong>
           </p>
           <p className="mt-2 text-sm text-slate-300">
@@ -521,6 +563,16 @@ export function FunQuizClient() {
           {roomState.statusMessage ? (
             <p className="mt-4 text-center text-sm text-slate-400">{roomState.statusMessage}</p>
           ) : null}
+          {question.outlineImageUrl ? (
+            <div className="mt-6 flex justify-center rounded-2xl border border-white/10 bg-slate-950/80 p-4">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={question.outlineImageUrl}
+                alt="Country outline"
+                className="max-h-48 w-full max-w-sm object-contain"
+              />
+            </div>
+          ) : null}
           <h2 className="mt-6 text-xl font-semibold leading-snug text-white sm:text-2xl">
             {question.prompt}
           </h2>
@@ -554,6 +606,16 @@ export function FunQuizClient() {
       {phase === "reveal" && question && roomState.correctIndex !== null ? (
         <section className="mt-6 flex flex-1 flex-col rounded-3xl border border-amber-400/30 bg-amber-950/20 p-6">
           <h2 className="text-lg font-semibold text-amber-100">Answer reveal</h2>
+          {question.outlineImageUrl ? (
+            <div className="mt-3 flex justify-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={question.outlineImageUrl}
+                alt="Country outline"
+                className="max-h-36 max-w-xs object-contain"
+              />
+            </div>
+          ) : null}
           <p className="mt-2 text-sm text-slate-300">{question.prompt}</p>
           <p className="mt-4 rounded-xl bg-emerald-900/40 px-4 py-3 text-emerald-100">
             Correct:{" "}
@@ -578,6 +640,7 @@ export function FunQuizClient() {
       {phase === "finished" && roomState.results ? (
         <section className="mt-6 flex flex-1 flex-col rounded-3xl border border-violet-400/30 bg-slate-950/80 p-6">
           <h2 className="text-2xl font-bold text-white">Results</h2>
+          <p className="mt-1 text-sm text-slate-400">{roomState.quizCategoryTitle}</p>
           {gameMode === GAME_MODE_PLAY_TOGETHER ? (
             <p className="mt-2 text-violet-100">
               Joint score: {roomState.jointScore ?? 0} / 50 (
@@ -616,7 +679,7 @@ export function FunQuizClient() {
           </div>
           {isHost ? (
             <div className="mt-6 space-y-3">
-              <p className="text-sm text-slate-300">Start a new game (pick mode):</p>
+              <p className="text-sm text-slate-300">Start a new game (pick mode and quiz):</p>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
@@ -641,9 +704,27 @@ export function FunQuizClient() {
                   Play together
                 </button>
               </div>
+              <div className="mt-2 max-h-40 overflow-y-auto rounded-lg border border-white/10 p-2">
+                <div className="grid grid-cols-2 gap-1">
+                  {QUIZ_CATEGORIES.map((cat) => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setNewGameCategory(cat.id)}
+                      className={`rounded-md border px-2 py-1.5 text-left text-[10px] leading-tight ${
+                        newGameCategory === cat.id
+                          ? "border-violet-400 bg-violet-950/50 text-violet-100"
+                          : "border-white/5 text-slate-400"
+                      }`}
+                    >
+                      {cat.title}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <button
                 type="button"
-                disabled={busy || !newGameMode}
+                disabled={busy || !newGameMode || !newGameCategory}
                 onClick={startNewGame}
                 className="w-full rounded-xl bg-violet-500 py-3 text-sm font-semibold text-white disabled:opacity-50"
               >
