@@ -81,6 +81,19 @@ async function fetchPlayerRows(
   supabase: ReturnType<typeof createAdminClient>,
   roomCode: string,
 ): Promise<FunquizPlayerRow[]> {
+  const { data: jsonRows, error: jsonError } = await supabase.rpc("funquiz_list_players_json", {
+    p_room_code: roomCode,
+  });
+  if (!jsonError && jsonRows != null) {
+    let parsed: unknown = jsonRows;
+    if (typeof parsed === "string") {
+      parsed = JSON.parse(parsed) as unknown;
+    }
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed as FunquizPlayerRow[];
+    }
+  }
+
   const { data: playerRows, count, error: playerError } = await supabase
     .from("funquiz_players")
     .select("*", { count: "exact" })
