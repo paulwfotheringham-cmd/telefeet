@@ -81,15 +81,27 @@ async function fetchPlayerRows(
   supabase: ReturnType<typeof createAdminClient>,
   roomCode: string,
 ): Promise<FunquizPlayerRow[]> {
-  const { data: playerRows, error: playerError } = await supabase
+  const { data: playerRows, count, error: playerError } = await supabase
     .from("funquiz_players")
-    .select("*")
+    .select("*", { count: "exact" })
     .eq("room_code", roomCode);
 
   if (playerError) {
     throw new Error(playerError.message);
   }
-  return (playerRows ?? []) as FunquizPlayerRow[];
+  const rows = (playerRows ?? []) as FunquizPlayerRow[];
+  if (count != null && count > rows.length) {
+    await new Promise((resolve) => setTimeout(resolve, 120));
+    const retry = await supabase
+      .from("funquiz_players")
+      .select("*")
+      .eq("room_code", roomCode);
+    if (retry.error) {
+      throw new Error(retry.error.message);
+    }
+    return (retry.data ?? []) as FunquizPlayerRow[];
+  }
+  return rows;
 }
 
 /** PostgREST can briefly return a stale single-player lobby after a join upsert. */
@@ -99,8 +111,8 @@ async function waitForLobbyPlayers(
   initial: FunquizPlayerRow[],
 ): Promise<FunquizPlayerRow[]> {
   let best = initial;
-  for (let attempt = 0; attempt < 6; attempt++) {
-    await new Promise((resolve) => setTimeout(resolve, 80));
+  for (let attempt = 0; attempt < 10; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, 100));
     const rows = await fetchPlayerRows(supabase, roomCode);
     if (rows.length > best.length) {
       best = rows;
