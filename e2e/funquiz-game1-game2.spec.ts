@@ -3,9 +3,14 @@ import { test, expect, type BrowserContext, type Page } from "@playwright/test";
 const BASE_URL = process.env.FUNQUIZ_E2E_BASE_URL ?? "http://127.0.0.1:3000";
 
 async function healthReady(): Promise<boolean> {
-  const res = await fetch(`${BASE_URL}/api/funquiz/health`);
-  const h = (await res.json()) as { ok?: boolean };
-  return Boolean(h.ok);
+  try {
+    const res = await fetch(`${BASE_URL}/api/funquiz/health`);
+    if (!res.ok) return false;
+    const h = (await res.json()) as { ok?: boolean };
+    return Boolean(h.ok);
+  } catch {
+    return false;
+  }
 }
 
 async function fillName(page: Page, name: string) {

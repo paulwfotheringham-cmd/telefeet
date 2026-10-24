@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import type { ClientRoomState } from "@/lib/funquiz/types";
 
 type Props = {
@@ -31,6 +32,25 @@ export function MillionaireStage({
 }: Props) {
   const mv = roomState.millionaireView;
   const question = roomState.question;
+  const lockedChoiceOptions = useMemo(() => {
+    const indices = new Set<number>();
+    for (const p of mv?.playerLocks ?? []) {
+      if (p.locked && p.choiceIndex !== null) indices.add(p.choiceIndex);
+    }
+    return [...indices].sort((a, b) => a - b);
+  }, [mv?.playerLocks]);
+  const [finalizeChoice, setFinalizeChoice] = useState<number | null>(null);
+  useEffect(() => {
+    if (!mv?.canFinalizeTeam) {
+      setFinalizeChoice(null);
+      return;
+    }
+    setFinalizeChoice((prev) => {
+      if (prev !== null && lockedChoiceOptions.includes(prev)) return prev;
+      return lockedChoiceOptions[0] ?? roomState.you.answer;
+    });
+  }, [mv?.canFinalizeTeam, lockedChoiceOptions, roomState.you.answer]);
+
   if (!mv) return null;
 
   const postAction = async (body: Record<string, unknown>) => {
@@ -110,6 +130,12 @@ export function MillionaireStage({
               </p>
             </div>
           </header>
+
+          {roomState.statusMessage ? (
+            <p className="mb-4 rounded-xl border border-cyan-500/25 bg-cyan-950/30 px-3 py-2 text-sm text-cyan-100">
+              {roomState.statusMessage}
+            </p>
+          ) : null}
 
           {(phase === "won" || phase === "lost" || phase === "walkaway") && (
             <section className="mb-6 rounded-2xl border border-violet-400/40 bg-violet-950/40 p-6 text-center">
@@ -225,28 +251,43 @@ export function MillionaireStage({
                     Walk away
                   </button>
                 ) : null}
-                {mv.canFinalizeTeam ? (
-                  <button
-                    type="button"
-                    disabled={busy || roomState.you.answer === null}
-                    onClick={() =>
-                      void postAction({
-                        action: "finalize",
-                        choiceIndex: roomState.you.answer,
-                      })
-                    }
-                    className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
-                  >
-                    Finalise team answer
-                  </button>
+                {mv.canFinalizeTeam && lockedChoiceOptions.length > 0 ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs text-violet-200">Host finalises:</span>
+                    {lockedChoiceOptions.map((idx) => {
+                      const letter = String.fromCharCode(65 + idx);
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          disabled={busy}
+                          onClick={() => setFinalizeChoice(idx)}
+                          className={`rounded-lg border px-2 py-1 text-xs ${
+                            finalizeChoice === idx
+                              ? "border-violet-300 bg-violet-800 text-white"
+                              : "border-white/15 text-slate-300"
+                          }`}
+                        >
+                          {letter}
+                        </button>
+                      );
+                    })}
+                    <button
+                      type="button"
+                      disabled={busy || finalizeChoice === null}
+                      onClick={() =>
+                        void postAction({
+                          action: "finalize",
+                          choiceIndex: finalizeChoice as number,
+                        })
+                      }
+                      className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                    >
+                      Finalise team answer
+                    </button>
+                  </div>
                 ) : null}
               </div>
-
-              {phase === "discussion" ? (
-                <p className="mt-3 text-sm text-amber-100/90">
-                  Team consultation — lock the same answer or the host finalises one choice.
-                </p>
-              ) : null}
 
               {phase === "reveal" && feedback ? (
                 <div
@@ -313,7 +354,9 @@ export function MillionaireStage({
           <ol className="space-y-1">
             {[...mv.ladder].reverse().map((prize, revIdx) => {
               const idx = mv.ladder.length - 1 - revIdx;
-              const isCurrent = idx === roomState.questionIndex && phase === "question";
+              const isCurrent =
+                idx === roomState.questionIndex &&
+                (phase === "question" || phase === "discussion" || phase === "reveal");
               const isPassed = idx < roomState.questionIndex || mv.outcome === "won";
               const isSafety = mv.safetyNetIndices.includes(idx);
               return (

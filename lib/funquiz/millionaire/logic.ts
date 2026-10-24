@@ -136,6 +136,16 @@ function resolveToReveal(room: QuizRoom, teamChoiceIndex: number): QuizRoom {
   };
 }
 
+function disagreementDiscussionActive(room: QuizRoom): boolean {
+  if (room.phase !== "discussion" || room.players.length < 2) {
+    return false;
+  }
+  if (!allPlayersLocked(room)) {
+    return false;
+  }
+  return new Set(lockedChoices(room)).size > 1;
+}
+
 function maybeAdvanceAfterLocks(room: QuizRoom): QuizRoom {
   if (!allPlayersLocked(room)) {
     return room;
@@ -146,11 +156,16 @@ function maybeAdvanceAfterLocks(room: QuizRoom): QuizRoom {
   }
   const unique = new Set(choices);
   if (room.players.length >= 2 && unique.size > 1) {
+    const now = Date.now();
     return {
       ...room,
       phase: "discussion",
-      revealStartedAt: Date.now(),
-      updatedAt: Date.now(),
+      revealStartedAt: now,
+      millionaire: {
+        ...ensureMillionaire(room),
+        askTeamActiveUntil: null,
+      },
+      updatedAt: now,
     };
   }
   return resolveToReveal(room, choices[0]!);
@@ -231,6 +246,8 @@ export function millionaireFinalizeTeamAnswer(
   if (playerId !== room.hostId) {
     throw new Error("Only the room creator can finalise the team answer");
   }
+  const bankId = currentBankId(room);
+  gradeAnswer(bankId, choiceIndex);
   return resolveToReveal(room, choiceIndex);
 }
 
@@ -411,14 +428,26 @@ export function millionaireTickRoom(room: QuizRoom, now = Date.now()): QuizRoom 
   if (room.phase === "discussion" && room.revealStartedAt !== null) {
     const m = ensureMillionaire(room);
     const deadline = m.askTeamActiveUntil ?? room.revealStartedAt + MILLIONAIRE_DISCUSSION_MS;
-    if (now >= deadline && m.askTeamActiveUntil !== null && !allPlayersLocked(room)) {
-      return {
-        ...room,
-        phase: "question",
-        revealStartedAt: null,
-        millionaire: { ...m, askTeamActiveUntil: null },
-        updatedAt: now,
-      };
+    if (now >= deadline) {
+      if (disagreementDiscussionActive(room)) {
+        return {
+          ...room,
+          phase: "question",
+          revealStartedAt: null,
+          millionaire: resetLocksForQuestion(room.players, { ...m, askTeamActiveUntil: null }),
+          players: room.players.map((p) => ({ ...p, answer: null })),
+          updatedAt: now,
+        };
+      }
+      if (m.askTeamActiveUntil !== null && !allPlayersLocked(room)) {
+        return {
+          ...room,
+          phase: "question",
+          revealStartedAt: null,
+          millionaire: { ...m, askTeamActiveUntil: null },
+          updatedAt: now,
+        };
+      }
     }
   }
 

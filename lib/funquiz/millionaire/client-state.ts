@@ -17,6 +17,24 @@ import {
 import { isMillionaireRoom } from "./logic";
 import type { MillionaireState } from "./types";
 
+function disagreementMessage(room: QuizRoom): string {
+  const m = room.millionaire;
+  if (!m) return "Team consultation.";
+  const locked = room.players
+    .map((p) => m.locks[p.id])
+    .filter((l) => l?.locked && l.choiceIndex !== null);
+  if (locked.length >= 2) {
+    const unique = new Set(locked.map((l) => l!.choiceIndex));
+    if (unique.size > 1) {
+      return "You picked different answers. The room host must finalise one team choice (correct answer not shown yet).";
+    }
+  }
+  if (m.askTeamActiveUntil !== null) {
+    return "Ask the Team — discuss, then lock the same answer or the host finalises.";
+  }
+  return "Discuss and lock the same answer, or the host can finalise the team choice.";
+}
+
 function ensureM(room: QuizRoom): MillionaireState {
   if (!room.millionaire) {
     throw new Error("Millionaire state missing");
@@ -128,8 +146,10 @@ export function toMillionaireClientState(room: QuizRoom, viewerId: string): Clie
     canSubmitAnswer: false,
     statusMessage:
       room.phase === "discussion"
-        ? "Discuss and lock the same answer, or the host can finalise the team choice."
-        : null,
+        ? disagreementMessage(room)
+        : room.phase === "question"
+          ? "Lock the same answer to continue. If you disagree, the host must pick the team answer."
+          : null,
     scoresHidden: false,
     jointScore: prizeDisplay,
     players: room.players.map((p) => ({
