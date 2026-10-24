@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { ClientRoomState } from "@/lib/funquiz/types";
+import {
+  GAME_MODE_PLAY_TOGETHER,
+  GAME_MODE_TAKE_TURNS,
+} from "@/lib/funquiz/constants";
+import type { ClientRoomState, GameMode } from "@/lib/funquiz/types";
 
 const PLAYER_ID_KEY = "funquiz-player-id";
 const PLAYER_NAME_KEY = "funquiz-player-name";
@@ -19,6 +23,10 @@ function getOrCreatePlayerId(): string {
 
 type Screen = "home" | "game";
 
+function gameModeLabel(mode: GameMode): string {
+  return mode === GAME_MODE_TAKE_TURNS ? "Take turns" : "Play together";
+}
+
 async function parseState(res: Response): Promise<ClientRoomState | null> {
   const data = (await res.json()) as { state?: ClientRoomState; error?: string };
   if (!res.ok) {
@@ -27,7 +35,6 @@ async function parseState(res: Response): Promise<ClientRoomState | null> {
   return data.state ?? null;
 }
 
-/** Avoid flicker when a stale poll omits a player who just joined (read-after-write lag). */
 function mergeLobbyPollState(
   prev: ClientRoomState | null,
   next: ClientRoomState,
@@ -51,7 +58,12 @@ function mergeLobbyPollState(
           name: mergedYouRow?.name ?? prev.you.name ?? next.you.name,
           score: mergedYouRow?.score ?? prev.you.score ?? next.you.score,
         };
-  return { ...next, players, you, error: players.some((p) => p.id === next.you.id) ? undefined : next.error };
+  return {
+    ...next,
+    players,
+    you,
+    error: players.some((p) => p.id === next.you.id) ? undefined : next.error,
+  };
 }
 
 function readPlayerId(): string {
@@ -64,6 +76,8 @@ export function FunQuizClient() {
   const [playerId, setPlayerId] = useState(readPlayerId);
   const [name, setName] = useState("");
   const [joinCode, setJoinCode] = useState("");
+  const [selectedMode, setSelectedMode] = useState<GameMode | null>(null);
+  const [newGameMode, setNewGameMode] = useState<GameMode | null>(null);
   const [roomState, setRoomState] = useState<ClientRoomState | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -137,6 +151,10 @@ export function FunQuizClient() {
       setError("Enter your name first.");
       return;
     }
+    if (!selectedMode) {
+      setError("Select a game mode before creating a room.");
+      return;
+    }
     const activePlayerId = resolvePlayerId();
     if (!playerId) setPlayerId(activePlayerId);
     persistName(name.trim());
@@ -145,7 +163,11 @@ export function FunQuizClient() {
       const res = await fetch("/api/funquiz/room", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ playerId: activePlayerId, playerName: name.trim() }),
+        body: JSON.stringify({
+          playerId: activePlayerId,
+          playerName: name.trim(),
+          gameMode: selectedMode,
+        }),
       });
       const state = await parseState(res);
       if (state) {
@@ -216,8 +238,9 @@ export function FunQuizClient() {
   };
 
   const submitAnswer = async (choiceIndex: number) => {
-    if (!roomState?.code || roomState.you.answer !== null) return;
+    if (!roomState?.code || !roomState.canSubmitAnswer) return;
     setBusy(true);
+    setError(null);
     try {
       const res = await fetch(`/api/funquiz/room/${roomState.code}/answer`, {
         method: "POST",
@@ -233,6 +256,28 @@ export function FunQuizClient() {
     }
   };
 
+  const startNewGame = async () => {
+    if (!roomState?.code || !newGameMode) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/funquiz/room/${roomState.code}/new-game`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ playerId, gameMode: newGameMode }),
+      });
+      const state = await parseState(res);
+      if (state) {
+        setRoomState(state);
+        setNewGameMode(null);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not start new game");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const isHost = roomState?.hostId === playerId;
 
   const progressPct = roomState
@@ -243,6 +288,7 @@ export function FunQuizClient() {
     setScreen("home");
     setRoomState(null);
     setError(null);
+    setNewGameMode(null);
   };
 
   if (screen === "home") {
@@ -250,14 +296,13 @@ export function FunQuizClient() {
       <div className="mx-auto flex min-h-[100dvh] max-w-lg flex-col justify-center px-4 py-10">
         <div className="rounded-3xl border border-violet-400/25 bg-gradient-to-b from-slate-900/95 to-indigo-950/90 p-8 shadow-2xl shadow-violet-900/40">
           <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-violet-300">
-            Two-player battle
+            Two-player quiz
           </p>
           <h1 className="mt-3 text-center font-bold tracking-tight text-white text-4xl">
             Fun Quiz
           </h1>
           <p className="mt-3 text-center text-sm leading-relaxed text-slate-300">
-            50 international general-knowledge questions. Create a room, share the code, and
-            play head-to-head from anywhere.
+            Choose a mode, create a room, and share the code with a friend.
           </p>
 
           {storeWarning ? (
@@ -272,17 +317,52 @@ export function FunQuizClient() {
               className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none ring-violet-400/0 transition focus:ring-2 focus:ring-violet-400/60"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Alex"
+              placeholder="Enter your name"
               maxLength={24}
               autoComplete="nickname"
             />
           </label>
 
+          <p className="mt-6 text-sm font-medium text-slate-200">Game mode</p>
+          <div className="mt-3 grid gap-3">
+            <button
+              type="button"
+              onClick={() => setSelectedMode(GAME_MODE_TAKE_TURNS)}
+              className={`rounded-2xl border p-4 text-left transition ${
+                selectedMode === GAME_MODE_TAKE_TURNS
+                  ? "border-violet-400 bg-violet-950/50"
+                  : "border-white/10 bg-black/30 hover:border-violet-400/40"
+              }`}
+            >
+              <p className="text-sm font-semibold text-violet-200">Game 1 — Take turns</p>
+              <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                Answer 25 different questions each. Take turns answering. See the correct
+                answers and compare your scores at the end.
+              </p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedMode(GAME_MODE_PLAY_TOGETHER)}
+              className={`rounded-2xl border p-4 text-left transition ${
+                selectedMode === GAME_MODE_PLAY_TOGETHER
+                  ? "border-violet-400 bg-violet-950/50"
+                  : "border-white/10 bg-black/30 hover:border-violet-400/40"
+              }`}
+            >
+              <p className="text-sm font-semibold text-violet-200">Game 2 — Play together</p>
+              <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                Answer 50 shared questions together. Discuss each question and let the room
+                creator submit the agreed answer. See whether you are correct after every
+                question.
+              </p>
+            </button>
+          </div>
+
           <button
             type="button"
             disabled={busy}
             onClick={createRoom}
-            className="mt-4 w-full rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 py-3.5 text-sm font-semibold text-white shadow-lg shadow-violet-700/30 transition hover:brightness-110 disabled:opacity-60"
+            className="mt-6 w-full rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 py-3.5 text-sm font-semibold text-white shadow-lg shadow-violet-700/30 transition hover:brightness-110 disabled:opacity-60"
           >
             Create room
           </button>
@@ -331,7 +411,7 @@ export function FunQuizClient() {
     );
   }
 
-  const { phase, question, players, you } = roomState;
+  const { phase, question, players, you, gameMode } = roomState;
   const opponent = players.find((p) => p.id !== playerId);
   const bothIn = players.length >= 2;
 
@@ -340,7 +420,7 @@ export function FunQuizClient() {
       <header className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-violet-300">
-            Room {roomState.code}
+            Room {roomState.code} · {gameModeLabel(gameMode)}
           </p>
           <h1 className="text-2xl font-bold text-white">Fun Quiz</h1>
         </div>
@@ -367,7 +447,13 @@ export function FunQuizClient() {
               {p!.name}
               {p!.id === playerId ? " (you)" : ""}
             </p>
-            <p className="mt-1 text-2xl font-bold tabular-nums text-violet-200">{p!.score}</p>
+            <p className="mt-1 text-2xl font-bold tabular-nums text-violet-200">
+              {roomState.scoresHidden
+                ? "—"
+                : gameMode === GAME_MODE_PLAY_TOGETHER
+                  ? `${roomState.jointScore ?? p!.score} / 50`
+                  : `${p!.score} / 25`}
+            </p>
           </div>
         ))}
       </div>
@@ -376,8 +462,10 @@ export function FunQuizClient() {
         <section className="mt-8 flex flex-1 flex-col rounded-3xl border border-white/10 bg-slate-900/70 p-6">
           <h2 className="text-lg font-semibold text-white">Waiting room</h2>
           <p className="mt-2 text-sm text-slate-300">
-            Share code <span className="font-mono text-lg text-violet-200">{roomState.code}</span>{" "}
-            with your opponent.
+            Mode: <strong className="text-violet-200">{gameModeLabel(gameMode)}</strong>
+          </p>
+          <p className="mt-2 text-sm text-slate-300">
+            Share code <span className="font-mono text-lg text-violet-200">{roomState.code}</span>
           </p>
           <ul className="mt-4 space-y-2 text-sm text-slate-200">
             {players.map((p) => (
@@ -386,9 +474,7 @@ export function FunQuizClient() {
                 {p.name}
               </li>
             ))}
-            {!bothIn ? (
-              <li className="text-slate-500">Waiting for player 2…</li>
-            ) : null}
+            {!bothIn ? <li className="text-slate-500">Waiting for player 2…</li> : null}
           </ul>
           {isHost ? (
             <button
@@ -397,7 +483,7 @@ export function FunQuizClient() {
               onClick={startGame}
               className="mt-auto rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 py-3.5 text-sm font-semibold text-white disabled:opacity-50"
             >
-              Start quiz ({roomState.totalQuestions} questions)
+              Start {gameModeLabel(gameMode)}
             </button>
           ) : (
             <p className="mt-auto text-center text-sm text-slate-400">
@@ -407,12 +493,23 @@ export function FunQuizClient() {
         </section>
       ) : null}
 
+      {phase === "question" && !question && roomState.statusMessage ? (
+        <section className="mt-8 flex flex-1 flex-col items-center justify-center rounded-3xl border border-white/10 bg-slate-900/70 p-8 text-center">
+          <p className="text-lg text-slate-200">{roomState.statusMessage}</p>
+          {you.answer !== null ? (
+            <p className="mt-4 text-sm text-emerald-300/90">Answer submitted.</p>
+          ) : null}
+        </section>
+      ) : null}
+
       {phase === "question" && question ? (
         <section className="mt-6 flex flex-1 flex-col">
           <div className="mb-3 flex items-center justify-between text-xs text-slate-400">
             <span>{question.category}</span>
             <span>
-              Q {roomState.questionIndex + 1} / {roomState.totalQuestions}
+              {gameMode === GAME_MODE_TAKE_TURNS
+                ? `Turn ${roomState.turnIndex + 1} / ${roomState.totalQuestions}`
+                : `Q ${roomState.questionIndex + 1} / ${roomState.totalQuestions}`}
             </span>
           </div>
           <div className="h-2 overflow-hidden rounded-full bg-white/10">
@@ -421,13 +518,16 @@ export function FunQuizClient() {
               style={{ width: `${progressPct}%` }}
             />
           </div>
+          {roomState.statusMessage ? (
+            <p className="mt-4 text-center text-sm text-slate-400">{roomState.statusMessage}</p>
+          ) : null}
           <h2 className="mt-6 text-xl font-semibold leading-snug text-white sm:text-2xl">
             {question.prompt}
           </h2>
           <div className="mt-6 flex flex-col gap-3">
             {question.options.map((opt, idx) => {
               const selected = you.answer === idx;
-              const disabled = you.answer !== null || busy;
+              const disabled = !roomState.canSubmitAnswer || busy;
               return (
                 <button
                   key={opt}
@@ -448,11 +548,6 @@ export function FunQuizClient() {
               );
             })}
           </div>
-          {you.answer !== null && opponent && !opponent.hasAnswered ? (
-            <p className="mt-4 text-center text-sm text-slate-400">
-              Answer locked in — waiting for {opponent.name}…
-            </p>
-          ) : null}
         </section>
       ) : null}
 
@@ -467,58 +562,105 @@ export function FunQuizClient() {
               {question.options[roomState.correctIndex]}
             </strong>
           </p>
-          <ul className="mt-4 space-y-2 text-sm">
-            {players.map((p) => (
-              <li key={p.id} className="text-slate-200">
-                {p.name}:{" "}
-                {p.answerIndex === null ? (
-                  <span className="text-slate-500">No answer</span>
-                ) : (
-                  <span className={p.wasCorrect ? "text-emerald-300" : "text-red-300"}>
-                    {p.wasCorrect ? "Correct (+1)" : "Wrong"}
-                  </span>
-                )}
-              </li>
-            ))}
-          </ul>
+          {gameMode === GAME_MODE_PLAY_TOGETHER ? (
+            <p className="mt-4 text-sm text-slate-200">
+              {players.find((p) => p.id === roomState.hostId)?.wasCorrect
+                ? `Correct! Your joint score is ${roomState.jointScore ?? 0} out of ${roomState.questionIndex + 1}.`
+                : `Not quite. The correct answer is ${question.options[roomState.correctIndex]}. Your joint score is ${roomState.jointScore ?? 0} out of ${roomState.questionIndex + 1}.`}
+            </p>
+          ) : null}
           <p className="mt-auto pt-6 text-center text-xs text-slate-500">
             Next question in a moment…
           </p>
         </section>
       ) : null}
 
-      {phase === "finished" ? (
-        <section className="mt-8 flex flex-1 flex-col items-center justify-center rounded-3xl border border-violet-400/30 bg-gradient-to-b from-violet-950/60 to-slate-950 p-8 text-center">
-          <h2 className="text-3xl font-bold text-white">Game over</h2>
-          <div className="mt-6 w-full space-y-3">
-            {players
-              .slice()
-              .sort((a, b) => b.score - a.score)
-              .map((p) => (
-                <div
-                  key={p.id}
-                  className="flex items-center justify-between rounded-xl bg-black/30 px-4 py-3"
-                >
-                  <span className="font-medium text-white">{p.name}</span>
-                  <span className="text-xl font-bold tabular-nums text-violet-200">
-                    {p.score} / {roomState.totalQuestions}
-                  </span>
-                </div>
-              ))}
+      {phase === "finished" && roomState.results ? (
+        <section className="mt-6 flex flex-1 flex-col rounded-3xl border border-violet-400/30 bg-slate-950/80 p-6">
+          <h2 className="text-2xl font-bold text-white">Results</h2>
+          {gameMode === GAME_MODE_PLAY_TOGETHER ? (
+            <p className="mt-2 text-violet-100">
+              Joint score: {roomState.jointScore ?? 0} / 50 (
+              {Math.round(((roomState.jointScore ?? 0) / 50) * 100)}% correct)
+            </p>
+          ) : (
+            <p className="mt-2 text-violet-100">
+              {roomState.winnerIds.length > 1
+                ? "It's a draw!"
+                : `${players.find((p) => p.id === roomState.winnerIds[0])?.name ?? "Winner"} wins`}
+            </p>
+          )}
+          <div className="mt-4 max-h-64 overflow-y-auto rounded-xl border border-white/10">
+            <table className="w-full text-left text-xs text-slate-200">
+              <thead className="sticky top-0 bg-slate-900 text-slate-400">
+                <tr>
+                  <th className="p-2">#</th>
+                  <th className="p-2">Player</th>
+                  <th className="p-2">Answer</th>
+                  <th className="p-2">Correct</th>
+                </tr>
+              </thead>
+              <tbody>
+                {roomState.results.map((r) => (
+                  <tr key={`${r.turnIndex}-${r.playerId}`} className="border-t border-white/5">
+                    <td className="p-2">{r.turnIndex + 1}</td>
+                    <td className="p-2">{r.playerName}</td>
+                    <td className="p-2">{r.chosenLabel ?? "—"}</td>
+                    <td className={`p-2 ${r.correct ? "text-emerald-300" : "text-red-300"}`}>
+                      {r.correctLabel} {r.correct ? "✓" : "✗"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-          <p className="mt-6 text-lg text-violet-100">
-            {roomState.winnerIds.length > 1
-              ? "It's a tie!"
-              : roomState.winnerIds[0] === playerId
-                ? "You win!"
-                : `${players.find((p) => p.id === roomState.winnerIds[0])?.name ?? "Opponent"} wins!`}
-          </p>
+          {isHost ? (
+            <div className="mt-6 space-y-3">
+              <p className="text-sm text-slate-300">Start a new game (pick mode):</p>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setNewGameMode(GAME_MODE_TAKE_TURNS)}
+                  className={`rounded-lg border px-2 py-2 text-xs ${
+                    newGameMode === GAME_MODE_TAKE_TURNS
+                      ? "border-violet-400 bg-violet-950/50"
+                      : "border-white/10"
+                  }`}
+                >
+                  Take turns
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNewGameMode(GAME_MODE_PLAY_TOGETHER)}
+                  className={`rounded-lg border px-2 py-2 text-xs ${
+                    newGameMode === GAME_MODE_PLAY_TOGETHER
+                      ? "border-violet-400 bg-violet-950/50"
+                      : "border-white/10"
+                  }`}
+                >
+                  Play together
+                </button>
+              </div>
+              <button
+                type="button"
+                disabled={busy || !newGameMode}
+                onClick={startNewGame}
+                className="w-full rounded-xl bg-violet-500 py-3 text-sm font-semibold text-white disabled:opacity-50"
+              >
+                New game
+              </button>
+            </div>
+          ) : (
+            <p className="mt-6 text-center text-sm text-slate-400">
+              Waiting for host to start a new game…
+            </p>
+          )}
           <button
             type="button"
             onClick={leaveRoom}
-            className="mt-8 rounded-xl bg-violet-500 px-6 py-3 text-sm font-semibold text-white"
+            className="mt-4 w-full rounded-xl border border-white/15 py-3 text-sm text-slate-300"
           >
-            Play again
+            Leave room
           </button>
         </section>
       ) : null}

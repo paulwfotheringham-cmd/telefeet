@@ -1,4 +1,8 @@
-import type { QuizPhase, QuizPlayer, QuizRoom } from "./types";
+import type { AnswerLogEntry, GameMode, QuizPhase, QuizPlayer, QuizRoom } from "./types";
+import {
+  GAME_MODE_PLAY_TOGETHER,
+  QUESTIONS_PER_GAME,
+} from "./constants";
 
 export type FunquizRoomRow = {
   code: string;
@@ -11,6 +15,14 @@ export type FunquizRoomRow = {
   updated_at: string;
   expires_at: string;
   players_snapshot?: unknown;
+  game_mode?: GameMode;
+  session_id?: string;
+  turn_index?: number;
+  active_player_id?: string | null;
+  host_question_order?: number[] | null;
+  guest_question_order?: number[] | null;
+  joint_score?: number;
+  answer_log?: unknown;
 };
 
 export type FunquizPlayerRow = {
@@ -63,6 +75,34 @@ export function playerRowsFromSnapshot(roomCode: string, snapshot: unknown): Fun
   return rows;
 }
 
+function parseAnswerLog(raw: unknown): AnswerLogEntry[] {
+  if (!Array.isArray(raw)) return [];
+  const out: AnswerLogEntry[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const r = item as Record<string, unknown>;
+    if (
+      typeof r.sessionId !== "string" ||
+      typeof r.turnIndex !== "number" ||
+      typeof r.bankId !== "number" ||
+      typeof r.playerId !== "string" ||
+      typeof r.choiceIndex !== "number" ||
+      typeof r.correct !== "boolean"
+    ) {
+      continue;
+    }
+    out.push({
+      sessionId: r.sessionId,
+      turnIndex: r.turnIndex,
+      bankId: r.bankId,
+      playerId: r.playerId,
+      choiceIndex: r.choiceIndex,
+      correct: r.correct,
+    });
+  }
+  return out;
+}
+
 export function roomToDbRows(room: QuizRoom): {
   room: Omit<FunquizRoomRow, "created_at"> & { created_at?: string };
   players: FunquizPlayerRow[];
@@ -86,6 +126,14 @@ export function roomToDbRows(room: QuizRoom): {
       updated_at: new Date(room.updatedAt).toISOString(),
       expires_at: expiresAt,
       players_snapshot: playerRows,
+      game_mode: room.gameMode,
+      session_id: room.sessionId,
+      turn_index: room.turnIndex,
+      active_player_id: room.activePlayerId,
+      host_question_order: room.hostQuestionOrder,
+      guest_question_order: room.guestQuestionOrder,
+      joint_score: room.jointScore,
+      answer_log: room.answerLog,
     },
     players: playerRows,
   };
@@ -101,12 +149,26 @@ export function dbRowsToRoom(roomRow: FunquizRoomRow, playerRows: FunquizPlayerR
   return {
     code: roomRow.code,
     hostId: roomRow.host_id,
+    gameMode: roomRow.game_mode ?? GAME_MODE_PLAY_TOGETHER,
+    sessionId: roomRow.session_id ?? "legacy",
     phase: roomRow.phase,
     questionIndex: roomRow.question_index,
-    questionOrder: roomRow.question_order,
+    questionOrder: roomRow.question_order ?? [],
+    hostQuestionOrder: roomRow.host_question_order ?? [],
+    guestQuestionOrder: roomRow.guest_question_order ?? [],
+    turnIndex: roomRow.turn_index ?? 0,
+    activePlayerId: roomRow.active_player_id ?? null,
+    jointScore: roomRow.joint_score ?? 0,
+    answerLog: parseAnswerLog(roomRow.answer_log),
     players,
     revealStartedAt: roomRow.reveal_started_at,
     createdAt: new Date(roomRow.created_at).getTime(),
     updatedAt: new Date(roomRow.updated_at).getTime(),
   };
+}
+
+export function assertQuestionOrderLength(order: number[]): void {
+  if (order.length > 0 && order.length !== QUESTIONS_PER_GAME) {
+    throw new Error(`question_order must have ${QUESTIONS_PER_GAME} ids when set`);
+  }
 }

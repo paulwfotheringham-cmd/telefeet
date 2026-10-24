@@ -1,3 +1,5 @@
+export type GameMode = "take_turns" | "play_together";
+
 export type QuizPhase = "lobby" | "question" | "reveal" | "finished";
 
 export type QuizPlayer = {
@@ -8,15 +10,31 @@ export type QuizPlayer = {
   answer: number | null;
 };
 
+export type AnswerLogEntry = {
+  sessionId: string;
+  turnIndex: number;
+  bankId: number;
+  playerId: string;
+  choiceIndex: number;
+  correct: boolean;
+};
+
 export type QuizRoom = {
   code: string;
   hostId: string;
+  gameMode: GameMode;
+  sessionId: string;
   phase: QuizPhase;
   questionIndex: number;
-  /** Shuffled order of question ids (0..49) for this match */
+  /** Shuffled order of 50 question bank ids (play_together authoritative list) */
   questionOrder: number[];
+  hostQuestionOrder: number[];
+  guestQuestionOrder: number[];
+  turnIndex: number;
+  activePlayerId: string | null;
+  jointScore: number;
+  answerLog: AnswerLogEntry[];
   players: QuizPlayer[];
-  /** When reveal phase started (ms since epoch) */
   revealStartedAt: number | null;
   createdAt: number;
   updatedAt: number;
@@ -29,26 +47,47 @@ export type PublicQuizQuestion = {
   category: string;
 };
 
+export type ResultRow = {
+  turnIndex: number;
+  bankId: number;
+  playerId: string;
+  playerName: string;
+  choiceIndex: number | null;
+  correctIndex: number;
+  correct: boolean;
+  prompt: string;
+  options: [string, string, string];
+  chosenLabel: string | null;
+  correctLabel: string;
+};
+
 export type ClientRoomState = {
   code: string;
   hostId: string;
+  gameMode: GameMode;
   phase: QuizPhase;
   questionIndex: number;
   totalQuestions: number;
+  turnIndex: number;
+  activePlayerId: string | null;
+  isYourTurn: boolean;
+  canSubmitAnswer: boolean;
+  statusMessage: string | null;
+  scoresHidden: boolean;
+  jointScore: number | null;
   players: Array<{
     id: string;
     name: string;
     score: number;
     hasAnswered: boolean;
-    /** Present during reveal for this question */
     answerIndex: number | null;
     wasCorrect: boolean | null;
   }>;
   question: PublicQuizQuestion | null;
-  /** Correct index; only sent during reveal/finished for current or past reveal */
   correctIndex: number | null;
   revealEndsAt: number | null;
   winnerIds: string[];
   you: { id: string; name: string; score: number; answer: number | null };
+  results: ResultRow[] | null;
   error?: string;
 };
