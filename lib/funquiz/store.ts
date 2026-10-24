@@ -108,10 +108,10 @@ async function loadPlayersForMerge(code: string): Promise<QuizPlayer[]> {
   }));
 }
 
-async function fetchPlayerRows(
+async function readPlayerRowGroups(
   supabase: ReturnType<typeof createAdminClient>,
   roomCode: string,
-): Promise<FunquizPlayerRow[]> {
+): Promise<{ groups: FunquizPlayerRow[][] }> {
   const groups: FunquizPlayerRow[][] = [];
 
   const { data: jsonRows, error: jsonError } = await supabase.rpc("funquiz_list_players_json", {
@@ -136,18 +136,22 @@ async function fetchPlayerRows(
     throw new Error(playerError.message);
   }
   groups.push((playerRows ?? []) as FunquizPlayerRow[]);
+  return { groups };
+}
 
+async function fetchPlayerRows(
+  supabase: ReturnType<typeof createAdminClient>,
+  roomCode: string,
+): Promise<FunquizPlayerRow[]> {
+  let { groups } = await readPlayerRowGroups(supabase, roomCode);
   let merged = mergePlayerRowsForRead(...groups);
-  if (merged.length >= MAX_PLAYERS) {
-    return merged;
+
+  for (let attempt = 0; attempt < 20 && merged.length < MAX_PLAYERS; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    ({ groups } = await readPlayerRowGroups(supabase, roomCode));
+    merged = mergePlayerRowsForRead(merged, ...groups);
   }
 
-  await new Promise((resolve) => setTimeout(resolve, 120));
-  const retry = await supabase.from("funquiz_players").select("*").eq("room_code", roomCode);
-  if (retry.error) {
-    throw new Error(retry.error.message);
-  }
-  merged = mergePlayerRowsForRead(merged, (retry.data ?? []) as FunquizPlayerRow[]);
   return merged;
 }
 
