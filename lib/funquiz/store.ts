@@ -1,7 +1,15 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { dbRowsToRoom, roomToDbRows, type FunquizPlayerRow, type FunquizRoomRow } from "./db-mapper";
 import { broadcastRoomSync } from "./realtime-server";
-import type { QuizRoom } from "./types";
+import type { QuizPlayer, QuizRoom } from "./types";
+
+/** Keep concurrent joins: in-memory mutations win; players only in DB are retained. */
+export function mergePlayersForSave(inMemory: QuizPlayer[], fromDb: QuizPlayer[]): QuizPlayer[] {
+  const memById = new Map(inMemory.map((p) => [p.id, p]));
+  const dbById = new Map(fromDb.map((p) => [p.id, p]));
+  const ids = new Set([...memById.keys(), ...dbById.keys()]);
+  return [...ids].map((id) => memById.get(id) ?? dbById.get(id)!);
+}
 
 export class QuizStoreUnavailableError extends Error {
   constructor(message: string) {
@@ -75,7 +83,14 @@ export async function loadRoom(code: string): Promise<QuizRoom | null> {
 export async function saveRoom(room: QuizRoom): Promise<void> {
   assertSupabaseConfigured();
   const supabase = createAdminClient();
-  const { room: roomInsert, players } = roomToDbRows(room);
+  const normalized = room.code.toUpperCase();
+
+  const latest = await loadRoom(normalized);
+  const mergedRoom: QuizRoom = latest
+    ? { ...room, players: mergePlayersForSave(room.players, latest.players) }
+    : room;
+
+  const { room: roomInsert, players } = roomToDbRows(mergedRoom);
 
   const existing = await supabase
     .from("funquiz_rooms")
@@ -84,7 +99,7 @@ export async function saveRoom(room: QuizRoom): Promise<void> {
     .maybeSingle();
 
   const createdAt =
-    existing.data?.created_at ?? new Date(room.createdAt).toISOString();
+    existing.data?.created_at ?? new Date(mergedRoom.createdAt).toISOString();
 
   const { error: roomError } = await supabase.from("funquiz_rooms").upsert({
     ...roomInsert,
@@ -95,16 +110,10 @@ export async function saveRoom(room: QuizRoom): Promise<void> {
     throw new Error(roomError.message);
   }
 
-  const { error: deletePlayersError } = await supabase
-    .from("funquiz_players")
-    .delete()
-    .eq("room_code", roomInsert.code);
-  if (deletePlayersError) {
-    throw new Error(deletePlayersError.message);
-  }
-
   if (players.length > 0) {
-    const { error: playerError } = await supabase.from("funquiz_players").insert(players);
+    const { error: playerError } = await supabase
+      .from("funquiz_players")
+      .upsert(players, { onConflict: "room_code,player_id" });
     if (playerError) {
       throw new Error(playerError.message);
     }

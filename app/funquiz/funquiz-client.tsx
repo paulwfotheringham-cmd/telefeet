@@ -27,9 +27,14 @@ async function parseState(res: Response): Promise<ClientRoomState | null> {
   return data.state ?? null;
 }
 
+function readPlayerId(): string {
+  if (typeof window === "undefined") return "";
+  return getOrCreatePlayerId();
+}
+
 export function FunQuizClient() {
   const [screen, setScreen] = useState<Screen>("home");
-  const [playerId, setPlayerId] = useState("");
+  const [playerId, setPlayerId] = useState(readPlayerId);
   const [name, setName] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [roomState, setRoomState] = useState<ClientRoomState | null>(null);
@@ -38,7 +43,8 @@ export function FunQuizClient() {
   const [storeWarning, setStoreWarning] = useState<string | null>(null);
 
   useEffect(() => {
-    setPlayerId(getOrCreatePlayerId());
+    const id = getOrCreatePlayerId();
+    setPlayerId(id);
     const saved = localStorage.getItem(PLAYER_NAME_KEY);
     if (saved) setName(saved);
     fetch("/api/funquiz/health")
@@ -94,19 +100,23 @@ export function FunQuizClient() {
     localStorage.setItem(PLAYER_NAME_KEY, n);
   };
 
+  const resolvePlayerId = () => playerId || getOrCreatePlayerId();
+
   const createRoom = async () => {
     setError(null);
     if (!name.trim()) {
       setError("Enter your name first.");
       return;
     }
+    const activePlayerId = resolvePlayerId();
+    if (!playerId) setPlayerId(activePlayerId);
     persistName(name.trim());
     setBusy(true);
     try {
       const res = await fetch("/api/funquiz/room", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ playerId, playerName: name.trim() }),
+        body: JSON.stringify({ playerId: activePlayerId, playerName: name.trim() }),
       });
       const state = await parseState(res);
       if (state) {
@@ -131,6 +141,8 @@ export function FunQuizClient() {
       setError("Enter a room code.");
       return;
     }
+    const activePlayerId = resolvePlayerId();
+    if (!playerId) setPlayerId(activePlayerId);
     persistName(name.trim());
     setBusy(true);
     try {
@@ -139,7 +151,7 @@ export function FunQuizClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           code: joinCode.trim().toUpperCase(),
-          playerId,
+          playerId: activePlayerId,
           playerName: name.trim(),
         }),
       });
