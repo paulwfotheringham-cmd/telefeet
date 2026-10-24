@@ -26,9 +26,16 @@ export async function GET(request: Request, { params }: Params) {
     if (room.phase !== phaseBefore || room.questionIndex !== indexBefore) {
       await saveRoom(room);
     }
+    const state = toClientState(room, playerId);
     return NextResponse.json(
-      { state: toClientState(room, playerId) },
-      { headers: { "Cache-Control": "no-store" } },
+      { state },
+      {
+        headers: {
+          "Cache-Control": "no-store",
+          "X-Funquiz-Players": String(room.players.length),
+          "X-Funquiz-State-Players": String(state.players.length),
+        },
+      },
     );
   } catch (err) {
     return handleStoreError(err);
