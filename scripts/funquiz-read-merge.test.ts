@@ -1,5 +1,10 @@
 import assert from "node:assert/strict";
-import { mergePlayerRowsForRead, mergePlayersForSave } from "../lib/funquiz/store";
+import {
+  absorbPlayerRowsIntoMap,
+  mergePlayerRowsForRead,
+  mergePlayersForSave,
+  shouldContinueLobbyPlayerRead,
+} from "../lib/funquiz/store";
 import type { FunquizPlayerRow } from "../lib/funquiz/db-mapper";
 import type { QuizPlayer } from "../lib/funquiz/types";
 
@@ -39,8 +44,24 @@ function runSaveMergeConcurrentStaleHostSave() {
   assert.equal(merged.length, 2);
 }
 
+function runMonotonicAbsorbKeepsGuestFromEarlierAttempt() {
+  const best = new Map<string, FunquizPlayerRow>();
+  absorbPlayerRowsIntoMap(best, [row("host", "Paul")]);
+  absorbPlayerRowsIntoMap(best, [row("host", "Paul")]);
+  absorbPlayerRowsIntoMap(best, [row("host", "Paul"), row("guest", "Phone")]);
+  assert.equal(best.size, 2);
+}
+
+function runLobbyReadStopsWhenCountMatches() {
+  assert.equal(shouldContinueLobbyPlayerRead(2, 2), false);
+  assert.equal(shouldContinueLobbyPlayerRead(1, 2), true);
+  assert.equal(shouldContinueLobbyPlayerRead(1, null), true);
+}
+
 runReadMergeRecoversGuestFromTable();
 runReadMergeTableWinsOnClash();
 runReadMergeNoDuplicateIds();
 runSaveMergeConcurrentStaleHostSave();
+runMonotonicAbsorbKeepsGuestFromEarlierAttempt();
+runLobbyReadStopsWhenCountMatches();
 console.log("funquiz read merge unit OK");

@@ -29,6 +29,7 @@ export async function POST(request: Request) {
     room = tickRoom(room);
     room = addPlayer(room, playerId, playerName);
     await persistJoinedPlayer(room, playerId);
+    room = (await loadRoom(code)) ?? room;
     return NextResponse.json({ state: toClientState(room, playerId) });
   } catch (err) {
     return handleStoreError(err);

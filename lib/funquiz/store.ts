@@ -32,6 +32,33 @@ export function mergePlayerRowsForRead(...groups: FunquizPlayerRow[][]): Funquiz
   return [...byId.values()].slice(0, MAX_PLAYERS);
 }
 
+/** Monotonic merge across poll attempts — never drop a player id we already observed. */
+export function absorbPlayerRowsIntoMap(
+  bestById: Map<string, FunquizPlayerRow>,
+  ...groups: FunquizPlayerRow[][]
+): FunquizPlayerRow[] {
+  for (const row of mergePlayerRowsForRead(...groups)) {
+    bestById.set(row.player_id, row);
+  }
+  return [...bestById.values()].slice(0, MAX_PLAYERS);
+}
+
+export function shouldContinueLobbyPlayerRead(
+  visibleCount: number,
+  dbCount: number | null,
+): boolean {
+  if (visibleCount >= MAX_PLAYERS) {
+    return false;
+  }
+  if (dbCount !== null) {
+    return visibleCount < dbCount;
+  }
+  return visibleCount < MAX_PLAYERS;
+}
+
+const LOBBY_PLAYER_READ_MAX_MS = 1_500;
+const LOBBY_PLAYER_READ_INTERVAL_MS = 75;
+
 export class QuizStoreUnavailableError extends Error {
   constructor(message: string) {
     super(message);
@@ -89,10 +116,9 @@ export async function loadRoom(code: string): Promise<QuizRoom | null> {
     return null;
   }
 
-  let playerRows = await fetchPlayerRows(supabase, normalized);
-  if (row.phase === "lobby" && playerRows.length === 1) {
-    playerRows = await waitForLobbyPlayers(supabase, normalized, playerRows);
-  }
+  const playerRows = await fetchPlayerRows(supabase, normalized, {
+    lobbyWait: row.phase === "lobby",
+  });
 
   return dbRowsToRoom(row, playerRows);
 }
@@ -139,40 +165,52 @@ async function readPlayerRowGroups(
   return { groups };
 }
 
+async function fetchPlayerCount(
+  supabase: ReturnType<typeof createAdminClient>,
+  roomCode: string,
+): Promise<number | null> {
+  const { data, error } = await supabase.rpc("funquiz_player_count", {
+    p_room_code: roomCode,
+  });
+  if (error || data == null || typeof data !== "number") {
+    return null;
+  }
+  return data;
+}
+
+type FetchPlayerRowsOptions = {
+  /** When true, retry until DB count matches visible rows or budget elapses (lobby join lag). */
+  lobbyWait?: boolean;
+};
+
 async function fetchPlayerRows(
   supabase: ReturnType<typeof createAdminClient>,
   roomCode: string,
+  options: FetchPlayerRowsOptions = {},
 ): Promise<FunquizPlayerRow[]> {
-  let { groups } = await readPlayerRowGroups(supabase, roomCode);
-  let merged = mergePlayerRowsForRead(...groups);
+  const bestById = new Map<string, FunquizPlayerRow>();
+  const deadline =
+    options.lobbyWait === true ? Date.now() + LOBBY_PLAYER_READ_MAX_MS : Date.now();
 
-  for (let attempt = 0; attempt < 20 && merged.length < MAX_PLAYERS; attempt++) {
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    ({ groups } = await readPlayerRowGroups(supabase, roomCode));
-    merged = mergePlayerRowsForRead(merged, ...groups);
-  }
+  do {
+    const { groups } = await readPlayerRowGroups(supabase, roomCode);
+    absorbPlayerRowsIntoMap(bestById, ...groups);
+    const visible = bestById.size;
+    const dbCount = await fetchPlayerCount(supabase, roomCode);
 
-  return merged;
-}
-
-/** PostgREST can briefly return a stale single-player lobby after a join upsert. */
-async function waitForLobbyPlayers(
-  supabase: ReturnType<typeof createAdminClient>,
-  roomCode: string,
-  initial: FunquizPlayerRow[],
-): Promise<FunquizPlayerRow[]> {
-  let best = initial;
-  for (let attempt = 0; attempt < 10; attempt++) {
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    const rows = await fetchPlayerRows(supabase, roomCode);
-    if (rows.length > best.length) {
-      best = rows;
-    }
-    if (best.length >= MAX_PLAYERS) {
+    if (!shouldContinueLobbyPlayerRead(visible, dbCount)) {
       break;
     }
-  }
-  return best;
+    if (!options.lobbyWait) {
+      break;
+    }
+    if (Date.now() >= deadline) {
+      break;
+    }
+    await new Promise((resolve) => setTimeout(resolve, LOBBY_PLAYER_READ_INTERVAL_MS));
+  } while (true);
+
+  return [...bestById.values()].slice(0, MAX_PLAYERS);
 }
 
 export async function saveRoom(room: QuizRoom): Promise<void> {
