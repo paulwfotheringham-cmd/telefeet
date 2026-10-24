@@ -43,20 +43,12 @@ export function absorbPlayerRowsIntoMap(
   return [...bestById.values()].slice(0, MAX_PLAYERS);
 }
 
-export function shouldContinueLobbyPlayerRead(
-  visibleCount: number,
-  dbCount: number | null,
-): boolean {
-  if (visibleCount >= MAX_PLAYERS) {
-    return false;
-  }
-  if (dbCount !== null) {
-    return visibleCount < dbCount;
-  }
-  return visibleCount < MAX_PLAYERS;
+/** True while lobby reads should keep retrying (count can be as stale as row selects). */
+export function shouldContinueLobbyPlayerRead(visibleCount: number, lobbyWait: boolean): boolean {
+  return lobbyWait && visibleCount < MAX_PLAYERS;
 }
 
-const LOBBY_PLAYER_READ_MAX_MS = 1_500;
+const LOBBY_PLAYER_READ_MAX_MS = 2_000;
 const LOBBY_PLAYER_READ_INTERVAL_MS = 75;
 
 export class QuizStoreUnavailableError extends Error {
@@ -197,11 +189,15 @@ async function fetchPlayerRows(
     absorbPlayerRowsIntoMap(bestById, ...groups);
     const visible = bestById.size;
     const dbCount = await fetchPlayerCount(supabase, roomCode);
-
-    if (!shouldContinueLobbyPlayerRead(visible, dbCount)) {
-      break;
+    if (dbCount !== null && dbCount > visible) {
+      for (let extra = 0; extra < 3 && bestById.size < dbCount; extra++) {
+        await new Promise((resolve) => setTimeout(resolve, LOBBY_PLAYER_READ_INTERVAL_MS));
+        const again = await readPlayerRowGroups(supabase, roomCode);
+        absorbPlayerRowsIntoMap(bestById, ...again.groups);
+      }
     }
-    if (!options.lobbyWait) {
+
+    if (!shouldContinueLobbyPlayerRead(bestById.size, options.lobbyWait === true)) {
       break;
     }
     if (Date.now() >= deadline) {

@@ -52,10 +52,10 @@ function runMonotonicAbsorbKeepsGuestFromEarlierAttempt() {
   assert.equal(best.size, 2);
 }
 
-function runLobbyReadStopsWhenCountMatches() {
-  assert.equal(shouldContinueLobbyPlayerRead(2, 2), false);
-  assert.equal(shouldContinueLobbyPlayerRead(1, 2), true);
-  assert.equal(shouldContinueLobbyPlayerRead(1, null), true);
+function runLobbyReadContinuesUntilFullLobby() {
+  assert.equal(shouldContinueLobbyPlayerRead(2, true), false);
+  assert.equal(shouldContinueLobbyPlayerRead(1, true), true);
+  assert.equal(shouldContinueLobbyPlayerRead(1, false), false);
 }
 
 runReadMergeRecoversGuestFromTable();
@@ -63,5 +63,5 @@ runReadMergeTableWinsOnClash();
 runReadMergeNoDuplicateIds();
 runSaveMergeConcurrentStaleHostSave();
 runMonotonicAbsorbKeepsGuestFromEarlierAttempt();
-runLobbyReadStopsWhenCountMatches();
+runLobbyReadContinuesUntilFullLobby();
 console.log("funquiz read merge unit OK");
