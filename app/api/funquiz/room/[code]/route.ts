@@ -20,9 +20,10 @@ export async function GET(request: Request, { params }: Params) {
     if (!room) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
-    const before = JSON.stringify(room);
+    const phaseBefore = room.phase;
+    const indexBefore = room.questionIndex;
     room = tickRoom(room);
-    if (JSON.stringify(room) !== before) {
+    if (room.phase !== phaseBefore || room.questionIndex !== indexBefore) {
       await saveRoom(room);
     }
     return NextResponse.json({ state: toClientState(room, playerId) });

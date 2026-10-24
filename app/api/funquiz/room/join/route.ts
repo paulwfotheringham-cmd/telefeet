@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { handleStoreError } from "@/lib/funquiz/api";
 import { addPlayer, tickRoom, toClientState } from "@/lib/funquiz/game-logic";
-import { loadRoom, saveRoom } from "@/lib/funquiz/store";
+import { loadRoom, persistJoinedPlayer } from "@/lib/funquiz/store";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     }
     room = tickRoom(room);
     room = addPlayer(room, playerId, playerName);
-    await saveRoom(room);
+    await persistJoinedPlayer(room, playerId);
     return NextResponse.json({ state: toClientState(room, playerId) });
   } catch (err) {
     return handleStoreError(err);

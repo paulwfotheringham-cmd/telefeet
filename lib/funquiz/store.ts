@@ -121,3 +121,39 @@ export async function saveRoom(room: QuizRoom): Promise<void> {
 
   await broadcastRoomSync(roomInsert.code);
 }
+
+/** Persist a single lobby join without rewriting other player rows (avoids join/poll races). */
+export async function persistJoinedPlayer(room: QuizRoom, playerId: string): Promise<void> {
+  assertSupabaseConfigured();
+  const supabase = createAdminClient();
+  const player = room.players.find((p) => p.id === playerId);
+  if (!player) {
+    throw new Error("Player not in room state");
+  }
+  const normalized = room.code.toUpperCase();
+  const { room: roomInsert } = roomToDbRows(room);
+
+  const { error: roomError } = await supabase
+    .from("funquiz_rooms")
+    .update({ updated_at: roomInsert.updated_at })
+    .eq("code", normalized);
+  if (roomError) {
+    throw new Error(roomError.message);
+  }
+
+  const { error: playerError } = await supabase.from("funquiz_players").upsert(
+    {
+      room_code: normalized,
+      player_id: player.id,
+      name: player.name,
+      score: player.score,
+      answer: player.answer,
+    },
+    { onConflict: "room_code,player_id" },
+  );
+  if (playerError) {
+    throw new Error(playerError.message);
+  }
+
+  await broadcastRoomSync(normalized);
+}
