@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { dbRowsToRoom, roomToDbRows, type FunquizPlayerRow, type FunquizRoomRow } from "./db-mapper";
+import { MAX_PLAYERS } from "./constants";
 import { broadcastRoomSync } from "./realtime-server";
 import type { QuizPlayer, QuizRoom } from "./types";
 
@@ -68,16 +69,47 @@ export async function loadRoom(code: string): Promise<QuizRoom | null> {
     return null;
   }
 
+  let playerRows = await fetchPlayerRows(supabase, normalized);
+  if (row.phase === "lobby" && playerRows.length === 1) {
+    playerRows = await waitForLobbyPlayers(supabase, normalized, playerRows);
+  }
+
+  return dbRowsToRoom(row, playerRows);
+}
+
+async function fetchPlayerRows(
+  supabase: ReturnType<typeof createAdminClient>,
+  roomCode: string,
+): Promise<FunquizPlayerRow[]> {
   const { data: playerRows, error: playerError } = await supabase
     .from("funquiz_players")
     .select("*")
-    .eq("room_code", normalized);
+    .eq("room_code", roomCode);
 
   if (playerError) {
     throw new Error(playerError.message);
   }
+  return (playerRows ?? []) as FunquizPlayerRow[];
+}
 
-  return dbRowsToRoom(row, (playerRows ?? []) as FunquizPlayerRow[]);
+/** PostgREST can briefly return a stale single-player lobby after a join upsert. */
+async function waitForLobbyPlayers(
+  supabase: ReturnType<typeof createAdminClient>,
+  roomCode: string,
+  initial: FunquizPlayerRow[],
+): Promise<FunquizPlayerRow[]> {
+  let best = initial;
+  for (let attempt = 0; attempt < 6; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, 80));
+    const rows = await fetchPlayerRows(supabase, roomCode);
+    if (rows.length > best.length) {
+      best = rows;
+    }
+    if (best.length >= MAX_PLAYERS) {
+      break;
+    }
+  }
+  return best;
 }
 
 export async function saveRoom(room: QuizRoom): Promise<void> {

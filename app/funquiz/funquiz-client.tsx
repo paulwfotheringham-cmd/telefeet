@@ -27,6 +27,33 @@ async function parseState(res: Response): Promise<ClientRoomState | null> {
   return data.state ?? null;
 }
 
+/** Avoid flicker when a stale poll omits a player who just joined (read-after-write lag). */
+function mergeLobbyPollState(
+  prev: ClientRoomState | null,
+  next: ClientRoomState,
+): ClientRoomState {
+  if (!prev || prev.code !== next.code || prev.phase !== "lobby" || next.phase !== "lobby") {
+    return next;
+  }
+  const byId = new Map(next.players.map((p) => [p.id, p]));
+  for (const p of prev.players) {
+    if (!byId.has(p.id)) {
+      byId.set(p.id, p);
+    }
+  }
+  const players = [...byId.values()];
+  const mergedYouRow = players.find((p) => p.id === next.you.id);
+  const you =
+    mergedYouRow && next.you.name
+      ? next.you
+      : {
+          ...next.you,
+          name: mergedYouRow?.name ?? prev.you.name ?? next.you.name,
+          score: mergedYouRow?.score ?? prev.you.score ?? next.you.score,
+        };
+  return { ...next, players, you, error: players.some((p) => p.id === next.you.id) ? undefined : next.error };
+}
+
 function readPlayerId(): string {
   if (typeof window === "undefined") return "";
   return getOrCreatePlayerId();
@@ -69,7 +96,9 @@ export function FunQuizClient() {
         { cache: "no-store" },
       );
       const state = await parseState(res);
-      if (state) setRoomState(state);
+      if (state) {
+        setRoomState((prev) => mergeLobbyPollState(prev, state));
+      }
     } catch {
       /* ignore transient poll errors */
     }
