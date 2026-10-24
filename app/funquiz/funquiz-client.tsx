@@ -510,30 +510,39 @@ export function FunQuizClient() {
         </button>
       </header>
 
-      <div className="mt-4 grid grid-cols-2 gap-3">
-        {[you, opponent].filter(Boolean).map((p) => (
-          <div
-            key={p!.id}
-            className={`rounded-2xl border px-4 py-3 ${
-              p!.id === playerId
-                ? "border-violet-400/50 bg-violet-950/40"
-                : "border-white/10 bg-slate-900/60"
-            }`}
-          >
-            <p className="truncate text-sm font-semibold text-white">
-              {p!.name}
-              {p!.id === playerId ? " (you)" : ""}
-            </p>
-            <p className="mt-1 text-2xl font-bold tabular-nums text-violet-200">
-              {roomState.scoresHidden
-                ? "—"
-                : gameMode === GAME_MODE_PLAY_TOGETHER
-                  ? `${roomState.jointScore ?? p!.score} / 50`
-                  : `${p!.score} / 25`}
-            </p>
-          </div>
-        ))}
-      </div>
+      {gameMode === GAME_MODE_PLAY_TOGETHER ? (
+        <div className="mt-4 rounded-2xl border border-violet-400/50 bg-violet-950/40 px-5 py-4">
+          <p className="text-sm font-semibold text-violet-200">Team score</p>
+          <p className="mt-1 text-3xl font-bold tabular-nums text-white">
+            {roomState.jointScore ?? 0}{" "}
+            <span className="text-lg font-medium text-violet-300/90">/ 50</span>
+          </p>
+          <p className="mt-2 text-xs text-slate-400">
+            {you.name} & {opponent?.name ?? "Partner"} · play together
+          </p>
+        </div>
+      ) : (
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          {[you, opponent].filter(Boolean).map((p) => (
+            <div
+              key={p!.id}
+              className={`rounded-2xl border px-4 py-3 ${
+                p!.id === playerId
+                  ? "border-violet-400/50 bg-violet-950/40"
+                  : "border-white/10 bg-slate-900/60"
+              }`}
+            >
+              <p className="truncate text-sm font-semibold text-white">
+                {p!.name}
+                {p!.id === playerId ? " (you)" : ""}
+              </p>
+              <p className="mt-1 text-2xl font-bold tabular-nums text-violet-200">
+                {roomState.scoresHidden ? "—" : `${p!.score} / 25`}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
 
       {phase === "lobby" ? (
         <section className="mt-8 flex flex-1 flex-col rounded-3xl border border-white/10 bg-slate-900/70 p-6">
@@ -646,7 +655,7 @@ export function FunQuizClient() {
         </section>
       ) : null}
 
-      {phase === "reveal" && question && roomState.correctIndex !== null ? (
+      {phase === "reveal" && question && roomState.answerFeedback ? (
         <section className="mt-6 flex flex-1 flex-col rounded-3xl border border-amber-400/30 bg-amber-950/20 p-6">
           <h2 className="text-lg font-semibold text-amber-100">Answer reveal</h2>
           {question.outlineImageUrl ? (
@@ -660,20 +669,36 @@ export function FunQuizClient() {
             </div>
           ) : null}
           <p className="mt-2 text-sm text-slate-300">{question.prompt}</p>
-          <p className="mt-4 rounded-xl bg-emerald-900/40 px-4 py-3 text-emerald-100">
-            Correct:{" "}
-            <strong>
-              {String.fromCharCode(65 + roomState.correctIndex)}.{" "}
-              {question.options[roomState.correctIndex]}
-            </strong>
+          <p
+            className={`mt-4 rounded-xl px-4 py-3 text-sm font-semibold ${
+              roomState.answerFeedback.correct
+                ? "bg-emerald-900/50 text-emerald-100"
+                : "bg-red-950/50 text-red-100"
+            }`}
+          >
+            {roomState.answerFeedback.correct ? "Correct!" : "Incorrect"}
           </p>
-          {gameMode === GAME_MODE_PLAY_TOGETHER ? (
-            <p className="mt-4 text-sm text-slate-200">
-              {players.find((p) => p.id === roomState.hostId)?.wasCorrect
-                ? `Correct! Your joint score is ${roomState.jointScore ?? 0} out of ${roomState.questionIndex + 1}.`
-                : `Not quite. The correct answer is ${question.options[roomState.correctIndex]}. Your joint score is ${roomState.jointScore ?? 0} out of ${roomState.questionIndex + 1}.`}
+          {!roomState.answerFeedback.correct ? (
+            <p className="mt-3 rounded-xl bg-emerald-900/40 px-4 py-3 text-emerald-100">
+              Correct answer:{" "}
+              <strong>
+                {String.fromCharCode(65 + roomState.answerFeedback.correctIndex)}.{" "}
+                {roomState.answerFeedback.correctLabel}
+              </strong>
             </p>
           ) : null}
+          {gameMode === GAME_MODE_PLAY_TOGETHER ? (
+            <p className="mt-4 text-sm text-slate-200">
+              Team score: {roomState.jointScore ?? 0} out of {roomState.questionIndex + 1}{" "}
+              answered.
+            </p>
+          ) : (
+            <p className="mt-4 text-sm text-slate-200">
+              {roomState.answerFeedback.correct
+                ? "Nice work — next turn in a moment."
+                : `You chose ${roomState.answerFeedback.chosenLabel}. Next turn in a moment.`}
+            </p>
+          )}
           <p className="mt-auto pt-6 text-center text-xs text-slate-500">
             Next question in a moment…
           </p>

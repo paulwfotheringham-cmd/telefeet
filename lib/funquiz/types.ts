@@ -99,6 +99,14 @@ export type ClientRoomState = {
   }>;
   question: PublicQuizQuestion | null;
   correctIndex: number | null;
+  /** Authoritative feedback for the answer just submitted (reveal phase). */
+  answerFeedback: {
+    correct: boolean;
+    choiceIndex: number;
+    correctIndex: number;
+    chosenLabel: string;
+    correctLabel: string;
+  } | null;
   revealEndsAt: number | null;
   winnerIds: string[];
   you: { id: string; name: string; score: number; answer: number | null };
