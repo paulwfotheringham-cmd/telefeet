@@ -4,6 +4,7 @@ export default defineConfig({
   testDir: "e2e",
   timeout: 90_000,
   retries: process.env.CI ? 1 : 0,
+  grep: process.env.FUNQUIZ_E2E_GREP ? new RegExp(process.env.FUNQUIZ_E2E_GREP) : undefined,
   use: {
     ...devices["Desktop Chrome"],
     baseURL: process.env.FUNQUIZ_E2E_BASE_URL ?? "http://127.0.0.1:3000",

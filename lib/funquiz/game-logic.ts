@@ -1,5 +1,6 @@
 import {
   GAME_MODE_PLAY_TOGETHER,
+  GAME_MODE_SHARED_MILLIONAIRE,
   GAME_MODE_TAKE_TURNS,
   MAX_PLAYERS,
   QUESTIONS_PER_GAME,
@@ -7,6 +8,15 @@ import {
   ROOM_CODE_LENGTH,
   TAKE_TURNS_QUESTIONS_PER_PLAYER,
 } from "./constants";
+import { toMillionaireClientState } from "./millionaire/client-state";
+import {
+  initMillionaireOnCreate,
+  isMillionaireRoom,
+  millionaireSelectAnswer,
+  millionaireTickRoom,
+  startMillionaireGame,
+} from "./millionaire/logic";
+import { createInitialMillionaireState } from "./millionaire/types";
 import type { QuizCategoryId } from "./categories";
 import { categoryTitle } from "./categories";
 import type { QuizDifficulty } from "./difficulties";
@@ -94,6 +104,10 @@ export function createRoom(
     answerLog: [],
     players: [{ id: hostId, name: hostName.trim().slice(0, 24), score: 0, answer: null }],
     revealStartedAt: null,
+    millionaire:
+      gameMode === GAME_MODE_SHARED_MILLIONAIRE
+        ? createInitialMillionaireState()
+        : undefined,
     createdAt: now,
     updatedAt: now,
   };
@@ -142,11 +156,19 @@ export function startGame(room: QuizRoom, playerId: string): QuizRoom {
   if (playerId !== room.hostId) {
     throw new Error("Only the host can start");
   }
-  if (room.players.length < MAX_PLAYERS) {
-    throw new Error("Waiting for a second player");
-  }
   if (room.phase !== "lobby") {
     throw new Error("Game already started");
+  }
+
+  if (room.gameMode === GAME_MODE_SHARED_MILLIONAIRE) {
+    if (room.players.length < 1) {
+      throw new Error("Waiting for at least one player");
+    }
+    return startMillionaireGame(initMillionaireOnCreate(room));
+  }
+
+  if (room.players.length < MAX_PLAYERS) {
+    throw new Error("Waiting for a second player");
   }
 
   const allocated = allocateQuestionsForGame(room.quizCategoryId, room.quizDifficulty);
@@ -182,7 +204,12 @@ export function resetRoomForNewGame(
   if (playerId !== room.hostId) {
     throw new Error("Only the host can start a new game");
   }
-  if (room.phase !== "finished") {
+  const terminal =
+    room.phase === "finished" ||
+    room.phase === "won" ||
+    room.phase === "lost" ||
+    room.phase === "walkaway";
+  if (!terminal) {
     throw new Error("Finish the current game before starting a new one");
   }
   return {
@@ -201,6 +228,10 @@ export function resetRoomForNewGame(
     jointScore: 0,
     answerLog: [],
     revealStartedAt: null,
+    millionaire:
+      gameMode === GAME_MODE_SHARED_MILLIONAIRE
+        ? createInitialMillionaireState()
+        : undefined,
     players: room.players.map((p) => ({ ...p, score: 0, answer: null })),
     updatedAt: Date.now(),
   };
@@ -312,6 +343,9 @@ function submitPlayTogether(room: QuizRoom, playerId: string, choiceIndex: numbe
 
 export function submitAnswer(room: QuizRoom, playerId: string, choiceIndexRaw: unknown): QuizRoom {
   const choiceIndex = normalizeChoiceIndex(choiceIndexRaw);
+  if (room.gameMode === GAME_MODE_SHARED_MILLIONAIRE) {
+    return millionaireSelectAnswer(room, playerId, choiceIndex);
+  }
   if (room.gameMode === GAME_MODE_TAKE_TURNS) {
     return submitTakeTurns(room, playerId, choiceIndex);
   }
@@ -376,6 +410,9 @@ function advanceFromReveal(room: QuizRoom): QuizRoom {
 }
 
 export function tickRoom(room: QuizRoom, now = Date.now()): QuizRoom {
+  if (isMillionaireRoom(room)) {
+    return millionaireTickRoom(room, now);
+  }
   if (room.phase === "reveal" && room.revealStartedAt !== null) {
     if (now - room.revealStartedAt >= REVEAL_MS) {
       return advanceFromReveal(room);
@@ -425,8 +462,20 @@ function currentBankId(room: QuizRoom): number | null {
     }
     return null;
   }
-  if (room.phase === "question" || room.phase === "reveal") {
-    return room.questionOrder[room.questionIndex] ?? null;
+  if (room.gameMode === GAME_MODE_SHARED_MILLIONAIRE) {
+    if (
+      room.phase === "question" ||
+      room.phase === "discussion" ||
+      room.phase === "reveal"
+    ) {
+      return room.questionOrder[room.questionIndex] ?? null;
+    }
+    return null;
+  }
+  if (room.gameMode === GAME_MODE_PLAY_TOGETHER) {
+    if (room.phase === "question" || room.phase === "reveal") {
+      return room.questionOrder[room.questionIndex] ?? null;
+    }
   }
   return null;
 }
@@ -441,6 +490,18 @@ function revealLogEntryForCurrentStep(room: QuizRoom): AnswerLogEntry | null {
 }
 
 export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState {
+  if (isMillionaireRoom(room)) {
+    const you = room.players.find((p) => p.id === viewerId);
+    if (!you) {
+      return {
+        ...toMillionaireClientState(room, room.hostId),
+        error: "You are not in this room",
+        millionaireView: null,
+      };
+    }
+    return toMillionaireClientState(room, viewerId);
+  }
+
   const you = room.players.find((p) => p.id === viewerId);
   if (!you) {
     return {
@@ -469,6 +530,7 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
       winnerIds: [],
       you: { id: viewerId, name: "", score: 0, answer: null },
       results: null,
+      millionaireView: null,
       error: "You are not in this room",
     };
   }
@@ -500,7 +562,10 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
         question = toPublicQuestion(getQuestionByBankId(bankId));
       }
     }
-  } else if (room.phase === "question" || room.phase === "reveal") {
+  } else if (
+    room.gameMode === GAME_MODE_PLAY_TOGETHER &&
+    (room.phase === "question" || room.phase === "reveal")
+  ) {
     if (bankId !== null) {
       question = toPublicQuestion(getQuestionByBankId(bankId));
     }
@@ -585,6 +650,7 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
       answer: you.answer,
     },
     results,
+    millionaireView: null,
   };
 }
 

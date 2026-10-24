@@ -1,13 +1,22 @@
 import type { QuizCategoryId } from "./categories";
 import type { QuizDifficulty } from "./difficulties";
+import type { MillionaireState } from "./millionaire/types";
 
-export type GameMode = "take_turns" | "play_together";
+export type GameMode = "take_turns" | "play_together" | "shared_millionaire";
 
 export type QuizOptionList =
   | readonly [string, string, string]
   | readonly [string, string, string, string];
 
-export type QuizPhase = "lobby" | "question" | "reveal" | "finished";
+export type QuizPhase =
+  | "lobby"
+  | "question"
+  | "discussion"
+  | "reveal"
+  | "finished"
+  | "won"
+  | "lost"
+  | "walkaway";
 
 export type QuizPlayer = {
   id: string;
@@ -45,6 +54,7 @@ export type QuizRoom = {
   answerLog: AnswerLogEntry[];
   players: QuizPlayer[];
   revealStartedAt: number | null;
+  millionaire?: MillionaireState;
   createdAt: number;
   updatedAt: number;
 };
@@ -111,5 +121,37 @@ export type ClientRoomState = {
   winnerIds: string[];
   you: { id: string; name: string; score: number; answer: number | null };
   results: ResultRow[] | null;
+  millionaireView: MillionaireClientView | null;
   error?: string;
+};
+
+export type MillionaireClientView = {
+  ladder: readonly number[];
+  safetyNetIndices: readonly number[];
+  questionNumber: number;
+  totalQuestions: number;
+  targetPrize: number;
+  securedPrize: number;
+  finalAwardedPrize: number | null;
+  outcome: "playing" | "won" | "lost" | "walkaway";
+  lifelinesAvailable: {
+    fifty_fifty: boolean;
+    ask_team: boolean;
+    change_question: boolean;
+  };
+  eliminatedOptionIndices: number[];
+  phase: QuizPhase;
+  discussionEndsAt: number | null;
+  revealEndsAt: number | null;
+  canSelectAnswer: boolean;
+  canLockAnswer: boolean;
+  canFinalizeTeam: boolean;
+  canWalkAway: boolean;
+  canUseLifelines: boolean;
+  playerLocks: Array<{
+    id: string;
+    name: string;
+    choiceIndex: number | null;
+    locked: boolean;
+  }>;
 };

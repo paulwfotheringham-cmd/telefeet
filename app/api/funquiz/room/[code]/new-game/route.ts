@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { handleStoreError } from "@/lib/funquiz/api";
 import {
   GAME_MODE_PLAY_TOGETHER,
+  GAME_MODE_SHARED_MILLIONAIRE,
   GAME_MODE_TAKE_TURNS,
 } from "@/lib/funquiz/constants";
 import { isQuizCategoryId } from "@/lib/funquiz/categories";
@@ -39,7 +40,11 @@ export async function POST(request: Request, { params }: Params) {
     if (!isQuizDifficulty(quizDifficultyRaw)) {
       return NextResponse.json({ error: "Invalid quizDifficulty" }, { status: 400 });
     }
-    if (gameModeRaw !== GAME_MODE_TAKE_TURNS && gameModeRaw !== GAME_MODE_PLAY_TOGETHER) {
+    if (
+      gameModeRaw !== GAME_MODE_TAKE_TURNS &&
+      gameModeRaw !== GAME_MODE_PLAY_TOGETHER &&
+      gameModeRaw !== GAME_MODE_SHARED_MILLIONAIRE
+    ) {
       return NextResponse.json({ error: "Invalid gameMode" }, { status: 400 });
     }
     const gameMode = gameModeRaw as GameMode;
