@@ -14,3 +14,7 @@ $$;
 
 comment on function public.funquiz_list_players(text) is
   'Returns all players for a Fun Quiz room; used by TeleFeet API loadRoom.';
+
+grant execute on function public.funquiz_list_players(text) to service_role;
+
+notify pgrst, 'reload schema';
