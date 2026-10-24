@@ -81,13 +81,19 @@ async function fetchPlayerRows(
   supabase: ReturnType<typeof createAdminClient>,
   roomCode: string,
 ): Promise<FunquizPlayerRow[]> {
-  const { data: playerRows, error: playerError } = await supabase
-    .from("funquiz_players")
-    .select("*")
-    .eq("room_code", roomCode);
+  const { data: playerRows, error: playerError } = await supabase.rpc("funquiz_list_players", {
+    p_room_code: roomCode,
+  });
 
   if (playerError) {
-    throw new Error(playerError.message);
+    const { data: fallbackRows, error: fallbackError } = await supabase
+      .from("funquiz_players")
+      .select("*")
+      .eq("room_code", roomCode);
+    if (fallbackError) {
+      throw new Error(fallbackError.message);
+    }
+    return (fallbackRows ?? []) as FunquizPlayerRow[];
   }
   return (playerRows ?? []) as FunquizPlayerRow[];
 }

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { handleStoreError } from "@/lib/funquiz/api";
 import { tickRoom, toClientState } from "@/lib/funquiz/game-logic";
-import { loadRoom, saveRoom } from "@/lib/funquiz/store";
+import { loadRoom } from "@/lib/funquiz/store";
 
 export const dynamic = "force-dynamic";
 
@@ -20,13 +20,11 @@ export async function GET(request: Request, { params }: Params) {
     if (!room) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
-    const phaseBefore = room.phase;
-    const indexBefore = room.questionIndex;
     room = tickRoom(room);
-    if (room.phase !== phaseBefore || room.questionIndex !== indexBefore) {
-      await saveRoom(room);
-    }
-    return NextResponse.json({ state: toClientState(room, playerId) });
+    return NextResponse.json(
+      { state: toClientState(room, playerId) },
+      { headers: { "Cache-Control": "no-store" } },
+    );
   } catch (err) {
     return handleStoreError(err);
   }
