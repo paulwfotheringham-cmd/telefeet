@@ -47,14 +47,21 @@ async function runOnce(): Promise<boolean> {
   return final.state?.players?.length === 2;
 }
 
-let passed = 0;
-const runs = 8;
-for (let i = 0; i < runs; i++) {
-  if (await runOnce()) passed++;
+async function main() {
+  let passed = 0;
+  const runs = 8;
+  for (let i = 0; i < runs; i++) {
+    if (await runOnce()) passed++;
+  }
+
+  assert.ok(
+    passed >= runs - 1,
+    `Expected at least ${runs - 1}/${runs} join+poll races to keep 2 players, got ${passed}`,
+  );
+  console.log(`funquiz join race: ${passed}/${runs} OK`);
 }
 
-assert.ok(
-  passed >= runs - 1,
-  `Expected at least ${runs - 1}/${runs} join+poll races to keep 2 players, got ${passed}`,
-);
-console.log(`funquiz join race: ${passed}/${runs} OK`);
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

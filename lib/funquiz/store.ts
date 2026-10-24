@@ -122,6 +122,34 @@ export async function saveRoom(room: QuizRoom): Promise<void> {
   await broadcastRoomSync(roomInsert.code);
 }
 
+/** Initial room write: upsert room row and host player only (no player-table delete). */
+export async function persistNewRoom(room: QuizRoom): Promise<void> {
+  assertSupabaseConfigured();
+  const supabase = createAdminClient();
+  const { room: roomInsert, players } = roomToDbRows(room);
+  const host = players[0];
+  if (!host) {
+    throw new Error("Room must include the host player");
+  }
+
+  const { error: roomError } = await supabase.from("funquiz_rooms").upsert({
+    ...roomInsert,
+    created_at: new Date(room.createdAt).toISOString(),
+  });
+  if (roomError) {
+    throw new Error(roomError.message);
+  }
+
+  const { error: playerError } = await supabase
+    .from("funquiz_players")
+    .upsert(host, { onConflict: "room_code,player_id" });
+  if (playerError) {
+    throw new Error(playerError.message);
+  }
+
+  await broadcastRoomSync(roomInsert.code);
+}
+
 /** Persist a single lobby join without rewriting other player rows (avoids join/poll races). */
 export async function persistJoinedPlayer(room: QuizRoom, playerId: string): Promise<void> {
   assertSupabaseConfigured();
