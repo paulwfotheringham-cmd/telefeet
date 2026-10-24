@@ -1,3 +1,6 @@
+import type { QuizDifficulty } from "../../difficulties";
+import { QUIZ_DIFFICULTY_HARD, QUIZ_DIFFICULTY_INTERMEDIATE } from "../../difficulties";
+
 export type OutlineCountryDef = {
   assetKey: string;
   correctCountry: string;
@@ -55,4 +58,62 @@ export const OUTLINE_COUNTRY_DEFS: OutlineCountryDef[] = [
   { assetKey: "o048", correctCountry: "Cuba", distractors: ["Jamaica", "Haiti", "Dominican Republic"] },
   { assetKey: "o049", correctCountry: "Ireland", distractors: ["United Kingdom", "Iceland", "Denmark"] },
   { assetKey: "o050", correctCountry: "Romania", distractors: ["Bulgaria", "Hungary", "Ukraine"] },
+];
+
+export type OutlineCountryDefWithDifficulty = OutlineCountryDef & {
+  difficulty: QuizDifficulty;
+};
+
+/** Extra silhouettes so each difficulty tier has 50+ outline questions. */
+export const OUTLINE_COUNTRY_DEFS_EXTRA: OutlineCountryDefWithDifficulty[] = [
+  { assetKey: "o051", correctCountry: "Belgium", distractors: ["Netherlands", "Luxembourg", "France"], difficulty: QUIZ_DIFFICULTY_INTERMEDIATE },
+  { assetKey: "o052", correctCountry: "Denmark", distractors: ["Sweden", "Germany", "Norway"], difficulty: QUIZ_DIFFICULTY_INTERMEDIATE },
+  { assetKey: "o053", correctCountry: "Austria", distractors: ["Switzerland", "Germany", "Czech Republic"], difficulty: QUIZ_DIFFICULTY_INTERMEDIATE },
+  { assetKey: "o054", correctCountry: "Hungary", distractors: ["Romania", "Slovakia", "Serbia"], difficulty: QUIZ_DIFFICULTY_INTERMEDIATE },
+  { assetKey: "o055", correctCountry: "Czech Republic", distractors: ["Poland", "Austria", "Slovakia"], difficulty: QUIZ_DIFFICULTY_INTERMEDIATE },
+  { assetKey: "o056", correctCountry: "Slovakia", distractors: ["Hungary", "Poland", "Ukraine"], difficulty: QUIZ_DIFFICULTY_INTERMEDIATE },
+  { assetKey: "o057", correctCountry: "Bulgaria", distractors: ["Romania", "Greece", "Turkey"], difficulty: QUIZ_DIFFICULTY_INTERMEDIATE },
+  { assetKey: "o058", correctCountry: "Serbia", distractors: ["Croatia", "Bosnia and Herzegovina", "Hungary"], difficulty: QUIZ_DIFFICULTY_INTERMEDIATE },
+  { assetKey: "o059", correctCountry: "Croatia", distractors: ["Slovenia", "Bosnia and Herzegovina", "Italy"], difficulty: QUIZ_DIFFICULTY_INTERMEDIATE },
+  { assetKey: "o060", correctCountry: "Bosnia and Herzegovina", distractors: ["Serbia", "Croatia", "Montenegro"], difficulty: QUIZ_DIFFICULTY_INTERMEDIATE },
+  { assetKey: "o061", correctCountry: "Albania", distractors: ["North Macedonia", "Greece", "Montenegro"], difficulty: QUIZ_DIFFICULTY_INTERMEDIATE },
+  { assetKey: "o062", correctCountry: "North Macedonia", distractors: ["Bulgaria", "Greece", "Albania"], difficulty: QUIZ_DIFFICULTY_INTERMEDIATE },
+  { assetKey: "o063", correctCountry: "Montenegro", distractors: ["Albania", "Croatia", "Serbia"], difficulty: QUIZ_DIFFICULTY_INTERMEDIATE },
+  { assetKey: "o064", correctCountry: "Slovenia", distractors: ["Croatia", "Austria", "Italy"], difficulty: QUIZ_DIFFICULTY_INTERMEDIATE },
+  { assetKey: "o065", correctCountry: "Estonia", distractors: ["Latvia", "Finland", "Lithuania"], difficulty: QUIZ_DIFFICULTY_INTERMEDIATE },
+  { assetKey: "o066", correctCountry: "Latvia", distractors: ["Lithuania", "Estonia", "Belarus"], difficulty: QUIZ_DIFFICULTY_INTERMEDIATE },
+  { assetKey: "o067", correctCountry: "Lithuania", distractors: ["Latvia", "Poland", "Belarus"], difficulty: QUIZ_DIFFICULTY_INTERMEDIATE },
+  { assetKey: "o068", correctCountry: "Belarus", distractors: ["Ukraine", "Poland", "Lithuania"], difficulty: QUIZ_DIFFICULTY_INTERMEDIATE },
+  { assetKey: "o069", correctCountry: "Moldova", distractors: ["Romania", "Ukraine", "Bulgaria"], difficulty: QUIZ_DIFFICULTY_INTERMEDIATE },
+  { assetKey: "o070", correctCountry: "Georgia", distractors: ["Armenia", "Azerbaijan", "Turkey"], difficulty: QUIZ_DIFFICULTY_INTERMEDIATE },
+  { assetKey: "o071", correctCountry: "Armenia", distractors: ["Georgia", "Azerbaijan", "Turkey"], difficulty: QUIZ_DIFFICULTY_INTERMEDIATE },
+  { assetKey: "o072", correctCountry: "Azerbaijan", distractors: ["Georgia", "Armenia", "Iran"], difficulty: QUIZ_DIFFICULTY_INTERMEDIATE },
+  { assetKey: "o073", correctCountry: "Kazakhstan", distractors: ["Uzbekistan", "Russia", "Kyrgyzstan"], difficulty: QUIZ_DIFFICULTY_INTERMEDIATE },
+  { assetKey: "o074", correctCountry: "Uzbekistan", distractors: ["Kazakhstan", "Turkmenistan", "Tajikistan"], difficulty: QUIZ_DIFFICULTY_INTERMEDIATE },
+  { assetKey: "o075", correctCountry: "Turkmenistan", distractors: ["Iran", "Uzbekistan", "Afghanistan"], difficulty: QUIZ_DIFFICULTY_INTERMEDIATE },
+  { assetKey: "o076", correctCountry: "Kyrgyzstan", distractors: ["Kazakhstan", "Tajikistan", "Uzbekistan"], difficulty: QUIZ_DIFFICULTY_HARD },
+  { assetKey: "o077", correctCountry: "Tajikistan", distractors: ["Afghanistan", "Uzbekistan", "Kyrgyzstan"], difficulty: QUIZ_DIFFICULTY_HARD },
+  { assetKey: "o078", correctCountry: "Afghanistan", distractors: ["Pakistan", "Iran", "Tajikistan"], difficulty: QUIZ_DIFFICULTY_HARD },
+  { assetKey: "o079", correctCountry: "Mongolia", distractors: ["China", "Russia", "Kazakhstan"], difficulty: QUIZ_DIFFICULTY_HARD },
+  { assetKey: "o080", correctCountry: "Laos", distractors: ["Thailand", "Vietnam", "Cambodia"], difficulty: QUIZ_DIFFICULTY_HARD },
+  { assetKey: "o081", correctCountry: "Cambodia", distractors: ["Thailand", "Vietnam", "Laos"], difficulty: QUIZ_DIFFICULTY_HARD },
+  { assetKey: "o082", correctCountry: "Malaysia", distractors: ["Indonesia", "Thailand", "Philippines"], difficulty: QUIZ_DIFFICULTY_HARD },
+  { assetKey: "o083", correctCountry: "Luxembourg", distractors: ["Belgium", "Netherlands", "France"], difficulty: QUIZ_DIFFICULTY_HARD },
+  { assetKey: "o084", correctCountry: "Brunei", distractors: ["Malaysia", "Indonesia", "Philippines"], difficulty: QUIZ_DIFFICULTY_HARD },
+  { assetKey: "o085", correctCountry: "Timor-Leste", distractors: ["Indonesia", "Papua New Guinea", "Australia"], difficulty: QUIZ_DIFFICULTY_HARD },
+  { assetKey: "o086", correctCountry: "Papua New Guinea", distractors: ["Indonesia", "Australia", "Solomon Islands"], difficulty: QUIZ_DIFFICULTY_HARD },
+  { assetKey: "o087", correctCountry: "Fiji", distractors: ["Vanuatu", "Samoa", "Tonga"], difficulty: QUIZ_DIFFICULTY_HARD },
+  { assetKey: "o088", correctCountry: "Iceland", distractors: ["Greenland", "Ireland", "Norway"], difficulty: QUIZ_DIFFICULTY_HARD },
+  { assetKey: "o089", correctCountry: "Tunisia", distractors: ["Algeria", "Libya", "Morocco"], difficulty: QUIZ_DIFFICULTY_HARD },
+  { assetKey: "o090", correctCountry: "Solomon Islands", distractors: ["Papua New Guinea", "Vanuatu", "Fiji"], difficulty: QUIZ_DIFFICULTY_HARD },
+  { assetKey: "o091", correctCountry: "Vanuatu", distractors: ["Fiji", "Solomon Islands", "New Caledonia"], difficulty: QUIZ_DIFFICULTY_HARD },
+  { assetKey: "o092", correctCountry: "Uruguay", distractors: ["Argentina", "Brazil", "Paraguay"], difficulty: QUIZ_DIFFICULTY_HARD },
+  { assetKey: "o093", correctCountry: "Paraguay", distractors: ["Bolivia", "Argentina", "Brazil"], difficulty: QUIZ_DIFFICULTY_HARD },
+  { assetKey: "o094", correctCountry: "Ecuador", distractors: ["Colombia", "Peru", "Brazil"], difficulty: QUIZ_DIFFICULTY_HARD },
+  { assetKey: "o095", correctCountry: "Guyana", distractors: ["Suriname", "Venezuela", "Brazil"], difficulty: QUIZ_DIFFICULTY_HARD },
+  { assetKey: "o096", correctCountry: "Suriname", distractors: ["Guyana", "French Guiana", "Brazil"], difficulty: QUIZ_DIFFICULTY_HARD },
+  { assetKey: "o097", correctCountry: "Panama", distractors: ["Costa Rica", "Colombia", "Nicaragua"], difficulty: QUIZ_DIFFICULTY_HARD },
+  { assetKey: "o098", correctCountry: "Costa Rica", distractors: ["Nicaragua", "Panama", "Honduras"], difficulty: QUIZ_DIFFICULTY_HARD },
+  { assetKey: "o099", correctCountry: "Guatemala", distractors: ["Belize", "Honduras", "El Salvador"], difficulty: QUIZ_DIFFICULTY_HARD },
+  { assetKey: "o100", correctCountry: "Honduras", distractors: ["Guatemala", "Nicaragua", "El Salvador"], difficulty: QUIZ_DIFFICULTY_HARD },
 ];

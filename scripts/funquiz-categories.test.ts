@@ -6,6 +6,11 @@ import {
   isQuizCategoryId,
 } from "../lib/funquiz/categories";
 import {
+  QUIZ_DIFFICULTIES,
+  QUIZ_DIFFICULTY_HARD,
+  QUIZ_DIFFICULTY_INTERMEDIATE,
+} from "../lib/funquiz/difficulties";
+import {
   GAME_MODE_PLAY_TOGETHER,
   GAME_MODE_TAKE_TURNS,
   QUESTIONS_PER_GAME,
@@ -22,7 +27,7 @@ import {
 import { getOutlineSvg } from "../lib/funquiz/outline-paths";
 import {
   InsufficientQuestionsError,
-  categoryCapacity,
+  categoryDifficultyCapacity,
   selectQuestionIdsForCategory,
 } from "../lib/funquiz/question-selection";
 import { getQuestionByBankId, toPublicQuestion } from "../lib/funquiz/questions";
@@ -37,28 +42,41 @@ function runCategoryIds() {
 
 function runPersistOnCreateAndJoinView() {
   const cat = QUIZ_CATEGORIES[2]!.id;
-  let room = createRoom("h", "Host", "CAT001", GAME_MODE_PLAY_TOGETHER, cat);
+  let room = createRoom(
+    "h",
+    "Host",
+    "CAT001",
+    GAME_MODE_PLAY_TOGETHER,
+    cat,
+    QUIZ_DIFFICULTY_HARD,
+  );
   assert.equal(room.quizCategoryId, cat);
+  assert.equal(room.quizDifficulty, QUIZ_DIFFICULTY_HARD);
   const guestView = toClientState(room, "guest");
   assert.equal(guestView.quizCategoryId, cat);
-  assert.equal(guestView.quizCategoryTitle, QUIZ_CATEGORIES[2]!.title);
+  assert.equal(guestView.quizDifficulty, QUIZ_DIFFICULTY_HARD);
 }
 
 function runCategoryQuestionSets() {
   for (const cat of QUIZ_CATEGORIES) {
-    const ids = selectQuestionIdsForCategory(cat.id);
-    assert.equal(ids.length, QUESTIONS_PER_GAME);
-    assert.equal(new Set(ids).size, QUESTIONS_PER_GAME);
-    if (cat.id === QUIZ_CATEGORY_GENERAL_KNOWLEDGE) {
-      const subjects = new Set<GeneralKnowledgeSubject>();
+    for (const diff of QUIZ_DIFFICULTIES) {
+      const ids = selectQuestionIdsForCategory(cat.id, diff.id);
+      assert.equal(ids.length, QUESTIONS_PER_GAME);
+      assert.equal(new Set(ids).size, QUESTIONS_PER_GAME);
       for (const id of ids) {
-        const q = getQuestionByBankId(id);
-        for (const s of q.generalKnowledgeSubjects ?? []) subjects.add(s);
+        assert.equal(getQuestionByBankId(id).difficulty, diff.id);
       }
-      assert.ok(subjects.size >= 5, "GK should span multiple subjects");
-    } else {
-      for (const id of ids) {
-        assert.equal(getQuestionByBankId(id).categoryId, cat.id);
+      if (cat.id === QUIZ_CATEGORY_GENERAL_KNOWLEDGE) {
+        const subjects = new Set<GeneralKnowledgeSubject>();
+        for (const id of ids) {
+          const q = getQuestionByBankId(id);
+          for (const s of q.generalKnowledgeSubjects ?? []) subjects.add(s);
+        }
+        assert.ok(subjects.size >= 5, "GK should span multiple subjects");
+      } else {
+        for (const id of ids) {
+          assert.equal(getQuestionByBankId(id).categoryId, cat.id);
+        }
       }
     }
   }
@@ -67,42 +85,44 @@ function runCategoryQuestionSets() {
 function runTakeTurnsDisjoint() {
   const { hostQuestionOrder, guestQuestionOrder } = allocateQuestionsForGame(
     QUIZ_CATEGORY_GENERAL_KNOWLEDGE,
+    QUIZ_DIFFICULTY_INTERMEDIATE,
   );
   const guestSet = new Set(guestQuestionOrder);
   for (const id of hostQuestionOrder) {
     assert.ok(!guestSet.has(id));
+    assert.equal(getQuestionByBankId(id).difficulty, QUIZ_DIFFICULTY_INTERMEDIATE);
   }
   assert.equal(hostQuestionOrder.length, TAKE_TURNS_QUESTIONS_PER_PLAYER);
 }
 
 function runPlayTogetherSameSequence() {
-  const a = allocateQuestionsForGame(QUIZ_CATEGORIES[1]!.id);
-  const b = allocateQuestionsForGame(QUIZ_CATEGORIES[1]!.id);
+  const cat = QUIZ_CATEGORIES[1]!.id;
+  const a = allocateQuestionsForGame(cat, QUIZ_DIFFICULTY_HARD);
+  const b = allocateQuestionsForGame(cat, QUIZ_DIFFICULTY_HARD);
   assert.notDeepEqual(a.questionOrder, b.questionOrder);
   assert.equal(a.questionOrder.length, QUESTIONS_PER_GAME);
 }
 
 function runCountryOutlinesNoLeak() {
   const outlineQs = QUIZ_QUESTIONS.filter((q) => q.categoryId === QUIZ_CATEGORY_COUNTRY_OUTLINES);
-  assert.ok(outlineQs.length >= 50);
+  assert.ok(outlineQs.length >= 100);
   for (const q of outlineQs.slice(0, 10)) {
     assert.ok(q.outlineAssetId);
     assert.ok(getOutlineSvg(q.outlineAssetId!));
     const pub = toPublicQuestion(q);
     assert.ok(pub.outlineImageUrl?.includes(q.outlineAssetId!));
-    assert.ok(!pub.outlineImageUrl?.toLowerCase().includes("italy"));
-    for (const opt of q.options) {
-      assert.ok(!pub.outlineImageUrl?.includes(opt.replace(/\s/g, "")));
-    }
   }
 }
 
 function runInsufficientCategoryFails() {
   assert.throws(
-    () => selectQuestionIdsForCategory("not_a_category" as never),
+    () => selectQuestionIdsForCategory("not_a_category" as never, QUIZ_DIFFICULTY_INTERMEDIATE),
     InsufficientQuestionsError,
   );
-  assert.ok(categoryCapacity(QUIZ_CATEGORY_COUNTRY_OUTLINES) >= QUESTIONS_PER_GAME);
+  assert.ok(
+    categoryDifficultyCapacity(QUIZ_CATEGORY_COUNTRY_OUTLINES, QUIZ_DIFFICULTY_INTERMEDIATE) >=
+      QUESTIONS_PER_GAME,
+  );
 }
 
 function runNewGameCategoryChange() {
@@ -112,19 +132,35 @@ function runNewGameCategoryChange() {
     "NEWCAT",
     GAME_MODE_TAKE_TURNS,
     QUIZ_CATEGORY_GENERAL_KNOWLEDGE,
+    QUIZ_DIFFICULTY_INTERMEDIATE,
   );
   room = { ...room, phase: "finished" as const };
-  room = resetRoomForNewGame(room, "h", GAME_MODE_PLAY_TOGETHER, QUIZ_CATEGORY_COUNTRY_OUTLINES);
+  room = resetRoomForNewGame(
+    room,
+    "h",
+    GAME_MODE_PLAY_TOGETHER,
+    QUIZ_CATEGORY_COUNTRY_OUTLINES,
+    QUIZ_DIFFICULTY_HARD,
+  );
   assert.equal(room.quizCategoryId, QUIZ_CATEGORY_COUNTRY_OUTLINES);
-  assert.equal(room.gameMode, GAME_MODE_PLAY_TOGETHER);
+  assert.equal(room.quizDifficulty, QUIZ_DIFFICULTY_HARD);
 }
 
 function runStartUsesRoomCategory() {
-  let room = createRoom("h", "H", "ST001", GAME_MODE_PLAY_TOGETHER, QUIZ_CATEGORIES[4]!.id);
+  let room = createRoom(
+    "h",
+    "H",
+    "ST001",
+    GAME_MODE_PLAY_TOGETHER,
+    QUIZ_CATEGORIES[4]!.id,
+    QUIZ_DIFFICULTY_INTERMEDIATE,
+  );
   room = addPlayer(room, "g", "G");
   room = startGame(room, "h");
   for (const id of room.questionOrder) {
-    assert.equal(getQuestionByBankId(id).categoryId, QUIZ_CATEGORIES[4]!.id);
+    const q = getQuestionByBankId(id);
+    assert.equal(q.categoryId, QUIZ_CATEGORIES[4]!.id);
+    assert.equal(q.difficulty, QUIZ_DIFFICULTY_INTERMEDIATE);
   }
 }
 

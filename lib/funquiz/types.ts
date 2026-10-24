@@ -1,4 +1,5 @@
 import type { QuizCategoryId } from "./categories";
+import type { QuizDifficulty } from "./difficulties";
 
 export type GameMode = "take_turns" | "play_together";
 
@@ -30,6 +31,7 @@ export type QuizRoom = {
   hostId: string;
   gameMode: GameMode;
   quizCategoryId: QuizCategoryId;
+  quizDifficulty: QuizDifficulty;
   sessionId: string;
   phase: QuizPhase;
   questionIndex: number;
@@ -75,6 +77,8 @@ export type ClientRoomState = {
   gameMode: GameMode;
   quizCategoryId: QuizCategoryId;
   quizCategoryTitle: string;
+  quizDifficulty: QuizDifficulty;
+  quizDifficultyTitle: string;
   phase: QuizPhase;
   questionIndex: number;
   totalQuestions: number;

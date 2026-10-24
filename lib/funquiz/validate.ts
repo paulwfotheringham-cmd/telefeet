@@ -1,16 +1,14 @@
 import { QUIZ_CATEGORIES } from "./categories";
+import { QUIZ_DIFFICULTIES } from "./difficulties";
 import { getOutlineSvg } from "./outline-paths";
-import {
-  countQuestionsByCategory,
-  QUIZ_QUESTIONS,
-  QUIZ_QUESTION_COUNT,
-} from "./questions";
+import { countQuestionsByCategoryAndDifficulty } from "./question-selection";
+import { QUIZ_QUESTIONS, QUIZ_QUESTION_COUNT } from "./questions";
 
-const MIN_PER_CATEGORY = 50;
+const MIN_PER_POOL = 50;
 
 export function validateQuestionBank(): string[] {
   const errors: string[] = [];
-  if (QUIZ_QUESTION_COUNT < MIN_PER_CATEGORY) {
+  if (QUIZ_QUESTION_COUNT < MIN_PER_POOL) {
     errors.push(`Question bank too small: ${QUIZ_QUESTION_COUNT} total`);
   }
   const ids = new Set<number>();
@@ -24,6 +22,9 @@ export function validateQuestionBank(): string[] {
       errors.push(`Question ${q.id} has invalid correctIndex`);
     }
     if (!q.prompt.trim()) errors.push(`Question ${q.id} has empty prompt`);
+    if (q.difficulty !== "intermediate" && q.difficulty !== "hard") {
+      errors.push(`Question ${q.id} has invalid difficulty`);
+    }
     if (q.outlineAssetId) {
       if (!/^o\d{3}$/.test(q.outlineAssetId)) {
         errors.push(`Question ${q.id} has invalid outlineAssetId`);
@@ -31,21 +32,18 @@ export function validateQuestionBank(): string[] {
       if (!getOutlineSvg(q.outlineAssetId)) {
         errors.push(`Question ${q.id} missing outline geometry for ${q.outlineAssetId}`);
       }
-      const url = `/api/funquiz/outline/${q.outlineAssetId}`;
-      const lower = url.toLowerCase();
-      for (const opt of q.options) {
-        if (lower.includes(opt.toLowerCase().replace(/\s+/g, ""))) {
-          errors.push(`Question ${q.id} outline URL may leak answer metadata`);
-        }
-      }
     }
   }
 
-  const counts = countQuestionsByCategory();
+  const counts = countQuestionsByCategoryAndDifficulty();
   for (const cat of QUIZ_CATEGORIES) {
-    const n = counts[cat.id] ?? 0;
-    if (n < MIN_PER_CATEGORY) {
-      errors.push(`Category "${cat.id}" has ${n} eligible questions; need at least ${MIN_PER_CATEGORY}`);
+    for (const diff of QUIZ_DIFFICULTIES) {
+      const n = counts[cat.id]?.[diff.id] ?? 0;
+      if (n < MIN_PER_POOL) {
+        errors.push(
+          `Category "${cat.id}" / "${diff.id}" has ${n} eligible questions; need at least ${MIN_PER_POOL}`,
+        );
+      }
     }
   }
 

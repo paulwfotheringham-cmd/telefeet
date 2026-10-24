@@ -1,4 +1,5 @@
 import type { QuizCategoryId } from "../categories";
+import type { QuizDifficulty } from "../difficulties";
 
 export type GeneralKnowledgeSubject =
   | "science"
@@ -23,5 +24,5 @@ export type QuizQuestionBankItem = {
   /** Included in General Knowledge balanced pools. */
   generalKnowledgeSubjects?: GeneralKnowledgeSubject[];
   outlineAssetId?: string;
-  difficulty?: "easy" | "medium" | "hard";
+  difficulty: QuizDifficulty;
 };

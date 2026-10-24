@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { QUIZ_CATEGORIES } from "@/lib/funquiz/categories";
 import type { QuizCategoryId } from "@/lib/funquiz/categories";
+import { QUIZ_DIFFICULTIES } from "@/lib/funquiz/difficulties";
+import type { QuizDifficulty } from "@/lib/funquiz/difficulties";
 import {
   GAME_MODE_PLAY_TOGETHER,
   GAME_MODE_TAKE_TURNS,
@@ -79,8 +81,10 @@ export function FunQuizClient() {
   const [name, setName] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [selectedMode, setSelectedMode] = useState<GameMode | null>(null);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<QuizDifficulty | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<QuizCategoryId | null>(null);
   const [newGameMode, setNewGameMode] = useState<GameMode | null>(null);
+  const [newGameDifficulty, setNewGameDifficulty] = useState<QuizDifficulty | null>(null);
   const [newGameCategory, setNewGameCategory] = useState<QuizCategoryId | null>(null);
   const [roomState, setRoomState] = useState<ClientRoomState | null>(null);
   const [busy, setBusy] = useState(false);
@@ -159,6 +163,10 @@ export function FunQuizClient() {
       setError("Select a game mode before creating a room.");
       return;
     }
+    if (!selectedDifficulty) {
+      setError("Select a difficulty before creating a room.");
+      return;
+    }
     if (!selectedCategory) {
       setError("Choose a quiz category before creating a room.");
       return;
@@ -175,6 +183,7 @@ export function FunQuizClient() {
           playerId: activePlayerId,
           playerName: name.trim(),
           gameMode: selectedMode,
+          quizDifficulty: selectedDifficulty,
           quizCategory: selectedCategory,
         }),
       });
@@ -266,7 +275,7 @@ export function FunQuizClient() {
   };
 
   const startNewGame = async () => {
-    if (!roomState?.code || !newGameMode || !newGameCategory) return;
+    if (!roomState?.code || !newGameMode || !newGameDifficulty || !newGameCategory) return;
     setBusy(true);
     setError(null);
     try {
@@ -276,6 +285,7 @@ export function FunQuizClient() {
         body: JSON.stringify({
           playerId,
           gameMode: newGameMode,
+          quizDifficulty: newGameDifficulty,
           quizCategory: newGameCategory,
         }),
       });
@@ -284,6 +294,7 @@ export function FunQuizClient() {
         setRoomState(state);
         setNewGameMode(null);
         setNewGameCategory(null);
+        setNewGameDifficulty(null);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not start new game");
@@ -304,6 +315,7 @@ export function FunQuizClient() {
     setError(null);
     setNewGameMode(null);
     setNewGameCategory(null);
+    setNewGameDifficulty(null);
   };
 
   if (screen === "home") {
@@ -375,6 +387,32 @@ export function FunQuizClient() {
 
           {selectedMode ? (
             <>
+              <p className="mt-6 text-sm font-medium text-slate-200">Difficulty</p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                {QUIZ_DIFFICULTIES.map((d) => (
+                  <button
+                    key={d.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedDifficulty(d.id);
+                      setSelectedCategory(null);
+                    }}
+                    className={`rounded-xl border p-3 text-left transition ${
+                      selectedDifficulty === d.id
+                        ? "border-violet-400 bg-violet-950/50 ring-1 ring-violet-400/40"
+                        : "border-white/10 bg-black/30 hover:border-violet-400/40"
+                    }`}
+                  >
+                    <p className="text-xs font-semibold text-violet-200">{d.title}</p>
+                    <p className="mt-1 text-[11px] leading-snug text-slate-400">{d.description}</p>
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : null}
+
+          {selectedMode && selectedDifficulty ? (
+            <>
               <p className="mt-6 text-sm font-medium text-slate-200">Choose your quiz</p>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {QUIZ_CATEGORIES.map((cat) => (
@@ -398,7 +436,7 @@ export function FunQuizClient() {
 
           <button
             type="button"
-            disabled={busy || !selectedMode || !selectedCategory}
+            disabled={busy || !selectedMode || !selectedDifficulty || !selectedCategory}
             onClick={createRoom}
             className="mt-6 w-full rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 py-3.5 text-sm font-semibold text-white shadow-lg shadow-violet-700/30 transition hover:brightness-110 disabled:opacity-60"
           >
@@ -458,7 +496,8 @@ export function FunQuizClient() {
       <header className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-violet-300">
-            Room {roomState.code} · {roomState.quizCategoryTitle} · {gameModeLabel(gameMode)}
+            Room {roomState.code} · {roomState.quizDifficultyTitle} · {roomState.quizCategoryTitle} ·{" "}
+            {gameModeLabel(gameMode)}
           </p>
           <h1 className="text-2xl font-bold text-white">Fun Quiz</h1>
         </div>
@@ -500,6 +539,10 @@ export function FunQuizClient() {
         <section className="mt-8 flex flex-1 flex-col rounded-3xl border border-white/10 bg-slate-900/70 p-6">
           <h2 className="text-lg font-semibold text-white">Waiting room</h2>
           <p className="mt-2 text-sm text-slate-300">
+            Difficulty:{" "}
+            <strong className="text-violet-200">{roomState.quizDifficultyTitle}</strong>
+          </p>
+          <p className="mt-1 text-sm text-slate-300">
             Quiz:{" "}
             <strong className="text-violet-200">{roomState.quizCategoryTitle}</strong>
           </p>
@@ -640,7 +683,9 @@ export function FunQuizClient() {
       {phase === "finished" && roomState.results ? (
         <section className="mt-6 flex flex-1 flex-col rounded-3xl border border-violet-400/30 bg-slate-950/80 p-6">
           <h2 className="text-2xl font-bold text-white">Results</h2>
-          <p className="mt-1 text-sm text-slate-400">{roomState.quizCategoryTitle}</p>
+          <p className="mt-1 text-sm text-slate-400">
+            {roomState.quizDifficultyTitle} · {roomState.quizCategoryTitle}
+          </p>
           {gameMode === GAME_MODE_PLAY_TOGETHER ? (
             <p className="mt-2 text-violet-100">
               Joint score: {roomState.jointScore ?? 0} / 50 (
@@ -679,7 +724,7 @@ export function FunQuizClient() {
           </div>
           {isHost ? (
             <div className="mt-6 space-y-3">
-              <p className="text-sm text-slate-300">Start a new game (pick mode and quiz):</p>
+              <p className="text-sm text-slate-300">Start a new game (pick mode, difficulty and quiz):</p>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
@@ -704,6 +749,22 @@ export function FunQuizClient() {
                   Play together
                 </button>
               </div>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                {QUIZ_DIFFICULTIES.map((d) => (
+                  <button
+                    key={d.id}
+                    type="button"
+                    onClick={() => setNewGameDifficulty(d.id)}
+                    className={`rounded-md border px-2 py-1.5 text-left text-[10px] ${
+                      newGameDifficulty === d.id
+                        ? "border-violet-400 bg-violet-950/50 text-violet-100"
+                        : "border-white/5 text-slate-400"
+                    }`}
+                  >
+                    {d.title}
+                  </button>
+                ))}
+              </div>
               <div className="mt-2 max-h-40 overflow-y-auto rounded-lg border border-white/10 p-2">
                 <div className="grid grid-cols-2 gap-1">
                   {QUIZ_CATEGORIES.map((cat) => (
@@ -724,7 +785,7 @@ export function FunQuizClient() {
               </div>
               <button
                 type="button"
-                disabled={busy || !newGameMode || !newGameCategory}
+                disabled={busy || !newGameMode || !newGameDifficulty || !newGameCategory}
                 onClick={startNewGame}
                 className="w-full rounded-xl bg-violet-500 py-3 text-sm font-semibold text-white disabled:opacity-50"
               >

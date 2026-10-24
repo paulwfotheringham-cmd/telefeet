@@ -4,6 +4,7 @@ import {
   QUIZ_CATEGORY_GEOGRAPHY,
   QUIZ_CATEGORY_SPACE,
 } from "../lib/funquiz/categories";
+import { QUIZ_DIFFICULTY_HARD, QUIZ_DIFFICULTY_INTERMEDIATE } from "../lib/funquiz/difficulties";
 import {
   GAME_MODE_PLAY_TOGETHER,
   GAME_MODE_TAKE_TURNS,
@@ -25,9 +26,11 @@ import {
 
 function runAllocation() {
   const { questionOrder, hostQuestionOrder, guestQuestionOrder } =
-    allocateQuestionsForGame(QUIZ_CATEGORY_SPACE);
+    allocateQuestionsForGame(QUIZ_CATEGORY_SPACE, QUIZ_DIFFICULTY_INTERMEDIATE);
   for (const id of questionOrder) {
-    assert.equal(getQuestionByBankId(id).categoryId, QUIZ_CATEGORY_SPACE);
+    const q = getQuestionByBankId(id);
+    assert.equal(q.categoryId, QUIZ_CATEGORY_SPACE);
+    assert.equal(q.difficulty, QUIZ_DIFFICULTY_INTERMEDIATE);
   }
   assert.equal(questionOrder.length, QUESTIONS_PER_GAME);
   assert.equal(hostQuestionOrder.length, TAKE_TURNS_QUESTIONS_PER_PLAYER);
@@ -48,6 +51,7 @@ function runTakeTurnsFlow() {
     "TT0001",
     GAME_MODE_TAKE_TURNS,
     QUIZ_CATEGORY_GEOGRAPHY,
+    QUIZ_DIFFICULTY_INTERMEDIATE,
   );
   room = addPlayer(room, "guest", "Guest");
   room = startGame(room, "host");
@@ -113,6 +117,7 @@ function runPlayTogetherHostOnlySubmit() {
     "PT0001",
     GAME_MODE_PLAY_TOGETHER,
     QUIZ_CATEGORY_GEOGRAPHY,
+    QUIZ_DIFFICULTY_INTERMEDIATE,
   );
   room = addPlayer(room, "guest", "Guest");
   room = startGame(room, "host");
@@ -136,6 +141,7 @@ function runPlayTogetherTickToFinish() {
     "PT0002",
     GAME_MODE_PLAY_TOGETHER,
     QUIZ_CATEGORY_SPACE,
+    QUIZ_DIFFICULTY_INTERMEDIATE,
   );
   room = addPlayer(room, "guest", "G");
   room = startGame(room, "host");
@@ -158,6 +164,7 @@ function runTakeTurnsCountryOutlineSpectator() {
     "TTOUT1",
     GAME_MODE_TAKE_TURNS,
     QUIZ_CATEGORY_COUNTRY_OUTLINES,
+    QUIZ_DIFFICULTY_INTERMEDIATE,
   );
   room = addPlayer(room, "guest", "Guest");
   room = startGame(room, "host");
@@ -177,15 +184,23 @@ function runNewGameReset() {
     "NG0001",
     GAME_MODE_PLAY_TOGETHER,
     QUIZ_CATEGORY_GEOGRAPHY,
+    QUIZ_DIFFICULTY_INTERMEDIATE,
   );
   room = addPlayer(room, "guest", "G");
   room = startGame(room, "host");
   room = { ...room, phase: "finished" as const };
   const prevSession = room.sessionId;
-  room = resetRoomForNewGame(room, "host", GAME_MODE_TAKE_TURNS, QUIZ_CATEGORY_SPACE);
+  room = resetRoomForNewGame(
+    room,
+    "host",
+    GAME_MODE_TAKE_TURNS,
+    QUIZ_CATEGORY_SPACE,
+    QUIZ_DIFFICULTY_HARD,
+  );
   assert.equal(room.phase, "lobby");
   assert.equal(room.gameMode, GAME_MODE_TAKE_TURNS);
   assert.equal(room.quizCategoryId, QUIZ_CATEGORY_SPACE);
+  assert.equal(room.quizDifficulty, QUIZ_DIFFICULTY_HARD);
   assert.notEqual(room.sessionId, prevSession);
   assert.equal(room.answerLog.length, 0);
 }

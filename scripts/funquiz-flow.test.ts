@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { QUIZ_CATEGORY_GEOGRAPHY } from "../lib/funquiz/categories";
+import { QUIZ_DIFFICULTY_INTERMEDIATE } from "../lib/funquiz/difficulties";
 import { GAME_MODE_PLAY_TOGETHER } from "../lib/funquiz/constants";
 import {
   addPlayer,
@@ -19,6 +20,7 @@ function runFlow() {
     "ABC123",
     GAME_MODE_PLAY_TOGETHER,
     QUIZ_CATEGORY_GEOGRAPHY,
+    QUIZ_DIFFICULTY_INTERMEDIATE,
   );
   assert.equal(room.phase, "lobby");
 
@@ -30,6 +32,7 @@ function runFlow() {
 
   const bankId = room.questionOrder[0];
   const q = getQuestionByBankId(bankId);
+  assert.equal(q.difficulty, QUIZ_DIFFICULTY_INTERMEDIATE);
 
   room = submitAnswer(room, "host-1", q.correctIndex);
   assert.equal(room.phase, "reveal");
@@ -60,12 +63,14 @@ function runMapperRoundtrip() {
     "XY12Z9",
     GAME_MODE_PLAY_TOGETHER,
     QUIZ_CATEGORY_GEOGRAPHY,
+    QUIZ_DIFFICULTY_INTERMEDIATE,
   );
   const withGuest = addPlayer(room, "p2", "Guest");
   const { room: row, players } = roomToDbRows(withGuest);
   assert.equal(row.code, "XY12Z9");
   assert.equal(players.length, 2);
   assert.equal(row.quiz_category, QUIZ_CATEGORY_GEOGRAPHY);
+  assert.equal(row.quiz_difficulty, QUIZ_DIFFICULTY_INTERMEDIATE);
   const back = dbRowsToRoom(
     {
       ...row,
@@ -74,6 +79,7 @@ function runMapperRoundtrip() {
     players,
   );
   assert.equal(back.quizCategoryId, QUIZ_CATEGORY_GEOGRAPHY);
+  assert.equal(back.quizDifficulty, QUIZ_DIFFICULTY_INTERMEDIATE);
 }
 
 runFlow();

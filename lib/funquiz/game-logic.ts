@@ -9,6 +9,8 @@ import {
 } from "./constants";
 import type { QuizCategoryId } from "./categories";
 import { categoryTitle } from "./categories";
+import type { QuizDifficulty } from "./difficulties";
+import { difficultyTitle } from "./difficulties";
 import { selectQuestionIdsForCategory } from "./question-selection";
 import { getQuestionByBankId, toPublicQuestion } from "./questions";
 import type {
@@ -38,12 +40,15 @@ function shuffleInPlace<T>(arr: T[]): T[] {
   return arr;
 }
 
-export function allocateQuestionsForGame(quizCategoryId: QuizCategoryId): {
+export function allocateQuestionsForGame(
+  quizCategoryId: QuizCategoryId,
+  quizDifficulty: QuizDifficulty,
+): {
   questionOrder: number[];
   hostQuestionOrder: number[];
   guestQuestionOrder: number[];
 } {
-  const questionOrder = selectQuestionIdsForCategory(quizCategoryId);
+  const questionOrder = selectQuestionIdsForCategory(quizCategoryId, quizDifficulty);
   const hostQuestionOrder = shuffleInPlace(
     questionOrder.slice(0, TAKE_TURNS_QUESTIONS_PER_PLAYER),
   );
@@ -66,6 +71,7 @@ export function createRoom(
   code: string,
   gameMode: GameMode,
   quizCategoryId: QuizCategoryId,
+  quizDifficulty: QuizDifficulty,
 ): QuizRoom {
   const now = Date.now();
   return {
@@ -73,6 +79,7 @@ export function createRoom(
     hostId,
     gameMode,
     quizCategoryId,
+    quizDifficulty,
     sessionId: newSessionId(),
     phase: "lobby",
     questionIndex: 0,
@@ -140,7 +147,7 @@ export function startGame(room: QuizRoom, playerId: string): QuizRoom {
     throw new Error("Game already started");
   }
 
-  const allocated = allocateQuestionsForGame(room.quizCategoryId);
+  const allocated = allocateQuestionsForGame(room.quizCategoryId, room.quizDifficulty);
   const guestId = guestPlayerId(room);
   if (!guestId) {
     throw new Error("Waiting for a second player");
@@ -184,6 +191,7 @@ export function resetRoomForNewGame(
   playerId: string,
   gameMode: GameMode,
   quizCategoryId: QuizCategoryId,
+  quizDifficulty: QuizDifficulty,
 ): QuizRoom {
   if (playerId !== room.hostId) {
     throw new Error("Only the host can start a new game");
@@ -195,6 +203,7 @@ export function resetRoomForNewGame(
     ...room,
     gameMode,
     quizCategoryId,
+    quizDifficulty,
     sessionId: newSessionId(),
     phase: "lobby",
     questionIndex: 0,
@@ -436,6 +445,8 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
       gameMode: room.gameMode,
       quizCategoryId: room.quizCategoryId,
       quizCategoryTitle: categoryTitle(room.quizCategoryId),
+      quizDifficulty: room.quizDifficulty,
+      quizDifficultyTitle: difficultyTitle(room.quizDifficulty),
       phase: room.phase,
       questionIndex: room.questionIndex,
       totalQuestions: QUESTIONS_PER_GAME,
@@ -519,6 +530,8 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
     gameMode: room.gameMode,
     quizCategoryId: room.quizCategoryId,
     quizCategoryTitle: categoryTitle(room.quizCategoryId),
+    quizDifficulty: room.quizDifficulty,
+    quizDifficultyTitle: difficultyTitle(room.quizDifficulty),
     phase: room.phase,
     questionIndex: room.questionIndex,
     totalQuestions: QUESTIONS_PER_GAME,
@@ -559,6 +572,9 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
 }
 
 /** @deprecated use allocateQuestionsForGame in tests */
-export function shuffleQuestionOrder(quizCategoryId: QuizCategoryId): number[] {
-  return allocateQuestionsForGame(quizCategoryId).questionOrder;
+export function shuffleQuestionOrder(
+  quizCategoryId: QuizCategoryId,
+  quizDifficulty: QuizDifficulty,
+): number[] {
+  return allocateQuestionsForGame(quizCategoryId, quizDifficulty).questionOrder;
 }

@@ -5,6 +5,7 @@ import {
   GAME_MODE_TAKE_TURNS,
 } from "@/lib/funquiz/constants";
 import { isQuizCategoryId } from "@/lib/funquiz/categories";
+import { isQuizDifficulty } from "@/lib/funquiz/difficulties";
 import type { GameMode } from "@/lib/funquiz/types";
 import { createRoom, generateRoomCode, toClientState } from "@/lib/funquiz/game-logic";
 import { loadRoom, persistNewRoom } from "@/lib/funquiz/store";
@@ -18,6 +19,7 @@ export async function POST(request: Request) {
       playerName?: string;
       gameMode?: string;
       quizCategory?: string;
+      quizDifficulty?: string;
     };
     const playerId = body.playerId?.trim();
     const playerName = body.playerName?.trim();
@@ -37,6 +39,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "quizCategory required" }, { status: 400 });
     }
     const quizCategoryId = quizCategoryRaw;
+    const quizDifficultyRaw = body.quizDifficulty?.trim();
+    if (!quizDifficultyRaw || !isQuizDifficulty(quizDifficultyRaw)) {
+      return NextResponse.json({ error: "quizDifficulty required" }, { status: 400 });
+    }
 
     let code = generateRoomCode();
     for (let attempt = 0; attempt < 8; attempt++) {
@@ -45,7 +51,14 @@ export async function POST(request: Request) {
       code = generateRoomCode();
     }
 
-    const room = createRoom(playerId, playerName, code, gameMode, quizCategoryId);
+    const room = createRoom(
+      playerId,
+      playerName,
+      code,
+      gameMode,
+      quizCategoryId,
+      quizDifficultyRaw,
+    );
     await persistNewRoom(room);
     return NextResponse.json({ state: toClientState(room, playerId) });
   } catch (err) {

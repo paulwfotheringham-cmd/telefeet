@@ -8,7 +8,7 @@ import {
 import type { GeneralKnowledgeSubject, QuizQuestionBankItem } from "./types";
 
 /** Original fifty questions remapped to category ids (3 options each). */
-export const LEGACY_QUESTION_DEFS: Omit<QuizQuestionBankItem, "id">[] = [
+export const LEGACY_QUESTION_DEFS: Omit<QuizQuestionBankItem, "id" | "difficulty">[] = [
   {
     categoryId: QUIZ_CATEGORY_GEOGRAPHY,
     category: "Geography",
@@ -413,4 +413,4 @@ export const LEGACY_QUESTION_DEFS: Omit<QuizQuestionBankItem, "id">[] = [
     correctIndex: 0,
     generalKnowledgeSubjects: ["military"],
   },
-] satisfies Omit<QuizQuestionBankItem, "id">[];
+] satisfies Omit<QuizQuestionBankItem, "id" | "difficulty">[];
