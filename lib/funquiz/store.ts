@@ -77,10 +77,22 @@ export async function loadRoom(code: string): Promise<QuizRoom | null> {
   return dbRowsToRoom(row, playerRows);
 }
 
+function mergePlayerRows(...groups: FunquizPlayerRow[][]): FunquizPlayerRow[] {
+  const byId = new Map<string, FunquizPlayerRow>();
+  for (const group of groups) {
+    for (const row of group) {
+      byId.set(row.player_id, row);
+    }
+  }
+  return [...byId.values()];
+}
+
 async function fetchPlayerRows(
   supabase: ReturnType<typeof createAdminClient>,
   roomCode: string,
 ): Promise<FunquizPlayerRow[]> {
+  const groups: FunquizPlayerRow[][] = [];
+
   const { data: jsonRows, error: jsonError } = await supabase.rpc("funquiz_list_players_json", {
     p_room_code: roomCode,
   });
@@ -89,32 +101,32 @@ async function fetchPlayerRows(
     if (typeof parsed === "string") {
       parsed = JSON.parse(parsed) as unknown;
     }
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      return parsed as FunquizPlayerRow[];
+    if (Array.isArray(parsed)) {
+      groups.push(parsed as FunquizPlayerRow[]);
     }
   }
 
-  const { data: playerRows, count, error: playerError } = await supabase
+  const { data: playerRows, error: playerError } = await supabase
     .from("funquiz_players")
-    .select("*", { count: "exact" })
+    .select("*")
     .eq("room_code", roomCode);
 
   if (playerError) {
     throw new Error(playerError.message);
   }
-  const rows = (playerRows ?? []) as FunquizPlayerRow[];
-  if (count != null && count > rows.length) {
-    await new Promise((resolve) => setTimeout(resolve, 120));
-    const retry = await supabase
-      .from("funquiz_players")
-      .select("*")
-      .eq("room_code", roomCode);
-    if (retry.error) {
-      throw new Error(retry.error.message);
-    }
-    return (retry.data ?? []) as FunquizPlayerRow[];
+  groups.push((playerRows ?? []) as FunquizPlayerRow[]);
+
+  const merged = mergePlayerRows(...groups);
+  if (merged.length >= MAX_PLAYERS) {
+    return merged;
   }
-  return rows;
+
+  await new Promise((resolve) => setTimeout(resolve, 120));
+  const retry = await supabase.from("funquiz_players").select("*").eq("room_code", roomCode);
+  if (retry.error) {
+    throw new Error(retry.error.message);
+  }
+  return mergePlayerRows(merged, (retry.data ?? []) as FunquizPlayerRow[]);
 }
 
 /** PostgREST can briefly return a stale single-player lobby after a join upsert. */
