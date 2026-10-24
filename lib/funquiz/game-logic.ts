@@ -457,7 +457,6 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
     };
   }
 
-  const opponent = room.players.find((p) => p.id !== viewerId);
   const scoresHidden = room.gameMode === GAME_MODE_TAKE_TURNS && room.phase !== "finished";
   const jointScore =
     room.gameMode === GAME_MODE_PLAY_TOGETHER ? room.jointScore : null;
@@ -475,12 +474,13 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
     if (room.phase === "question" && room.activePlayerId) {
       isYourTurn = viewerId === room.activePlayerId;
       canSubmitAnswer = isYourTurn && you.answer === null;
-      if (!isYourTurn && opponent) {
-        statusMessage = `${opponent.name} is answering. Please wait for your turn.`;
+      const activePlayer = room.players.find((p) => p.id === room.activePlayerId);
+      if (!isYourTurn && activePlayer) {
+        statusMessage = `It's ${activePlayer.name}'s turn — watch along!`;
       } else if (isYourTurn && you.answer !== null) {
         statusMessage = "Answer submitted. Waiting for your opponent…";
       }
-      if (isYourTurn && bankId !== null) {
+      if (bankId !== null) {
         question = toPublicQuestion(getQuestionByBankId(bankId));
       }
     }

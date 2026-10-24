@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import {
+  QUIZ_CATEGORY_COUNTRY_OUTLINES,
   QUIZ_CATEGORY_GEOGRAPHY,
   QUIZ_CATEGORY_SPACE,
 } from "../lib/funquiz/categories";
@@ -59,7 +60,12 @@ function runTakeTurnsFlow() {
   assert.equal(hostView.scoresHidden, true);
 
   const guestView = toClientState(room, "guest");
-  assert.equal(guestView.question, null);
+  assert.ok(guestView.question);
+  assert.equal(guestView.question!.id, hostView.question!.id);
+  assert.deepEqual(guestView.question!.options, hostView.question!.options);
+  assert.equal(guestView.canSubmitAnswer, false);
+  assert.equal(guestView.correctIndex, null);
+  assert.ok(guestView.statusMessage?.includes("watch along"));
   assert.ok(guestView.statusMessage?.includes("Host"));
 
   const bank0 = room.hostQuestionOrder[0]!;
@@ -70,8 +76,16 @@ function runTakeTurnsFlow() {
 
   assert.throws(() => submitAnswer(room, "host", 0), /not your turn/i);
 
+  const hostTurn2 = toClientState(room, "host");
+  const guestTurn2 = toClientState(room, "guest");
   const bank1 = room.guestQuestionOrder[0]!;
   const q1 = getQuestionByBankId(bank1);
+  assert.equal(hostTurn2.question!.id, bank1);
+  assert.equal(guestTurn2.question!.id, bank1);
+  assert.notEqual(hostTurn2.question!.id, hostView.question!.id);
+  assert.equal(hostTurn2.canSubmitAnswer, false);
+  assert.equal(guestTurn2.canSubmitAnswer, true);
+  assert.throws(() => submitAnswer(room, "host", 0), /not your turn/i);
   room = submitAnswer(room, "guest", q1.correctIndex === 0 ? 1 : 0);
 
   for (let i = 2; i < QUESTIONS_PER_GAME; i++) {
@@ -137,6 +151,25 @@ function runPlayTogetherTickToFinish() {
   assert.equal(room.jointScore, QUESTIONS_PER_GAME);
 }
 
+function runTakeTurnsCountryOutlineSpectator() {
+  let room = createRoom(
+    "host",
+    "Host",
+    "TTOUT1",
+    GAME_MODE_TAKE_TURNS,
+    QUIZ_CATEGORY_COUNTRY_OUTLINES,
+  );
+  room = addPlayer(room, "guest", "Guest");
+  room = startGame(room, "host");
+  const hostView = toClientState(room, "host");
+  const guestView = toClientState(room, "guest");
+  assert.ok(hostView.question?.outlineImageUrl);
+  assert.equal(guestView.question?.outlineImageUrl, hostView.question?.outlineImageUrl);
+  assert.equal(guestView.canSubmitAnswer, false);
+  assert.equal(hostView.correctIndex, null);
+  assert.equal(guestView.correctIndex, null);
+}
+
 function runNewGameReset() {
   let room = createRoom(
     "host",
@@ -159,6 +192,7 @@ function runNewGameReset() {
 
 runAllocation();
 runTakeTurnsFlow();
+runTakeTurnsCountryOutlineSpectator();
 runPlayTogetherHostOnlySubmit();
 runPlayTogetherTickToFinish();
 runNewGameReset();
