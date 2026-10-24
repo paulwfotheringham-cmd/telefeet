@@ -23,7 +23,10 @@ export async function GET(request: Request, { params }: Params) {
     const phaseBefore = room.phase;
     const indexBefore = room.questionIndex;
     room = tickRoom(room);
-    if (room.phase !== phaseBefore || room.questionIndex !== indexBefore) {
+    const tickChanged =
+      room.phase !== phaseBefore || room.questionIndex !== indexBefore;
+    // Lobby polls must never persist tick side-effects; tickRoom is a no-op in lobby anyway.
+    if (tickChanged && phaseBefore !== "lobby") {
       await saveRoom(room);
       room = (await loadRoom(code)) ?? room;
     }

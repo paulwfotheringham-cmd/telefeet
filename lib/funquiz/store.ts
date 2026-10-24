@@ -49,9 +49,19 @@ export function absorbPlayerRowsIntoMap(
   return [...bestById.values()].slice(0, MAX_PLAYERS);
 }
 
-/** True while lobby reads should keep retrying (count can be as stale as row selects). */
-export function shouldContinueLobbyPlayerRead(visibleCount: number, lobbyWait: boolean): boolean {
-  return lobbyWait && visibleCount < MAX_PLAYERS;
+/** Stop lobby player load when full or DB reports a full lobby that matches visible rows. */
+export function shouldStopLobbyPlayerLoad(
+  visibleCount: number,
+  dbCount: number | null,
+  deadlinePassed: boolean,
+): boolean {
+  if (visibleCount >= MAX_PLAYERS) {
+    return true;
+  }
+  if (dbCount !== null && dbCount >= MAX_PLAYERS && visibleCount >= dbCount) {
+    return true;
+  }
+  return deadlinePassed;
 }
 
 const LOBBY_PLAYER_READ_MAX_MS = 2_000;
@@ -114,44 +124,39 @@ export async function loadRoom(code: string): Promise<QuizRoom | null> {
     return null;
   }
 
-  let snapshotRows = playerRowsFromSnapshot(normalized, row.players_snapshot);
-  if (row.phase === "lobby" && snapshotRows.length < MAX_PLAYERS) {
-    snapshotRows = await waitForLobbySnapshot(supabase, normalized, snapshotRows);
-  }
-
-  const playerRows = await fetchPlayerRows(supabase, normalized, {
-    lobbyWait: row.phase === "lobby",
-    seedRows: snapshotRows,
-  });
+  const snapshotRows = playerRowsFromSnapshot(normalized, row.players_snapshot);
+  const playerRows = await loadPlayerRowsForRoom(
+    supabase,
+    normalized,
+    row.phase === "lobby",
+    snapshotRows,
+  );
 
   return dbRowsToRoom(row, playerRows);
 }
 
-async function waitForLobbySnapshot(
-  supabase: ReturnType<typeof createAdminClient>,
-  roomCode: string,
-  initial: FunquizPlayerRow[],
-): Promise<FunquizPlayerRow[]> {
-  const bestById = new Map(initial.map((r) => [r.player_id, r]));
-  const deadline = Date.now() + LOBBY_PLAYER_READ_MAX_MS;
-  while (shouldContinueLobbyPlayerRead(bestById.size, true) && Date.now() < deadline) {
-    await new Promise((resolve) => setTimeout(resolve, LOBBY_PLAYER_READ_INTERVAL_MS));
-    const { data, error } = await supabase
-      .from("funquiz_rooms")
-      .select("players_snapshot")
-      .eq("code", roomCode)
-      .maybeSingle();
-    if (error) {
-      throw new Error(error.message);
-    }
-    absorbPlayerRowsIntoMap(bestById, playerRowsFromSnapshot(roomCode, data?.players_snapshot));
-  }
-  return [...bestById.values()].slice(0, MAX_PLAYERS);
-}
-
 async function loadPlayersForMerge(code: string): Promise<QuizPlayer[]> {
   const supabase = createAdminClient();
-  const rows = await fetchPlayerRows(supabase, code.toUpperCase());
+  const rows = await loadPlayerRowsForRoom(supabase, code.toUpperCase(), false);
+  return playerRowsToQuizPlayers(rows);
+}
+
+export function parsePlayerJsonRows(payload: unknown): FunquizPlayerRow[] {
+  let parsed: unknown = payload;
+  if (typeof parsed === "string") {
+    try {
+      parsed = JSON.parse(parsed) as unknown;
+    } catch {
+      return [];
+    }
+  }
+  if (!Array.isArray(parsed)) {
+    return [];
+  }
+  return parsed as FunquizPlayerRow[];
+}
+
+function playerRowsToQuizPlayers(rows: FunquizPlayerRow[]): QuizPlayer[] {
   return rows.map((p) => ({
     id: p.player_id,
     name: p.name,
@@ -160,15 +165,44 @@ async function loadPlayersForMerge(code: string): Promise<QuizPlayer[]> {
   }));
 }
 
-function parsePlayerJsonRows(payload: unknown): FunquizPlayerRow[] {
-  let parsed: unknown = payload;
-  if (typeof parsed === "string") {
-    parsed = JSON.parse(parsed) as unknown;
+/** Primary player read: resolved JSON RPC, retry in lobby until count catches up. */
+export async function loadPlayerRowsForRoom(
+  supabase: ReturnType<typeof createAdminClient>,
+  roomCode: string,
+  lobbyWait: boolean,
+  seedRows: FunquizPlayerRow[] = [],
+): Promise<FunquizPlayerRow[]> {
+  const bestById = new Map<string, FunquizPlayerRow>();
+  if (seedRows.length > 0) {
+    absorbPlayerRowsIntoMap(bestById, seedRows);
   }
-  if (!Array.isArray(parsed)) {
-    return [];
+  const deadline = lobbyWait ? Date.now() + LOBBY_PLAYER_READ_MAX_MS : Date.now();
+
+  do {
+    const { data, error } = await supabase.rpc("funquiz_resolved_players_json", {
+      p_room_code: roomCode,
+    });
+    if (!error && data != null) {
+      absorbPlayerRowsIntoMap(bestById, parsePlayerJsonRows(data));
+    }
+
+    if (!lobbyWait) {
+      break;
+    }
+
+    const dbCount = await fetchPlayerCount(supabase, roomCode);
+    if (shouldStopLobbyPlayerLoad(bestById.size, dbCount, Date.now() >= deadline)) {
+      break;
+    }
+    await new Promise((resolve) => setTimeout(resolve, LOBBY_PLAYER_READ_INTERVAL_MS));
+  } while (true);
+
+  if (bestById.size === 0) {
+    const { groups } = await readPlayerRowGroups(supabase, roomCode);
+    absorbPlayerRowsIntoMap(bestById, ...groups);
   }
-  return parsed as FunquizPlayerRow[];
+
+  return [...bestById.values()].slice(0, MAX_PLAYERS);
 }
 
 async function readPlayerRowGroups(
@@ -182,10 +216,7 @@ async function readPlayerRowGroups(
     { p_room_code: roomCode },
   );
   if (!resolvedError && resolvedRows != null) {
-    const rows = parsePlayerJsonRows(resolvedRows);
-    if (rows.length > 0) {
-      groups.push(rows);
-    }
+    groups.push(parsePlayerJsonRows(resolvedRows));
   }
 
   const { data: jsonRows, error: jsonError } = await supabase.rpc("funquiz_list_players_json", {
@@ -220,61 +251,6 @@ async function fetchPlayerCount(
   return data;
 }
 
-type FetchPlayerRowsOptions = {
-  /** When true, retry until DB count matches visible rows or budget elapses (lobby join lag). */
-  lobbyWait?: boolean;
-  /** Rows from funquiz_rooms.players_snapshot (same row fetch as room metadata). */
-  seedRows?: FunquizPlayerRow[];
-};
-
-async function fetchPlayerRows(
-  supabase: ReturnType<typeof createAdminClient>,
-  roomCode: string,
-  options: FetchPlayerRowsOptions = {},
-): Promise<FunquizPlayerRow[]> {
-  const bestById = new Map<string, FunquizPlayerRow>();
-  if (options.seedRows?.length) {
-    absorbPlayerRowsIntoMap(bestById, options.seedRows);
-  }
-  const deadline =
-    options.lobbyWait === true ? Date.now() + LOBBY_PLAYER_READ_MAX_MS : Date.now();
-
-  do {
-    if (options.lobbyWait === true) {
-      const { data: snapRow } = await supabase
-        .from("funquiz_rooms")
-        .select("players_snapshot")
-        .eq("code", roomCode)
-        .maybeSingle();
-      absorbPlayerRowsIntoMap(
-        bestById,
-        playerRowsFromSnapshot(roomCode, snapRow?.players_snapshot),
-      );
-    }
-    const { groups } = await readPlayerRowGroups(supabase, roomCode);
-    absorbPlayerRowsIntoMap(bestById, ...groups);
-    const visible = bestById.size;
-    const dbCount = await fetchPlayerCount(supabase, roomCode);
-    if (dbCount !== null && dbCount > visible) {
-      for (let extra = 0; extra < 3 && bestById.size < dbCount; extra++) {
-        await new Promise((resolve) => setTimeout(resolve, LOBBY_PLAYER_READ_INTERVAL_MS));
-        const again = await readPlayerRowGroups(supabase, roomCode);
-        absorbPlayerRowsIntoMap(bestById, ...again.groups);
-      }
-    }
-
-    if (!shouldContinueLobbyPlayerRead(bestById.size, options.lobbyWait === true)) {
-      break;
-    }
-    if (Date.now() >= deadline) {
-      break;
-    }
-    await new Promise((resolve) => setTimeout(resolve, LOBBY_PLAYER_READ_INTERVAL_MS));
-  } while (true);
-
-  return [...bestById.values()].slice(0, MAX_PLAYERS);
-}
-
 export async function saveRoom(room: QuizRoom): Promise<void> {
   assertSupabaseConfigured();
   const supabase = createAdminClient();
@@ -294,11 +270,21 @@ export async function saveRoom(room: QuizRoom): Promise<void> {
     score: p.score,
     answer: p.answer,
   }));
+  const supabaseForRead = createAdminClient();
+  const resolvedRows = await loadPlayerRowsForRoom(supabaseForRead, normalized, false);
+  const resolvedPlayers = playerRowsToQuizPlayers(resolvedRows);
   const dbPlayers = await loadPlayersForMerge(normalized);
-  const mergedFromDb = mergePlayersForSave(dbPlayers, snapshotPlayers);
+  const mergedFromDb = mergePlayersForSave(
+    mergePlayersForSave(dbPlayers, snapshotPlayers),
+    resolvedPlayers,
+  );
+  let mergedPlayers = mergePlayersForSave(room.players, mergedFromDb);
+  if (room.phase === "lobby" && resolvedPlayers.length > mergedPlayers.length) {
+    mergedPlayers = mergePlayersForSave(mergedPlayers, resolvedPlayers);
+  }
   const mergedRoom: QuizRoom = {
     ...room,
-    players: mergePlayersForSave(room.players, mergedFromDb),
+    players: mergedPlayers,
   };
 
   const { room: roomInsert, players } = roomToDbRows(mergedRoom);

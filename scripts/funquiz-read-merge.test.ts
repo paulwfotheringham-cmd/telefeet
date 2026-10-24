@@ -3,7 +3,7 @@ import {
   absorbPlayerRowsIntoMap,
   mergePlayerRowsForRead,
   mergePlayersForSave,
-  shouldContinueLobbyPlayerRead,
+  shouldStopLobbyPlayerLoad,
 } from "../lib/funquiz/store";
 import { playerRowsFromSnapshot, type FunquizPlayerRow } from "../lib/funquiz/db-mapper";
 import type { QuizPlayer } from "../lib/funquiz/types";
@@ -63,9 +63,9 @@ function runSnapshotRecoversGuestWhenTableStale() {
 }
 
 function runLobbyReadContinuesUntilFullLobby() {
-  assert.equal(shouldContinueLobbyPlayerRead(2, true), false);
-  assert.equal(shouldContinueLobbyPlayerRead(1, true), true);
-  assert.equal(shouldContinueLobbyPlayerRead(1, false), false);
+  assert.equal(shouldStopLobbyPlayerLoad(2, 2, false), true);
+  assert.equal(shouldStopLobbyPlayerLoad(1, 1, false), false);
+  assert.equal(shouldStopLobbyPlayerLoad(1, 2, false), false);
 }
 
 runReadMergeRecoversGuestFromTable();

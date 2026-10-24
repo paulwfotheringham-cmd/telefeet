@@ -10,48 +10,13 @@ if (!BASE) {
   process.exit(0);
 }
 
-async function runOnce(): Promise<boolean> {
-  const hostId = crypto.randomUUID();
-  const guestId = crypto.randomUUID();
-  const create = await fetch(`${BASE}/api/funquiz/room`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ playerId: hostId, playerName: "Host" }),
-  }).then((r) => r.json());
-  const code = create.state?.code as string | undefined;
-  if (!code) return false;
-
-  const polls = Array.from({ length: 12 }, (_, i) =>
-    (async () => {
-      await new Promise((r) => setTimeout(r, i * 100));
-      await fetch(
-        `${BASE}/api/funquiz/room/${encodeURIComponent(code)}?playerId=${encodeURIComponent(hostId)}`,
-        { cache: "no-store" },
-      );
-    })(),
-  );
-
-  const join = fetch(`${BASE}/api/funquiz/room/join`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ code, playerId: guestId, playerName: "Guest" }),
-  });
-
-  await Promise.all([join, ...polls]);
-
-  const final = await fetch(
-    `${BASE}/api/funquiz/room/${encodeURIComponent(code)}?playerId=${encodeURIComponent(hostId)}`,
-    { cache: "no-store" },
-  ).then((r) => r.json());
-
-  return final.state?.players?.length === 2;
-}
+import { runConcurrentJoinOnce } from "./funquiz-concurrent-join.harness";
 
 async function main() {
   let passed = 0;
   const runs = 8;
   for (let i = 0; i < runs; i++) {
-    if (await runOnce()) passed++;
+    if (await runConcurrentJoinOnce(BASE)) passed++;
   }
 
   assert.ok(

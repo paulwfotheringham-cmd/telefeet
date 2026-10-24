@@ -33,12 +33,20 @@ export function playersToSnapshot(players: QuizPlayer[], roomCode: string): Funq
 }
 
 export function playerRowsFromSnapshot(roomCode: string, snapshot: unknown): FunquizPlayerRow[] {
-  if (!Array.isArray(snapshot)) {
+  let parsed: unknown = snapshot;
+  if (typeof parsed === "string") {
+    try {
+      parsed = JSON.parse(parsed) as unknown;
+    } catch {
+      return [];
+    }
+  }
+  if (!Array.isArray(parsed)) {
     return [];
   }
   const code = roomCode.toUpperCase();
   const rows: FunquizPlayerRow[] = [];
-  for (const item of snapshot) {
+  for (const item of parsed) {
     if (!item || typeof item !== "object") continue;
     const r = item as Record<string, unknown>;
     const playerId = r.player_id;
