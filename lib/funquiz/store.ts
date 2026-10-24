@@ -160,23 +160,39 @@ async function loadPlayersForMerge(code: string): Promise<QuizPlayer[]> {
   }));
 }
 
+function parsePlayerJsonRows(payload: unknown): FunquizPlayerRow[] {
+  let parsed: unknown = payload;
+  if (typeof parsed === "string") {
+    parsed = JSON.parse(parsed) as unknown;
+  }
+  if (!Array.isArray(parsed)) {
+    return [];
+  }
+  return parsed as FunquizPlayerRow[];
+}
+
 async function readPlayerRowGroups(
   supabase: ReturnType<typeof createAdminClient>,
   roomCode: string,
 ): Promise<{ groups: FunquizPlayerRow[][] }> {
   const groups: FunquizPlayerRow[][] = [];
 
+  const { data: resolvedRows, error: resolvedError } = await supabase.rpc(
+    "funquiz_resolved_players_json",
+    { p_room_code: roomCode },
+  );
+  if (!resolvedError && resolvedRows != null) {
+    const rows = parsePlayerJsonRows(resolvedRows);
+    if (rows.length > 0) {
+      groups.push(rows);
+    }
+  }
+
   const { data: jsonRows, error: jsonError } = await supabase.rpc("funquiz_list_players_json", {
     p_room_code: roomCode,
   });
   if (!jsonError && jsonRows != null) {
-    let parsed: unknown = jsonRows;
-    if (typeof parsed === "string") {
-      parsed = JSON.parse(parsed) as unknown;
-    }
-    if (Array.isArray(parsed)) {
-      groups.push(parsed as FunquizPlayerRow[]);
-    }
+    groups.push(parsePlayerJsonRows(jsonRows));
   }
 
   const { data: playerRows, error: playerError } = await supabase
