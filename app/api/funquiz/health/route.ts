@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isFunquizMigrationRequired } from "@/lib/funquiz/funquiz-db-health";
 import { checkSupabaseHostReachable } from "@/lib/funquiz/supabase-host-check";
 import { isQuizStoreConfigured, quizStoreMode } from "@/lib/funquiz/store";
 
@@ -26,9 +27,7 @@ export async function GET() {
     const supabase = createAdminClient();
     const { error } = await supabase.from("funquiz_rooms").select("code").limit(1);
     if (error) {
-      const needsMigration =
-        error.message.includes("funquiz_rooms") &&
-        (error.message.includes("does not exist") || error.code === "42P01");
+      const needsMigration = isFunquizMigrationRequired(error);
       return NextResponse.json({
         ok: false,
         store: mode,

@@ -19,10 +19,14 @@ export async function checkSupabaseHostReachable(
     const res = await fetch(`https://${host}/auth/v1/health`, {
       signal: AbortSignal.timeout(8000),
     });
-    if (!res.ok) {
+    // Live Supabase projects return 401 here without an apikey; edge is still up.
+    if (res.status === 401 || res.ok) {
+      return { ok: true, ref };
+    }
+    if (res.status === 404 || res.status >= 500) {
       return { ok: false, ref, reason: `health_http_${res.status}` };
     }
-    return { ok: true, ref };
+    return { ok: false, ref, reason: `health_http_${res.status}` };
   } catch (e) {
     const msg = e instanceof Error ? e.message : "lookup_failed";
     if (msg.includes("ENOTFOUND") || msg.includes("getaddrinfo")) {

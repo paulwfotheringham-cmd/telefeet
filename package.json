@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "verify": "next build",
-    "test:funquiz": "npx tsx scripts/validate-funquiz.ts && npx tsx scripts/funquiz-flow.test.ts && npx tsx scripts/supabase-host-check.test.ts",
+    "test:funquiz": "npx tsx scripts/validate-funquiz.ts && npx tsx scripts/funquiz-flow.test.ts && npx tsx scripts/supabase-host-check.test.ts && npx tsx scripts/funquiz-db-health.test.ts && npx tsx scripts/supabase-host-check.mock.test.ts && npx tsx scripts/supabase-host-check.integration.test.ts",
     "db:migrate:funquiz": "node scripts/apply-funquiz-migration.mjs",
     "db:migrate": "node scripts/apply-migration.mjs",
     "db:seed": "node scripts/seed-demo-users.mjs",
