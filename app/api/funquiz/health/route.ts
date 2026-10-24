@@ -36,7 +36,17 @@ export async function GET() {
         hint: error.message,
       });
     }
-    return NextResponse.json({ ok: true, store: mode, db: "ready", projectRef: hostCheck.ref });
+    const { error: rpcError } = await supabase.rpc("funquiz_resolved_players_json", {
+      p_room_code: "______",
+    });
+    return NextResponse.json({
+      ok: true,
+      store: mode,
+      db: "ready",
+      projectRef: hostCheck.ref,
+      commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? null,
+      resolvedPlayersRpc: !rpcError,
+    });
   } catch (e) {
     const message = e instanceof Error ? e.message : "unknown";
     return NextResponse.json({
