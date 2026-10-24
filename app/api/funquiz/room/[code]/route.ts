@@ -25,17 +25,11 @@ export async function GET(request: Request, { params }: Params) {
     room = tickRoom(room);
     if (room.phase !== phaseBefore || room.questionIndex !== indexBefore) {
       await saveRoom(room);
+      room = (await loadRoom(code)) ?? room;
     }
-    const state = toClientState(room, playerId);
     return NextResponse.json(
-      { state },
-      {
-        headers: {
-          "Cache-Control": "no-store",
-          "X-Funquiz-Players": String(room.players.length),
-          "X-Funquiz-State-Players": String(state.players.length),
-        },
-      },
+      { state: toClientState(room, playerId) },
+      { headers: { "Cache-Control": "no-store" } },
     );
   } catch (err) {
     return handleStoreError(err);

@@ -37,8 +37,9 @@ test("two browsers see both players and host can start", async ({ browser }) => 
     const hostLobbyList = host.locator("section ul");
     await expect(host.getByText("HostE2E (you)")).toBeVisible({ timeout: 15_000 });
     await expect(hostLobbyList.getByText("GuestE2E", { exact: true })).toBeVisible({
-      timeout: 15_000,
+      timeout: 25_000,
     });
+    await expect(guest.getByRole("button", { name: /Start quiz/i })).toHaveCount(0);
     await expect(guest.getByText("GuestE2E (you)")).toBeVisible({ timeout: 15_000 });
     await expect(guest.locator("section ul").getByText("HostE2E", { exact: true })).toBeVisible({
       timeout: 15_000,

@@ -9,7 +9,27 @@ export function mergePlayersForSave(inMemory: QuizPlayer[], fromDb: QuizPlayer[]
   const memById = new Map(inMemory.map((p) => [p.id, p]));
   const dbById = new Map(fromDb.map((p) => [p.id, p]));
   const ids = new Set([...memById.keys(), ...dbById.keys()]);
-  return [...ids].map((id) => memById.get(id) ?? dbById.get(id)!);
+  const merged = [...ids].map((id) => memById.get(id) ?? dbById.get(id)!);
+  if (merged.length <= MAX_PLAYERS) {
+    return merged;
+  }
+  const memIds = new Set(inMemory.map((p) => p.id));
+  const prioritized = [
+    ...merged.filter((p) => memIds.has(p.id)),
+    ...merged.filter((p) => !memIds.has(p.id)),
+  ];
+  return prioritized.slice(0, MAX_PLAYERS);
+}
+
+/** Merge player rows from multiple read paths (table select + JSON RPC). Later groups win on id clash. */
+export function mergePlayerRowsForRead(...groups: FunquizPlayerRow[][]): FunquizPlayerRow[] {
+  const byId = new Map<string, FunquizPlayerRow>();
+  for (const group of groups) {
+    for (const row of group) {
+      byId.set(row.player_id, row);
+    }
+  }
+  return [...byId.values()].slice(0, MAX_PLAYERS);
 }
 
 export class QuizStoreUnavailableError extends Error {
@@ -77,14 +97,15 @@ export async function loadRoom(code: string): Promise<QuizRoom | null> {
   return dbRowsToRoom(row, playerRows);
 }
 
-function mergePlayerRows(...groups: FunquizPlayerRow[][]): FunquizPlayerRow[] {
-  const byId = new Map<string, FunquizPlayerRow>();
-  for (const group of groups) {
-    for (const row of group) {
-      byId.set(row.player_id, row);
-    }
-  }
-  return [...byId.values()];
+async function loadPlayersForMerge(code: string): Promise<QuizPlayer[]> {
+  const supabase = createAdminClient();
+  const rows = await fetchPlayerRows(supabase, code.toUpperCase());
+  return rows.map((p) => ({
+    id: p.player_id,
+    name: p.name,
+    score: p.score,
+    answer: p.answer,
+  }));
 }
 
 async function fetchPlayerRows(
@@ -116,7 +137,7 @@ async function fetchPlayerRows(
   }
   groups.push((playerRows ?? []) as FunquizPlayerRow[]);
 
-  const merged = mergePlayerRows(...groups);
+  let merged = mergePlayerRowsForRead(...groups);
   if (merged.length >= MAX_PLAYERS) {
     return merged;
   }
@@ -126,7 +147,8 @@ async function fetchPlayerRows(
   if (retry.error) {
     throw new Error(retry.error.message);
   }
-  return mergePlayerRows(merged, (retry.data ?? []) as FunquizPlayerRow[]);
+  merged = mergePlayerRowsForRead(merged, (retry.data ?? []) as FunquizPlayerRow[]);
+  return merged;
 }
 
 /** PostgREST can briefly return a stale single-player lobby after a join upsert. */
@@ -154,10 +176,11 @@ export async function saveRoom(room: QuizRoom): Promise<void> {
   const supabase = createAdminClient();
   const normalized = room.code.toUpperCase();
 
-  const latest = await loadRoom(normalized);
-  const mergedRoom: QuizRoom = latest
-    ? { ...room, players: mergePlayersForSave(room.players, latest.players) }
-    : room;
+  const dbPlayers = await loadPlayersForMerge(normalized);
+  const mergedRoom: QuizRoom = {
+    ...room,
+    players: mergePlayersForSave(room.players, dbPlayers),
+  };
 
   const { room: roomInsert, players } = roomToDbRows(mergedRoom);
 
