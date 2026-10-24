@@ -429,7 +429,10 @@ export async function persistNewRoom(room: QuizRoom): Promise<void> {
   await broadcastRoomSync(roomInsert.code);
 }
 
-/** Persist a single lobby join without rewriting other player rows (avoids join/poll races). */
+/**
+ * @deprecated Use `mutateRoomPersisted` with `addPlayer` (join route) for CAS-safe joins.
+ * Persist a single lobby join without rewriting other player rows (avoids join/poll races).
+ */
 export async function persistJoinedPlayer(room: QuizRoom, playerId: string): Promise<void> {
   assertSupabaseConfigured();
   const supabase = createAdminClient();
