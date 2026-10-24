@@ -9,7 +9,7 @@ import { isQuizCategoryId } from "@/lib/funquiz/categories";
 import { isQuizDifficulty } from "@/lib/funquiz/difficulties";
 import { resetRoomForNewGame, toClientState } from "@/lib/funquiz/game-logic";
 import type { GameMode } from "@/lib/funquiz/types";
-import { loadRoom, saveRoom } from "@/lib/funquiz/store";
+import { loadRoom, mutateRoomPersisted } from "@/lib/funquiz/store";
 
 export const dynamic = "force-dynamic";
 
@@ -49,12 +49,13 @@ export async function POST(request: Request, { params }: Params) {
     }
     const gameMode = gameModeRaw as GameMode;
 
-    let room = await loadRoom(code);
-    if (!room) {
+    const exists = await loadRoom(code);
+    if (!exists) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
-    room = resetRoomForNewGame(room, playerId, gameMode, quizCategoryRaw, quizDifficultyRaw);
-    await saveRoom(room);
+    const room = await mutateRoomPersisted(code, (room) =>
+      resetRoomForNewGame(room, playerId, gameMode, quizCategoryRaw, quizDifficultyRaw),
+    );
     return NextResponse.json({ state: toClientState(room, playerId) });
   } catch (err) {
     return handleStoreError(err);

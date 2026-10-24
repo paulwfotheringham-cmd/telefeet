@@ -57,6 +57,8 @@ export type QuizRoom = {
   millionaire?: MillionaireState;
   createdAt: number;
   updatedAt: number;
+  /** ISO timestamp last read from `funquiz_rooms.updated_at` (optimistic concurrency). */
+  dbUpdatedAtIso?: string;
 };
 
 export type PublicQuizQuestion = {

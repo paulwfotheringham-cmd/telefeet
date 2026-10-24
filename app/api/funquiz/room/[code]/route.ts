@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { handleStoreError } from "@/lib/funquiz/api";
 import { tickRoom, toClientState } from "@/lib/funquiz/game-logic";
-import { loadRoom, saveRoom } from "@/lib/funquiz/store";
+import { loadRoom, mutateRoomPersisted } from "@/lib/funquiz/store";
 
 export const dynamic = "force-dynamic";
 
@@ -16,19 +16,15 @@ export async function GET(request: Request, { params }: Params) {
       return NextResponse.json({ error: "code and playerId required" }, { status: 400 });
     }
 
-    let room = await loadRoom(code);
-    if (!room) {
+    const initial = await loadRoom(code);
+    if (!initial) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
-    const phaseBefore = room.phase;
-    const indexBefore = room.questionIndex;
-    room = tickRoom(room);
-    const tickChanged =
-      room.phase !== phaseBefore || room.questionIndex !== indexBefore;
-    // Lobby polls must never persist tick side-effects; tickRoom is a no-op in lobby anyway.
-    if (tickChanged && phaseBefore !== "lobby") {
-      await saveRoom(room);
-      room = (await loadRoom(code)) ?? room;
+    let room = initial;
+    if (initial.phase !== "lobby") {
+      room = await mutateRoomPersisted(code, (r) => tickRoom(r));
+    } else {
+      room = tickRoom(room);
     }
     return NextResponse.json(
       { state: toClientState(room, playerId) },

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { InsufficientQuestionsError } from "./question-selection";
-import { QuizStoreUnavailableError, quizStoreMode } from "./store";
+import { QuizRoomConflictError, QuizStoreUnavailableError, quizStoreMode } from "./store";
 
 export function jsonError(message: string, status: number) {
   return NextResponse.json({ error: message, store: quizStoreMode() }, { status });
@@ -9,6 +9,9 @@ export function jsonError(message: string, status: number) {
 export function handleStoreError(err: unknown) {
   if (err instanceof QuizStoreUnavailableError) {
     return jsonError(err.message, 503);
+  }
+  if (err instanceof QuizRoomConflictError) {
+    return jsonError(err.message, 409);
   }
   if (err instanceof InsufficientQuestionsError) {
     return jsonError(

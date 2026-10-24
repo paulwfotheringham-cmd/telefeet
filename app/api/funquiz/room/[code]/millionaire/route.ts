@@ -7,8 +7,8 @@ import {
   millionaireWalkAway,
 } from "@/lib/funquiz/millionaire/logic";
 import type { MillionaireLifelineId } from "@/lib/funquiz/millionaire/config";
-import { tickRoom, toClientState } from "@/lib/funquiz/game-logic";
-import { loadRoom, saveRoom } from "@/lib/funquiz/store";
+import { toClientState } from "@/lib/funquiz/game-logic";
+import { mutateRoomPersisted } from "@/lib/funquiz/store";
 
 export const dynamic = "force-dynamic";
 
@@ -33,43 +33,34 @@ export async function POST(request: Request, { params }: Params) {
       return NextResponse.json({ error: "playerId and action required" }, { status: 400 });
     }
 
-    let room = await loadRoom(code);
-    if (!room) {
-      return NextResponse.json({ error: "Room not found" }, { status: 404 });
-    }
-    room = tickRoom(room);
+    const room = await mutateRoomPersisted(code, (room) => {
+      switch (body.action) {
+        case "lock": {
+          if (body.choiceIndex === undefined) {
+            throw new Error("choiceIndex required");
+          }
+          return millionaireLockAnswer(room, playerId, body.choiceIndex);
+        }
+        case "finalize": {
+          if (body.choiceIndex === undefined) {
+            throw new Error("choiceIndex required");
+          }
+          return millionaireFinalizeTeamAnswer(room, playerId, body.choiceIndex);
+        }
+        case "walkaway":
+          return millionaireWalkAway(room, playerId);
+        case "lifeline": {
+          const lifeline = body.lifeline?.trim() ?? "";
+          if (!isLifeline(lifeline)) {
+            throw new Error("Invalid lifeline");
+          }
+          return millionaireUseLifeline(room, playerId, lifeline);
+        }
+        default:
+          throw new Error("Unknown action");
+      }
+    });
 
-    switch (body.action) {
-      case "lock": {
-        if (body.choiceIndex === undefined) {
-          return NextResponse.json({ error: "choiceIndex required" }, { status: 400 });
-        }
-        room = millionaireLockAnswer(room, playerId, body.choiceIndex);
-        break;
-      }
-      case "finalize": {
-        if (body.choiceIndex === undefined) {
-          return NextResponse.json({ error: "choiceIndex required" }, { status: 400 });
-        }
-        room = millionaireFinalizeTeamAnswer(room, playerId, body.choiceIndex);
-        break;
-      }
-      case "walkaway":
-        room = millionaireWalkAway(room, playerId);
-        break;
-      case "lifeline": {
-        const lifeline = body.lifeline?.trim() ?? "";
-        if (!isLifeline(lifeline)) {
-          return NextResponse.json({ error: "Invalid lifeline" }, { status: 400 });
-        }
-        room = millionaireUseLifeline(room, playerId, lifeline);
-        break;
-      }
-      default:
-        return NextResponse.json({ error: "Unknown action" }, { status: 400 });
-    }
-
-    await saveRoom(room);
     return NextResponse.json({ state: toClientState(room, playerId) });
   } catch (err) {
     return handleStoreError(err);

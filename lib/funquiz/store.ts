@@ -8,6 +8,7 @@ import {
 } from "./db-mapper";
 import { MAX_PLAYERS } from "./constants";
 import { broadcastRoomSync } from "./realtime-server";
+import { tickRoom } from "./game-logic";
 import type { QuizPlayer, QuizRoom } from "./types";
 
 /** Keep concurrent joins: in-memory mutations win; players only in DB are retained. */
@@ -74,6 +75,13 @@ export class QuizStoreUnavailableError extends Error {
   }
 }
 
+export class QuizRoomConflictError extends Error {
+  constructor(message = "Room was updated concurrently; retry the action") {
+    super(message);
+    this.name = "QuizRoomConflictError";
+  }
+}
+
 function assertSupabaseConfigured(): void {
   if (
     !process.env.NEXT_PUBLIC_SUPABASE_URL ||
@@ -98,6 +106,14 @@ export function quizStoreMode(): "supabase" | "none" {
 async function purgeExpiredRoom(code: string): Promise<void> {
   const supabase = createAdminClient();
   await supabase.from("funquiz_rooms").delete().eq("code", code.toUpperCase());
+}
+
+/** Test helper: remove a room row (no-op when store is not configured). */
+export async function deleteRoomForTest(code: string): Promise<void> {
+  if (!isQuizStoreConfigured()) {
+    return;
+  }
+  await purgeExpiredRoom(code);
 }
 
 export async function loadRoom(code: string): Promise<QuizRoom | null> {
@@ -251,7 +267,7 @@ async function fetchPlayerCount(
   return data;
 }
 
-export async function saveRoom(room: QuizRoom): Promise<void> {
+export async function saveRoom(room: QuizRoom): Promise<QuizRoom> {
   assertSupabaseConfigured();
   const supabase = createAdminClient();
   const normalized = room.code.toUpperCase();
@@ -298,13 +314,42 @@ export async function saveRoom(room: QuizRoom): Promise<void> {
   const createdAt =
     existing.data?.created_at ?? new Date(mergedRoom.createdAt).toISOString();
 
-  const { error: roomError } = await supabase.from("funquiz_rooms").upsert({
+  const basisUpdatedAt = mergedRoom.dbUpdatedAtIso;
+  const roomPayload = {
     ...roomInsert,
     created_at: createdAt,
-  });
+  };
 
-  if (roomError) {
-    throw new Error(roomError.message);
+  if (basisUpdatedAt && existing.data) {
+    const { code: _code, created_at: _ca, ...updatePatch } = roomPayload;
+    const { data: updatedRow, error: roomError } = await supabase
+      .from("funquiz_rooms")
+      .update(updatePatch)
+      .eq("code", normalized)
+      .eq("updated_at", basisUpdatedAt)
+      .select("updated_at")
+      .maybeSingle();
+
+    if (roomError) {
+      throw new Error(roomError.message);
+    }
+    if (!updatedRow) {
+      throw new QuizRoomConflictError();
+    }
+    mergedRoom.dbUpdatedAtIso = updatedRow.updated_at as string;
+  } else {
+    const { error: roomError } = await supabase.from("funquiz_rooms").upsert(roomPayload);
+    if (roomError) {
+      throw new Error(roomError.message);
+    }
+    const { data: reread } = await supabase
+      .from("funquiz_rooms")
+      .select("updated_at")
+      .eq("code", normalized)
+      .maybeSingle();
+    if (reread?.updated_at) {
+      mergedRoom.dbUpdatedAtIso = reread.updated_at as string;
+    }
   }
 
   if (players.length > 0) {
@@ -317,6 +362,43 @@ export async function saveRoom(room: QuizRoom): Promise<void> {
   }
 
   await broadcastRoomSync(roomInsert.code);
+  return mergedRoom;
+}
+
+const DEFAULT_MUTATE_ATTEMPTS = 4;
+
+/**
+ * Load room, apply server-side transition, and persist with optimistic concurrency.
+ * Retries on concurrent write conflicts by reloading and re-applying the mutation.
+ */
+export async function mutateRoomPersisted(
+  code: string,
+  mutate: (room: QuizRoom) => QuizRoom,
+  options?: { maxAttempts?: number },
+): Promise<QuizRoom> {
+  const normalized = code.toUpperCase();
+  const maxAttempts = options?.maxAttempts ?? DEFAULT_MUTATE_ATTEMPTS;
+  let lastConflict: QuizRoomConflictError | null = null;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    let room = await loadRoom(normalized);
+    if (!room) {
+      throw new Error("Room not found");
+    }
+    room = tickRoom(room);
+    const next = mutate(room);
+    try {
+      return await saveRoom(next);
+    } catch (err) {
+      if (err instanceof QuizRoomConflictError) {
+        lastConflict = err;
+        continue;
+      }
+      throw err;
+    }
+  }
+
+  throw lastConflict ?? new QuizRoomConflictError("Too many concurrent room updates");
 }
 
 /** Initial room write: upsert room row and host player only (no player-table delete). */

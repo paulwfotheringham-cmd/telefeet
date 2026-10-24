@@ -233,6 +233,7 @@ export function dbRowsToRoom(roomRow: FunquizRoomRow, playerRows: FunquizPlayerR
         : undefined),
     createdAt: new Date(roomRow.created_at).getTime(),
     updatedAt: new Date(roomRow.updated_at).getTime(),
+    dbUpdatedAtIso: roomRow.updated_at,
   };
 }
 
