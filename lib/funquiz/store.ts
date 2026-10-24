@@ -1,5 +1,11 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { dbRowsToRoom, roomToDbRows, type FunquizPlayerRow, type FunquizRoomRow } from "./db-mapper";
+import {
+  dbRowsToRoom,
+  playerRowsFromSnapshot,
+  roomToDbRows,
+  type FunquizPlayerRow,
+  type FunquizRoomRow,
+} from "./db-mapper";
 import { MAX_PLAYERS } from "./constants";
 import { broadcastRoomSync } from "./realtime-server";
 import type { QuizPlayer, QuizRoom } from "./types";
@@ -108,8 +114,10 @@ export async function loadRoom(code: string): Promise<QuizRoom | null> {
     return null;
   }
 
+  const snapshotRows = playerRowsFromSnapshot(normalized, row.players_snapshot);
   const playerRows = await fetchPlayerRows(supabase, normalized, {
     lobbyWait: row.phase === "lobby",
+    seedRows: snapshotRows,
   });
 
   return dbRowsToRoom(row, playerRows);
@@ -173,6 +181,8 @@ async function fetchPlayerCount(
 type FetchPlayerRowsOptions = {
   /** When true, retry until DB count matches visible rows or budget elapses (lobby join lag). */
   lobbyWait?: boolean;
+  /** Rows from funquiz_rooms.players_snapshot (same row fetch as room metadata). */
+  seedRows?: FunquizPlayerRow[];
 };
 
 async function fetchPlayerRows(
@@ -181,6 +191,9 @@ async function fetchPlayerRows(
   options: FetchPlayerRowsOptions = {},
 ): Promise<FunquizPlayerRow[]> {
   const bestById = new Map<string, FunquizPlayerRow>();
+  if (options.seedRows?.length) {
+    absorbPlayerRowsIntoMap(bestById, options.seedRows);
+  }
   const deadline =
     options.lobbyWait === true ? Date.now() + LOBBY_PLAYER_READ_MAX_MS : Date.now();
 
@@ -291,9 +304,13 @@ export async function persistJoinedPlayer(room: QuizRoom, playerId: string): Pro
   const normalized = room.code.toUpperCase();
   const { room: roomInsert } = roomToDbRows(room);
 
+  const { room: roomPatch, players: allPlayers } = roomToDbRows(room);
   const { error: roomError } = await supabase
     .from("funquiz_rooms")
-    .update({ updated_at: roomInsert.updated_at })
+    .update({
+      updated_at: roomPatch.updated_at,
+      players_snapshot: allPlayers,
+    })
     .eq("code", normalized);
   if (roomError) {
     throw new Error(roomError.message);

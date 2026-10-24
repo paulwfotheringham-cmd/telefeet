@@ -5,7 +5,7 @@ import {
   mergePlayersForSave,
   shouldContinueLobbyPlayerRead,
 } from "../lib/funquiz/store";
-import type { FunquizPlayerRow } from "../lib/funquiz/db-mapper";
+import { playerRowsFromSnapshot, type FunquizPlayerRow } from "../lib/funquiz/db-mapper";
 import type { QuizPlayer } from "../lib/funquiz/types";
 
 function row(id: string, name: string): FunquizPlayerRow {
@@ -52,6 +52,16 @@ function runMonotonicAbsorbKeepsGuestFromEarlierAttempt() {
   assert.equal(best.size, 2);
 }
 
+function runSnapshotRecoversGuestWhenTableStale() {
+  const snapshot = playerRowsFromSnapshot("ABC123", [
+    { room_code: "ABC123", player_id: "host", name: "Paul", score: 0, answer: null },
+    { room_code: "ABC123", player_id: "guest", name: "Phone", score: 0, answer: null },
+  ]);
+  const staleTable = [row("host", "Paul")];
+  const merged = mergePlayerRowsForRead(snapshot, staleTable);
+  assert.equal(merged.length, 2);
+}
+
 function runLobbyReadContinuesUntilFullLobby() {
   assert.equal(shouldContinueLobbyPlayerRead(2, true), false);
   assert.equal(shouldContinueLobbyPlayerRead(1, true), true);
@@ -63,5 +73,6 @@ runReadMergeTableWinsOnClash();
 runReadMergeNoDuplicateIds();
 runSaveMergeConcurrentStaleHostSave();
 runMonotonicAbsorbKeepsGuestFromEarlierAttempt();
+runSnapshotRecoversGuestWhenTableStale();
 runLobbyReadContinuesUntilFullLobby();
 console.log("funquiz read merge unit OK");
