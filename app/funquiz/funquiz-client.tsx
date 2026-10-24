@@ -278,6 +278,30 @@ export function FunQuizClient() {
     }
   };
 
+  const playAgainSameSettings = async () => {
+    if (!roomState?.code || roomState.hostId !== playerId) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/funquiz/room/${roomState.code}/new-game`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          playerId,
+          gameMode: roomState.gameMode,
+          quizCategory: roomState.quizCategoryId,
+          quizDifficulty: roomState.quizDifficulty,
+        }),
+      });
+      const state = await parseState(res);
+      if (state) setRoomState(state);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not start new game");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const startNewGame = async () => {
     if (!roomState?.code || !newGameMode || !newGameDifficulty || !newGameCategory) return;
     setBusy(true);
@@ -543,6 +567,8 @@ export function FunQuizClient() {
           setBusy={setBusy}
           onRefreshState={setRoomState}
           onError={setError}
+          onPlayAgain={isHost ? () => void playAgainSameSettings() : undefined}
+          onLeaveLobby={leaveRoom}
         />
       ) : null}
 

@@ -145,6 +145,32 @@ function runTwoPlayerDisagreementFinalize() {
   assert.equal(hostView.jointScore, guestView.jointScore);
 }
 
+function runWinAllTenQuestions() {
+  let room = createRoom(
+    "host",
+    "H",
+    "MM0007",
+    GAME_MODE_SHARED_MILLIONAIRE,
+    QUIZ_CATEGORY_SPACE,
+    QUIZ_DIFFICULTY_INTERMEDIATE,
+  );
+  room = startGame(room, "host");
+  for (let i = 0; i < MILLIONAIRE_QUESTION_COUNT; i++) {
+    assert.equal(room.questionIndex, i);
+    const q = getQuestionByBankId(room.questionOrder[i]!);
+    room = submitAnswer(room, "host", q.correctIndex);
+    room = millionaireLockAnswer(room, "host", q.correctIndex);
+    assert.equal(room.phase, "reveal");
+    room = tickRoom(room, Date.now() + 10_000);
+    if (i < MILLIONAIRE_QUESTION_COUNT - 1) {
+      assert.equal(room.phase, "question");
+    }
+  }
+  assert.equal(room.phase, "won");
+  assert.equal(room.millionaire!.finalAwardedPrize, 1_000_000);
+  assert.equal(room.millionaire!.outcome, "won");
+}
+
 function runPersistenceRoundtrip() {
   let room = createRoom(
     "host",
@@ -171,5 +197,6 @@ runWrongAnswerLost();
 runWalkAway();
 runFiftyFifty();
 runTwoPlayerDisagreementFinalize();
+runWinAllTenQuestions();
 runPersistenceRoundtrip();
 console.log("funquiz-millionaire.test.ts OK");

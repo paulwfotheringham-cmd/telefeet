@@ -10,6 +10,8 @@ type Props = {
   onRefreshState: (state: ClientRoomState) => void;
   onError: (message: string) => void;
   setBusy: (busy: boolean) => void;
+  onPlayAgain?: () => void;
+  onLeaveLobby?: () => void;
 };
 
 function formatMoney(n: number): string {
@@ -24,6 +26,8 @@ export function MillionaireStage({
   onRefreshState,
   onError,
   setBusy,
+  onPlayAgain,
+  onLeaveLobby,
 }: Props) {
   const mv = roomState.millionaireView;
   const question = roomState.question;
@@ -116,10 +120,40 @@ export function MillionaireStage({
                     ? "You walked away"
                     : "Game over"}
               </h3>
+              <p className="mt-2 text-sm text-slate-300">
+                {roomState.players.map((p) => p.name).join(" · ")}
+              </p>
               <p className="mt-2 text-amber-100">
                 Final virtual prize:{" "}
                 <strong>{formatMoney(mv.finalAwardedPrize ?? mv.securedPrize)}</strong>
               </p>
+              {phase === "won" ? (
+                <p className="mt-1 text-xs text-slate-400">
+                  All {mv.totalQuestions} questions answered correctly.
+                </p>
+              ) : null}
+              <div className="mt-5 flex flex-wrap justify-center gap-3">
+                {isHost && onPlayAgain ? (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => onPlayAgain()}
+                    className="rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 px-5 py-2.5 text-sm font-semibold text-black disabled:opacity-50"
+                  >
+                    Play again
+                  </button>
+                ) : null}
+                {onLeaveLobby ? (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => onLeaveLobby()}
+                    className="rounded-xl border border-white/20 px-5 py-2.5 text-sm text-slate-200"
+                  >
+                    Leave room
+                  </button>
+                ) : null}
+              </div>
             </section>
           )}
 
