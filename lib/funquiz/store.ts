@@ -108,19 +108,45 @@ export async function loadRoom(code: string): Promise<QuizRoom | null> {
     return null;
   }
 
-  const row = roomRow as FunquizRoomRow;
+  let row = roomRow as FunquizRoomRow;
   if (new Date(row.expires_at).getTime() < Date.now()) {
     await purgeExpiredRoom(normalized);
     return null;
   }
 
-  const snapshotRows = playerRowsFromSnapshot(normalized, row.players_snapshot);
+  let snapshotRows = playerRowsFromSnapshot(normalized, row.players_snapshot);
+  if (row.phase === "lobby" && snapshotRows.length < MAX_PLAYERS) {
+    snapshotRows = await waitForLobbySnapshot(supabase, normalized, snapshotRows);
+  }
+
   const playerRows = await fetchPlayerRows(supabase, normalized, {
     lobbyWait: row.phase === "lobby",
     seedRows: snapshotRows,
   });
 
   return dbRowsToRoom(row, playerRows);
+}
+
+async function waitForLobbySnapshot(
+  supabase: ReturnType<typeof createAdminClient>,
+  roomCode: string,
+  initial: FunquizPlayerRow[],
+): Promise<FunquizPlayerRow[]> {
+  const bestById = new Map(initial.map((r) => [r.player_id, r]));
+  const deadline = Date.now() + LOBBY_PLAYER_READ_MAX_MS;
+  while (shouldContinueLobbyPlayerRead(bestById.size, true) && Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, LOBBY_PLAYER_READ_INTERVAL_MS));
+    const { data, error } = await supabase
+      .from("funquiz_rooms")
+      .select("players_snapshot")
+      .eq("code", roomCode)
+      .maybeSingle();
+    if (error) {
+      throw new Error(error.message);
+    }
+    absorbPlayerRowsIntoMap(bestById, playerRowsFromSnapshot(roomCode, data?.players_snapshot));
+  }
+  return [...bestById.values()].slice(0, MAX_PLAYERS);
 }
 
 async function loadPlayersForMerge(code: string): Promise<QuizPlayer[]> {
@@ -198,6 +224,17 @@ async function fetchPlayerRows(
     options.lobbyWait === true ? Date.now() + LOBBY_PLAYER_READ_MAX_MS : Date.now();
 
   do {
+    if (options.lobbyWait === true) {
+      const { data: snapRow } = await supabase
+        .from("funquiz_rooms")
+        .select("players_snapshot")
+        .eq("code", roomCode)
+        .maybeSingle();
+      absorbPlayerRowsIntoMap(
+        bestById,
+        playerRowsFromSnapshot(roomCode, snapRow?.players_snapshot),
+      );
+    }
     const { groups } = await readPlayerRowGroups(supabase, roomCode);
     absorbPlayerRowsIntoMap(bestById, ...groups);
     const visible = bestById.size;
@@ -227,10 +264,25 @@ export async function saveRoom(room: QuizRoom): Promise<void> {
   const supabase = createAdminClient();
   const normalized = room.code.toUpperCase();
 
+  const { data: roomMeta } = await supabase
+    .from("funquiz_rooms")
+    .select("players_snapshot")
+    .eq("code", normalized)
+    .maybeSingle();
+  const snapshotPlayers: QuizPlayer[] = playerRowsFromSnapshot(
+    normalized,
+    roomMeta?.players_snapshot,
+  ).map((p) => ({
+    id: p.player_id,
+    name: p.name,
+    score: p.score,
+    answer: p.answer,
+  }));
   const dbPlayers = await loadPlayersForMerge(normalized);
+  const mergedFromDb = mergePlayersForSave(dbPlayers, snapshotPlayers);
   const mergedRoom: QuizRoom = {
     ...room,
-    players: mergePlayersForSave(room.players, dbPlayers),
+    players: mergePlayersForSave(room.players, mergedFromDb),
   };
 
   const { room: roomInsert, players } = roomToDbRows(mergedRoom);
@@ -302,8 +354,6 @@ export async function persistJoinedPlayer(room: QuizRoom, playerId: string): Pro
     throw new Error("Player not in room state");
   }
   const normalized = room.code.toUpperCase();
-  const { room: roomInsert } = roomToDbRows(room);
-
   const { room: roomPatch, players: allPlayers } = roomToDbRows(room);
   const { error: roomError } = await supabase
     .from("funquiz_rooms")
