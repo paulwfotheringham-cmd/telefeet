@@ -27,7 +27,9 @@ export async function GET() {
       db: "missing_env",
       missingEnv,
       hint:
-        "Fun Quiz uses the same Supabase store for Games 1–3. Copy Production env vars to Preview in Vercel (Settings → Environment Variables).",
+        missingEnv.length === 1 && missingEnv[0] === "SUPABASE_SERVICE_ROLE_KEY"
+          ? "Fun Quiz Preview is missing the server key. If Production already works, enable the same existing variables for Preview in Vercel (Environment Variables → Preview scope)."
+          : "Fun Quiz Preview is missing Supabase env at runtime. Games 1–3 share one store; Production likely has these set for Production scope only—enable Preview for the same keys, or deploy Game 3 via merge to main.",
     });
   }
 
