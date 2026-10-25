@@ -102,10 +102,16 @@ export function FunQuizClient() {
     if (saved) setName(saved);
     fetch("/api/funquiz/health")
       .then((r) => r.json())
-      .then((h: { ok?: boolean; store?: string }) => {
+      .then((h: { ok?: boolean; store?: string; missingEnv?: string[]; hint?: string }) => {
         if (!h.ok || h.store === "none") {
+          const missing =
+            h.missingEnv && h.missingEnv.length > 0
+              ? ` Missing: ${h.missingEnv.join(", ")}.`
+              : "";
           setStoreWarning(
-            "Multiplayer storage is unavailable. Supabase must be configured on the server.",
+            (h.hint ??
+              "Multiplayer storage is unavailable. Supabase must be configured on the server.") +
+              missing,
           );
         }
       })

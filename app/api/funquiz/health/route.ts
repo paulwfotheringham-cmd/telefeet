@@ -6,10 +6,29 @@ import { isQuizStoreConfigured, quizStoreMode } from "@/lib/funquiz/store";
 
 export const dynamic = "force-dynamic";
 
+function missingFunquizEnvVars(): string[] {
+  const missing: string[] = [];
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()) {
+    missing.push("NEXT_PUBLIC_SUPABASE_URL");
+  }
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()) {
+    missing.push("SUPABASE_SERVICE_ROLE_KEY");
+  }
+  return missing;
+}
+
 export async function GET() {
   const mode = quizStoreMode();
+  const missingEnv = missingFunquizEnvVars();
   if (!isQuizStoreConfigured()) {
-    return NextResponse.json({ ok: false, store: mode, db: "missing_env" });
+    return NextResponse.json({
+      ok: false,
+      store: mode,
+      db: "missing_env",
+      missingEnv,
+      hint:
+        "Fun Quiz uses the same Supabase store for Games 1–3. Copy Production env vars to Preview in Vercel (Settings → Environment Variables).",
+    });
   }
 
   const hostCheck = await checkSupabaseHostReachable(process.env.NEXT_PUBLIC_SUPABASE_URL);
