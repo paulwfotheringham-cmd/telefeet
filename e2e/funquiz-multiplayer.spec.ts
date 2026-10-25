@@ -2,6 +2,17 @@ import { test, expect, type BrowserContext, type Page } from "@playwright/test";
 
 const BASE_URL = process.env.FUNQUIZ_E2E_BASE_URL ?? "http://127.0.0.1:3000";
 
+async function healthReady(): Promise<boolean> {
+  try {
+    const res = await fetch(`${BASE_URL}/api/funquiz/health`);
+    if (!res.ok) return false;
+    const h = (await res.json()) as { ok?: boolean };
+    return Boolean(h.ok);
+  } catch {
+    return false;
+  }
+}
+
 async function fillNameAndCreatePlayTogether(page: Page, name: string) {
   await page.getByPlaceholder("Enter your name").fill(name);
   await page.getByRole("button", { name: "Game 2 — Play together" }).click();
@@ -20,6 +31,7 @@ async function fillNameAndJoin(page: Page, name: string, code: string) {
 
 test("two browsers see both players and host can start play together", async ({ browser }) => {
   test.setTimeout(90_000);
+  test.skip(!(await healthReady()), "Supabase FunQuiz storage not configured (see /api/funquiz/health)");
 
   const hostContext: BrowserContext = await browser.newContext();
   const guestContext: BrowserContext = await browser.newContext();

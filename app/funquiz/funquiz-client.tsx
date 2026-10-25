@@ -6,8 +6,10 @@ import { QUIZ_CATEGORIES } from "@/lib/funquiz/categories";
 import type { QuizCategoryId } from "@/lib/funquiz/categories";
 import { QUIZ_DIFFICULTIES } from "@/lib/funquiz/difficulties";
 import type { QuizDifficulty } from "@/lib/funquiz/difficulties";
+import { MillionaireStage } from "@/components/funquiz/millionaire-stage";
 import {
   GAME_MODE_PLAY_TOGETHER,
+  GAME_MODE_SHARED_MILLIONAIRE,
   GAME_MODE_TAKE_TURNS,
 } from "@/lib/funquiz/constants";
 import type { ClientRoomState, GameMode } from "@/lib/funquiz/types";
@@ -28,7 +30,9 @@ function getOrCreatePlayerId(): string {
 type Screen = "home" | "game";
 
 function gameModeLabel(mode: GameMode): string {
-  return mode === GAME_MODE_TAKE_TURNS ? "Take turns" : "Play together";
+  if (mode === GAME_MODE_TAKE_TURNS) return "Take turns";
+  if (mode === GAME_MODE_SHARED_MILLIONAIRE) return "Shared Millionaire";
+  return "Play together";
 }
 
 async function parseState(res: Response): Promise<ClientRoomState | null> {
@@ -98,10 +102,16 @@ export function FunQuizClient() {
     if (saved) setName(saved);
     fetch("/api/funquiz/health")
       .then((r) => r.json())
-      .then((h: { ok?: boolean; store?: string }) => {
+      .then((h: { ok?: boolean; store?: string; missingEnv?: string[]; hint?: string }) => {
         if (!h.ok || h.store === "none") {
+          const missing =
+            h.missingEnv && h.missingEnv.length > 0
+              ? ` Missing: ${h.missingEnv.join(", ")}.`
+              : "";
           setStoreWarning(
-            "Multiplayer storage is unavailable. Supabase must be configured on the server.",
+            (h.hint ??
+              "Multiplayer storage is unavailable. Supabase must be configured on the server.") +
+              missing,
           );
         }
       })
@@ -274,6 +284,30 @@ export function FunQuizClient() {
     }
   };
 
+  const playAgainSameSettings = async () => {
+    if (!roomState?.code || roomState.hostId !== playerId) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/funquiz/room/${roomState.code}/new-game`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          playerId,
+          gameMode: roomState.gameMode,
+          quizCategory: roomState.quizCategoryId,
+          quizDifficulty: roomState.quizDifficulty,
+        }),
+      });
+      const state = await parseState(res);
+      if (state) setRoomState(state);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not start new game");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const startNewGame = async () => {
     if (!roomState?.code || !newGameMode || !newGameDifficulty || !newGameCategory) return;
     setBusy(true);
@@ -383,6 +417,21 @@ export function FunQuizClient() {
                 question.
               </p>
             </button>
+            <button
+              type="button"
+              onClick={() => setSelectedMode(GAME_MODE_SHARED_MILLIONAIRE)}
+              className={`rounded-2xl border p-4 text-left transition ${
+                selectedMode === GAME_MODE_SHARED_MILLIONAIRE
+                  ? "border-amber-400 bg-amber-950/30"
+                  : "border-white/10 bg-black/30 hover:border-amber-400/40"
+              }`}
+            >
+              <p className="text-sm font-semibold text-amber-200">Game 3 — Shared Millionaire</p>
+              <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                Work together. Beat the ladder. Win the million. Lock in answers together,
+                use shared lifelines, and climb ten prize milestones.
+              </p>
+            </button>
           </div>
 
           {selectedMode ? (
@@ -490,9 +539,14 @@ export function FunQuizClient() {
   const { phase, question, players, you, gameMode } = roomState;
   const opponent = players.find((p) => p.id !== playerId);
   const bothIn = players.length >= 2;
+  const canStartGame =
+    gameMode === GAME_MODE_SHARED_MILLIONAIRE ? players.length >= 1 : bothIn;
+  const isMillionaire = gameMode === GAME_MODE_SHARED_MILLIONAIRE;
 
   return (
-    <div className="mx-auto flex min-h-[100dvh] max-w-2xl flex-col px-4 py-6 pb-10">
+    <div
+      className={`mx-auto flex min-h-[100dvh] flex-col px-4 py-6 pb-10 ${isMillionaire ? "max-w-5xl" : "max-w-2xl"}`}
+    >
       <header className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-violet-300">
@@ -510,30 +564,53 @@ export function FunQuizClient() {
         </button>
       </header>
 
-      <div className="mt-4 grid grid-cols-2 gap-3">
-        {[you, opponent].filter(Boolean).map((p) => (
-          <div
-            key={p!.id}
-            className={`rounded-2xl border px-4 py-3 ${
-              p!.id === playerId
-                ? "border-violet-400/50 bg-violet-950/40"
-                : "border-white/10 bg-slate-900/60"
-            }`}
-          >
-            <p className="truncate text-sm font-semibold text-white">
-              {p!.name}
-              {p!.id === playerId ? " (you)" : ""}
-            </p>
-            <p className="mt-1 text-2xl font-bold tabular-nums text-violet-200">
-              {roomState.scoresHidden
-                ? "—"
-                : gameMode === GAME_MODE_PLAY_TOGETHER
-                  ? `${roomState.jointScore ?? p!.score} / 50`
-                  : `${p!.score} / 25`}
-            </p>
-          </div>
-        ))}
-      </div>
+      {isMillionaire && phase !== "lobby" ? (
+        <MillionaireStage
+          roomState={roomState}
+          playerId={playerId}
+          isHost={isHost}
+          busy={busy}
+          setBusy={setBusy}
+          onRefreshState={setRoomState}
+          onError={setError}
+          onPlayAgain={isHost ? () => void playAgainSameSettings() : undefined}
+          onLeaveLobby={leaveRoom}
+        />
+      ) : null}
+
+      {!isMillionaire && gameMode === GAME_MODE_PLAY_TOGETHER ? (
+        <div className="mt-4 rounded-2xl border border-violet-400/50 bg-violet-950/40 px-5 py-4">
+          <p className="text-sm font-semibold text-violet-200">Team score</p>
+          <p className="mt-1 text-3xl font-bold tabular-nums text-white">
+            {roomState.jointScore ?? 0}{" "}
+            <span className="text-lg font-medium text-violet-300/90">/ 50</span>
+          </p>
+          <p className="mt-2 text-xs text-slate-400">
+            {you.name} & {opponent?.name ?? "Partner"} · play together
+          </p>
+        </div>
+      ) : !isMillionaire ? (
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          {[you, opponent].filter(Boolean).map((p) => (
+            <div
+              key={p!.id}
+              className={`rounded-2xl border px-4 py-3 ${
+                p!.id === playerId
+                  ? "border-violet-400/50 bg-violet-950/40"
+                  : "border-white/10 bg-slate-900/60"
+              }`}
+            >
+              <p className="truncate text-sm font-semibold text-white">
+                {p!.name}
+                {p!.id === playerId ? " (you)" : ""}
+              </p>
+              <p className="mt-1 text-2xl font-bold tabular-nums text-violet-200">
+                {roomState.scoresHidden ? "—" : `${p!.score} / 25`}
+              </p>
+            </div>
+          ))}
+        </div>
+      ) : null}
 
       {phase === "lobby" ? (
         <section className="mt-8 flex flex-1 flex-col rounded-3xl border border-white/10 bg-slate-900/70 p-6">
@@ -564,7 +641,7 @@ export function FunQuizClient() {
           {isHost ? (
             <button
               type="button"
-              disabled={busy || !bothIn}
+              disabled={busy || !canStartGame}
               onClick={startGame}
               className="mt-auto rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 py-3.5 text-sm font-semibold text-white disabled:opacity-50"
             >
@@ -578,7 +655,7 @@ export function FunQuizClient() {
         </section>
       ) : null}
 
-      {phase === "question" && !question && roomState.statusMessage ? (
+      {!isMillionaire && phase === "question" && !question && roomState.statusMessage ? (
         <section className="mt-8 flex flex-1 flex-col items-center justify-center rounded-3xl border border-white/10 bg-slate-900/70 p-8 text-center">
           <p className="text-lg text-slate-200">{roomState.statusMessage}</p>
           {you.answer !== null ? (
@@ -587,7 +664,7 @@ export function FunQuizClient() {
         </section>
       ) : null}
 
-      {phase === "question" && question ? (
+      {!isMillionaire && phase === "question" && question ? (
         <section className="mt-6 flex flex-1 flex-col">
           <div className="mb-3 flex items-center justify-between text-xs text-slate-400">
             <span>{question.category}</span>
@@ -646,7 +723,7 @@ export function FunQuizClient() {
         </section>
       ) : null}
 
-      {phase === "reveal" && question && roomState.correctIndex !== null ? (
+      {!isMillionaire && phase === "reveal" && question && roomState.answerFeedback ? (
         <section className="mt-6 flex flex-1 flex-col rounded-3xl border border-amber-400/30 bg-amber-950/20 p-6">
           <h2 className="text-lg font-semibold text-amber-100">Answer reveal</h2>
           {question.outlineImageUrl ? (
@@ -660,27 +737,43 @@ export function FunQuizClient() {
             </div>
           ) : null}
           <p className="mt-2 text-sm text-slate-300">{question.prompt}</p>
-          <p className="mt-4 rounded-xl bg-emerald-900/40 px-4 py-3 text-emerald-100">
-            Correct:{" "}
-            <strong>
-              {String.fromCharCode(65 + roomState.correctIndex)}.{" "}
-              {question.options[roomState.correctIndex]}
-            </strong>
+          <p
+            className={`mt-4 rounded-xl px-4 py-3 text-sm font-semibold ${
+              roomState.answerFeedback.correct
+                ? "bg-emerald-900/50 text-emerald-100"
+                : "bg-red-950/50 text-red-100"
+            }`}
+          >
+            {roomState.answerFeedback.correct ? "Correct!" : "Incorrect"}
           </p>
-          {gameMode === GAME_MODE_PLAY_TOGETHER ? (
-            <p className="mt-4 text-sm text-slate-200">
-              {players.find((p) => p.id === roomState.hostId)?.wasCorrect
-                ? `Correct! Your joint score is ${roomState.jointScore ?? 0} out of ${roomState.questionIndex + 1}.`
-                : `Not quite. The correct answer is ${question.options[roomState.correctIndex]}. Your joint score is ${roomState.jointScore ?? 0} out of ${roomState.questionIndex + 1}.`}
+          {!roomState.answerFeedback.correct ? (
+            <p className="mt-3 rounded-xl bg-emerald-900/40 px-4 py-3 text-emerald-100">
+              Correct answer:{" "}
+              <strong>
+                {String.fromCharCode(65 + roomState.answerFeedback.correctIndex)}.{" "}
+                {roomState.answerFeedback.correctLabel}
+              </strong>
             </p>
           ) : null}
+          {gameMode === GAME_MODE_PLAY_TOGETHER ? (
+            <p className="mt-4 text-sm text-slate-200">
+              Team score: {roomState.jointScore ?? 0} out of {roomState.questionIndex + 1}{" "}
+              answered.
+            </p>
+          ) : (
+            <p className="mt-4 text-sm text-slate-200">
+              {roomState.answerFeedback.correct
+                ? "Nice work — next turn in a moment."
+                : `You chose ${roomState.answerFeedback.chosenLabel}. Next turn in a moment.`}
+            </p>
+          )}
           <p className="mt-auto pt-6 text-center text-xs text-slate-500">
             Next question in a moment…
           </p>
         </section>
       ) : null}
 
-      {phase === "finished" && roomState.results ? (
+      {!isMillionaire && phase === "finished" && roomState.results ? (
         <section className="mt-6 flex flex-1 flex-col rounded-3xl border border-violet-400/30 bg-slate-950/80 p-6">
           <h2 className="text-2xl font-bold text-white">Results</h2>
           <p className="mt-1 text-sm text-slate-400">

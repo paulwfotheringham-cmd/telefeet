@@ -1,5 +1,6 @@
 import {
   GAME_MODE_PLAY_TOGETHER,
+  GAME_MODE_SHARED_MILLIONAIRE,
   GAME_MODE_TAKE_TURNS,
   MAX_PLAYERS,
   QUESTIONS_PER_GAME,
@@ -7,11 +8,22 @@ import {
   ROOM_CODE_LENGTH,
   TAKE_TURNS_QUESTIONS_PER_PLAYER,
 } from "./constants";
+import { toMillionaireClientState } from "./millionaire/client-state";
+import {
+  initMillionaireOnCreate,
+  isMillionaireRoom,
+  millionaireSelectAnswer,
+  millionaireTickRoom,
+  startMillionaireGame,
+} from "./millionaire/logic";
+import { createInitialMillionaireState } from "./millionaire/types";
 import type { QuizCategoryId } from "./categories";
 import { categoryTitle } from "./categories";
 import type { QuizDifficulty } from "./difficulties";
 import { difficultyTitle } from "./difficulties";
+import { gradeAnswer, normalizeChoiceIndex } from "./answer-validation";
 import { selectQuestionIdsForCategory } from "./question-selection";
+import { assertRoomQuestionAllocation } from "./session-questions";
 import { getQuestionByBankId, toPublicQuestion } from "./questions";
 import type {
   AnswerLogEntry,
@@ -92,6 +104,10 @@ export function createRoom(
     answerLog: [],
     players: [{ id: hostId, name: hostName.trim().slice(0, 24), score: 0, answer: null }],
     revealStartedAt: null,
+    millionaire:
+      gameMode === GAME_MODE_SHARED_MILLIONAIRE
+        ? createInitialMillionaireState()
+        : undefined,
     createdAt: now,
     updatedAt: now,
   };
@@ -140,11 +156,19 @@ export function startGame(room: QuizRoom, playerId: string): QuizRoom {
   if (playerId !== room.hostId) {
     throw new Error("Only the host can start");
   }
-  if (room.players.length < MAX_PLAYERS) {
-    throw new Error("Waiting for a second player");
-  }
   if (room.phase !== "lobby") {
     throw new Error("Game already started");
+  }
+
+  if (room.gameMode === GAME_MODE_SHARED_MILLIONAIRE) {
+    if (room.players.length < 1) {
+      throw new Error("Waiting for at least one player");
+    }
+    return startMillionaireGame(initMillionaireOnCreate(room));
+  }
+
+  if (room.players.length < MAX_PLAYERS) {
+    throw new Error("Waiting for a second player");
   }
 
   const allocated = allocateQuestionsForGame(room.quizCategoryId, room.quizDifficulty);
@@ -153,27 +177,9 @@ export function startGame(room: QuizRoom, playerId: string): QuizRoom {
     throw new Error("Waiting for a second player");
   }
 
-  if (room.gameMode === GAME_MODE_TAKE_TURNS) {
-    return {
-      ...room,
-      ...allocated,
-      phase: "question",
-      questionIndex: 0,
-      turnIndex: 0,
-      activePlayerId: room.hostId,
-      jointScore: 0,
-      answerLog: [],
-      revealStartedAt: null,
-      players: room.players.map((p) => ({ ...p, score: 0, answer: null })),
-      updatedAt: Date.now(),
-    };
-  }
-
-  return {
+  const started: QuizRoom = {
     ...room,
-    questionOrder: allocated.questionOrder,
-    hostQuestionOrder: allocated.hostQuestionOrder,
-    guestQuestionOrder: allocated.guestQuestionOrder,
+    ...allocated,
     phase: "question",
     questionIndex: 0,
     turnIndex: 0,
@@ -184,6 +190,8 @@ export function startGame(room: QuizRoom, playerId: string): QuizRoom {
     players: room.players.map((p) => ({ ...p, score: 0, answer: null })),
     updatedAt: Date.now(),
   };
+  assertRoomQuestionAllocation(started);
+  return started;
 }
 
 export function resetRoomForNewGame(
@@ -196,7 +204,12 @@ export function resetRoomForNewGame(
   if (playerId !== room.hostId) {
     throw new Error("Only the host can start a new game");
   }
-  if (room.phase !== "finished") {
+  const terminal =
+    room.phase === "finished" ||
+    room.phase === "won" ||
+    room.phase === "lost" ||
+    room.phase === "walkaway";
+  if (!terminal) {
     throw new Error("Finish the current game before starting a new one");
   }
   return {
@@ -215,6 +228,10 @@ export function resetRoomForNewGame(
     jointScore: 0,
     answerLog: [],
     revealStartedAt: null,
+    millionaire:
+      gameMode === GAME_MODE_SHARED_MILLIONAIRE
+        ? createInitialMillionaireState()
+        : undefined,
     players: room.players.map((p) => ({ ...p, score: 0, answer: null })),
     updatedAt: Date.now(),
   };
@@ -251,51 +268,31 @@ function submitTakeTurns(room: QuizRoom, playerId: string, choiceIndex: number):
   }
 
   const bankId = bankIdForTakeTurn(room, room.turnIndex);
-  const q = getQuestionByBankId(bankId);
-  assertValidChoiceIndex(choiceIndex, q.options.length);
-  const correct = choiceIndex === q.correctIndex;
+  const graded = gradeAnswer(bankId, choiceIndex);
   const entry: AnswerLogEntry = {
     sessionId: room.sessionId,
     turnIndex: room.turnIndex,
     bankId,
     playerId,
-    choiceIndex,
-    correct,
+    choiceIndex: graded.choiceIndex,
+    correct: graded.correct,
   };
 
   const players = room.players.map((p) => {
     if (p.id !== playerId) return { ...p, answer: null };
     return {
       ...p,
-      answer: choiceIndex,
-      score: correct ? p.score + 1 : p.score,
+      answer: graded.choiceIndex,
+      score: graded.correct ? p.score + 1 : p.score,
     };
   });
 
-  const nextTurn = room.turnIndex + 1;
-  const answerLog = [...room.answerLog, entry];
-
-  if (nextTurn >= QUESTIONS_PER_GAME) {
-    return {
-      ...room,
-      players: players.map((p) => ({ ...p, answer: null })),
-      answerLog,
-      turnIndex: nextTurn,
-      activePlayerId: null,
-      phase: "finished",
-      updatedAt: Date.now(),
-    };
-  }
-
-  const nextActive = expectedPlayerForTurn(room, nextTurn);
   return {
     ...room,
-    players: players.map((p) => ({ ...p, answer: null })),
-    answerLog,
-    turnIndex: nextTurn,
-    activePlayerId: nextActive,
-    questionIndex: Math.floor(nextTurn / 2),
-    phase: "question",
+    players,
+    answerLog: [...room.answerLog, entry],
+    phase: "reveal",
+    revealStartedAt: Date.now(),
     updatedAt: Date.now(),
   };
 }
@@ -317,21 +314,19 @@ function submitPlayTogether(room: QuizRoom, playerId: string, choiceIndex: numbe
   }
 
   const bankId = room.questionOrder[room.questionIndex]!;
-  const q = getQuestionByBankId(bankId);
-  assertValidChoiceIndex(choiceIndex, q.options.length);
-  const correct = choiceIndex === q.correctIndex;
+  const graded = gradeAnswer(bankId, choiceIndex);
   const entry: AnswerLogEntry = {
     sessionId: room.sessionId,
     turnIndex: room.questionIndex,
     bankId,
     playerId,
-    choiceIndex,
-    correct,
+    choiceIndex: graded.choiceIndex,
+    correct: graded.correct,
   };
-  const jointScore = room.jointScore + (correct ? 1 : 0);
+  const jointScore = room.jointScore + (graded.correct ? 1 : 0);
   const players = room.players.map((p) => ({
     ...p,
-    answer: p.id === room.hostId ? choiceIndex : null,
+    answer: p.id === room.hostId ? graded.choiceIndex : null,
     score: jointScore,
   }));
 
@@ -346,20 +341,47 @@ function submitPlayTogether(room: QuizRoom, playerId: string, choiceIndex: numbe
   };
 }
 
-function assertValidChoiceIndex(choiceIndex: number, optionCount: number): void {
-  if (choiceIndex < 0 || choiceIndex >= optionCount || !Number.isInteger(choiceIndex)) {
-    throw new Error("Invalid answer");
+export function submitAnswer(room: QuizRoom, playerId: string, choiceIndexRaw: unknown): QuizRoom {
+  const choiceIndex = normalizeChoiceIndex(choiceIndexRaw);
+  if (room.gameMode === GAME_MODE_SHARED_MILLIONAIRE) {
+    return millionaireSelectAnswer(room, playerId, choiceIndex);
   }
-}
-
-export function submitAnswer(room: QuizRoom, playerId: string, choiceIndex: number): QuizRoom {
   if (room.gameMode === GAME_MODE_TAKE_TURNS) {
     return submitTakeTurns(room, playerId, choiceIndex);
   }
   return submitPlayTogether(room, playerId, choiceIndex);
 }
 
-function advanceFromReveal(room: QuizRoom): QuizRoom {
+function advanceFromRevealTakeTurns(room: QuizRoom): QuizRoom {
+  const nextTurn = room.turnIndex + 1;
+  const clearedPlayers = room.players.map((p) => ({ ...p, answer: null }));
+
+  if (nextTurn >= QUESTIONS_PER_GAME) {
+    return {
+      ...room,
+      phase: "finished",
+      turnIndex: nextTurn,
+      activePlayerId: null,
+      revealStartedAt: null,
+      players: clearedPlayers,
+      updatedAt: Date.now(),
+    };
+  }
+
+  const nextActive = expectedPlayerForTurn(room, nextTurn);
+  return {
+    ...room,
+    phase: "question",
+    turnIndex: nextTurn,
+    activePlayerId: nextActive,
+    questionIndex: Math.floor(nextTurn / 2),
+    revealStartedAt: null,
+    players: clearedPlayers,
+    updatedAt: Date.now(),
+  };
+}
+
+function advanceFromRevealPlayTogether(room: QuizRoom): QuizRoom {
   const nextIndex = room.questionIndex + 1;
   if (nextIndex >= QUESTIONS_PER_GAME) {
     return {
@@ -380,9 +402,16 @@ function advanceFromReveal(room: QuizRoom): QuizRoom {
   };
 }
 
+function advanceFromReveal(room: QuizRoom): QuizRoom {
+  if (room.gameMode === GAME_MODE_TAKE_TURNS) {
+    return advanceFromRevealTakeTurns(room);
+  }
+  return advanceFromRevealPlayTogether(room);
+}
+
 export function tickRoom(room: QuizRoom, now = Date.now()): QuizRoom {
-  if (room.gameMode !== GAME_MODE_PLAY_TOGETHER) {
-    return room;
+  if (isMillionaireRoom(room)) {
+    return millionaireTickRoom(room, now);
   }
   if (room.phase === "reveal" && room.revealStartedAt !== null) {
     if (now - room.revealStartedAt >= REVEAL_MS) {
@@ -427,16 +456,52 @@ export function buildResultRows(room: QuizRoom): ResultRow[] {
 
 function currentBankId(room: QuizRoom): number | null {
   if (room.gameMode === GAME_MODE_TAKE_TURNS) {
-    if (room.phase !== "question" || room.turnIndex >= QUESTIONS_PER_GAME) return null;
-    return bankIdForTakeTurn(room, room.turnIndex);
+    if (room.turnIndex >= QUESTIONS_PER_GAME) return null;
+    if (room.phase === "question" || room.phase === "reveal") {
+      return bankIdForTakeTurn(room, room.turnIndex);
+    }
+    return null;
   }
-  if (room.phase === "question" || room.phase === "reveal") {
-    return room.questionOrder[room.questionIndex] ?? null;
+  if (room.gameMode === GAME_MODE_SHARED_MILLIONAIRE) {
+    if (
+      room.phase === "question" ||
+      room.phase === "discussion" ||
+      room.phase === "reveal"
+    ) {
+      return room.questionOrder[room.questionIndex] ?? null;
+    }
+    return null;
+  }
+  if (room.gameMode === GAME_MODE_PLAY_TOGETHER) {
+    if (room.phase === "question" || room.phase === "reveal") {
+      return room.questionOrder[room.questionIndex] ?? null;
+    }
   }
   return null;
 }
 
+function revealLogEntryForCurrentStep(room: QuizRoom): AnswerLogEntry | null {
+  const turnKey =
+    room.gameMode === GAME_MODE_TAKE_TURNS ? room.turnIndex : room.questionIndex;
+  const entries = room.answerLog.filter(
+    (e) => e.sessionId === room.sessionId && e.turnIndex === turnKey,
+  );
+  return entries.length > 0 ? entries[entries.length - 1]! : null;
+}
+
 export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState {
+  if (isMillionaireRoom(room)) {
+    const you = room.players.find((p) => p.id === viewerId);
+    if (!you) {
+      return {
+        ...toMillionaireClientState(room, room.hostId),
+        error: "You are not in this room",
+        millionaireView: null,
+      };
+    }
+    return toMillionaireClientState(room, viewerId);
+  }
+
   const you = room.players.find((p) => p.id === viewerId);
   if (!you) {
     return {
@@ -460,10 +525,12 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
       players: [],
       question: null,
       correctIndex: null,
+      answerFeedback: null,
       revealEndsAt: null,
       winnerIds: [],
       you: { id: viewerId, name: "", score: 0, answer: null },
       results: null,
+      millionaireView: null,
       error: "You are not in this room",
     };
   }
@@ -474,28 +541,31 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
 
   let question = null;
   let correctIndex: number | null = null;
-  let revealCorrect: number | null = null;
+  let answerFeedback: ClientRoomState["answerFeedback"] = null;
   const bankId = currentBankId(room);
+  const revealEntry =
+    room.phase === "reveal" ? revealLogEntryForCurrentStep(room) : null;
 
   let isYourTurn = false;
   let canSubmitAnswer = false;
   let statusMessage: string | null = null;
 
   if (room.gameMode === GAME_MODE_TAKE_TURNS) {
-    if (room.phase === "question" && room.activePlayerId) {
+    if ((room.phase === "question" || room.phase === "reveal") && room.activePlayerId) {
       isYourTurn = viewerId === room.activePlayerId;
-      canSubmitAnswer = isYourTurn && you.answer === null;
+      canSubmitAnswer = room.phase === "question" && isYourTurn && you.answer === null;
       const activePlayer = room.players.find((p) => p.id === room.activePlayerId);
-      if (!isYourTurn && activePlayer) {
+      if (room.phase === "question" && !isYourTurn && activePlayer) {
         statusMessage = `It's ${activePlayer.name}'s turn — watch along!`;
-      } else if (isYourTurn && you.answer !== null) {
-        statusMessage = "Answer submitted. Waiting for your opponent…";
       }
       if (bankId !== null) {
         question = toPublicQuestion(getQuestionByBankId(bankId));
       }
     }
-  } else if (room.phase === "question" || room.phase === "reveal") {
+  } else if (
+    room.gameMode === GAME_MODE_PLAY_TOGETHER &&
+    (room.phase === "question" || room.phase === "reveal")
+  ) {
     if (bankId !== null) {
       question = toPublicQuestion(getQuestionByBankId(bankId));
     }
@@ -504,11 +574,18 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
     if (!isYourTurn && room.phase === "question") {
       statusMessage = "Discuss with your partner — only the room creator can submit.";
     }
-    if (room.phase === "reveal" && bankId !== null) {
-      const q = getQuestionByBankId(bankId);
-      correctIndex = q.correctIndex;
-      revealCorrect = q.correctIndex;
-    }
+  }
+
+  if (room.phase === "reveal" && revealEntry) {
+    const q = getQuestionByBankId(revealEntry.bankId);
+    correctIndex = q.correctIndex;
+    answerFeedback = {
+      correct: revealEntry.correct,
+      choiceIndex: revealEntry.choiceIndex,
+      correctIndex: q.correctIndex,
+      chosenLabel: q.options[revealEntry.choiceIndex] ?? "",
+      correctLabel: q.options[q.correctIndex] ?? "",
+    };
   }
 
   const revealEndsAt =
@@ -548,14 +625,19 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
       score: displayScore(p),
       hasAnswered: p.answer !== null,
       answerIndex:
-        room.phase === "reveal" || room.phase === "finished" ? p.answer : null,
+        room.phase === "reveal" && revealEntry && p.id === revealEntry.playerId
+          ? revealEntry.choiceIndex
+          : room.phase === "finished"
+            ? p.answer
+            : null,
       wasCorrect:
-        room.phase === "reveal" && p.answer !== null && revealCorrect !== null
-          ? p.answer === revealCorrect
+        room.phase === "reveal" && revealEntry && p.id === revealEntry.playerId
+          ? revealEntry.correct
           : null,
     })),
     question,
     correctIndex,
+    answerFeedback,
     revealEndsAt,
     winnerIds:
       room.phase === "finished" && room.gameMode === GAME_MODE_TAKE_TURNS
@@ -568,6 +650,7 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
       answer: you.answer,
     },
     results,
+    millionaireView: null,
   };
 }
 

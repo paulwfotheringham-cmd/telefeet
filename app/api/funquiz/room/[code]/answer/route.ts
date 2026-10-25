@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { handleStoreError } from "@/lib/funquiz/api";
-import { submitAnswer, tickRoom, toClientState } from "@/lib/funquiz/game-logic";
-import { loadRoom, saveRoom } from "@/lib/funquiz/store";
+import { submitAnswer, toClientState } from "@/lib/funquiz/game-logic";
+import { loadRoom, mutateRoomPersisted } from "@/lib/funquiz/store";
 
 export const dynamic = "force-dynamic";
 
@@ -20,13 +20,13 @@ export async function POST(request: Request, { params }: Params) {
       );
     }
 
-    let room = await loadRoom(code);
-    if (!room) {
+    const exists = await loadRoom(code);
+    if (!exists) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
-    room = tickRoom(room);
-    room = submitAnswer(room, playerId, choiceIndex);
-    await saveRoom(room);
+    const room = await mutateRoomPersisted(code, (room) =>
+      submitAnswer(room, playerId, choiceIndex),
+    );
     return NextResponse.json({ state: toClientState(room, playerId) });
   } catch (err) {
     return handleStoreError(err);

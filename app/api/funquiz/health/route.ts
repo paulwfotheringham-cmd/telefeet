@@ -6,10 +6,31 @@ import { isQuizStoreConfigured, quizStoreMode } from "@/lib/funquiz/store";
 
 export const dynamic = "force-dynamic";
 
+function missingFunquizEnvVars(): string[] {
+  const missing: string[] = [];
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()) {
+    missing.push("NEXT_PUBLIC_SUPABASE_URL");
+  }
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()) {
+    missing.push("SUPABASE_SERVICE_ROLE_KEY");
+  }
+  return missing;
+}
+
 export async function GET() {
   const mode = quizStoreMode();
+  const missingEnv = missingFunquizEnvVars();
   if (!isQuizStoreConfigured()) {
-    return NextResponse.json({ ok: false, store: mode, db: "missing_env" });
+    return NextResponse.json({
+      ok: false,
+      store: mode,
+      db: "missing_env",
+      missingEnv,
+      hint:
+        missingEnv.length === 1 && missingEnv[0] === "SUPABASE_SERVICE_ROLE_KEY"
+          ? "Fun Quiz Preview is missing the server key. If Production already works, enable the same existing variables for Preview in Vercel (Environment Variables → Preview scope)."
+          : "Fun Quiz Preview is missing Supabase env at runtime. Games 1–3 share one store; Production likely has these set for Production scope only—enable Preview for the same keys, or deploy Game 3 via merge to main.",
+    });
   }
 
   const hostCheck = await checkSupabaseHostReachable(process.env.NEXT_PUBLIC_SUPABASE_URL);

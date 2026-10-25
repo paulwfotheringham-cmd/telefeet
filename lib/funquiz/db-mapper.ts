@@ -3,10 +3,15 @@ import { QUIZ_CATEGORY_GENERAL_KNOWLEDGE } from "./categories";
 import { isQuizDifficulty } from "./difficulties";
 import { QUIZ_DIFFICULTY_INTERMEDIATE } from "./difficulties";
 import type { AnswerLogEntry, GameMode, QuizPhase, QuizPlayer, QuizRoom } from "./types";
+import type { MillionaireState } from "./millionaire/types";
+import { createInitialMillionaireState } from "./millionaire/types";
 import {
   GAME_MODE_PLAY_TOGETHER,
+  GAME_MODE_SHARED_MILLIONAIRE,
+  GAME_MODE_TAKE_TURNS,
   QUESTIONS_PER_GAME,
 } from "./constants";
+import { MILLIONAIRE_QUESTION_COUNT } from "./millionaire/config";
 
 export type FunquizRoomRow = {
   code: string;
@@ -29,6 +34,7 @@ export type FunquizRoomRow = {
   guest_question_order?: number[] | null;
   joint_score?: number;
   answer_log?: unknown;
+  millionaire_state?: unknown;
 };
 
 export type FunquizPlayerRow = {
@@ -79,6 +85,42 @@ export function playerRowsFromSnapshot(roomCode: string, snapshot: unknown): Fun
     });
   }
   return rows;
+}
+
+function parseMillionaireState(raw: unknown): MillionaireState | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const r = raw as Record<string, unknown>;
+  const lifelines = r.lifelinesUsed as Record<string, boolean> | undefined;
+  if (!lifelines) return undefined;
+  return {
+    securedPrize: typeof r.securedPrize === "number" ? r.securedPrize : 0,
+    finalAwardedPrize:
+      typeof r.finalAwardedPrize === "number" ? r.finalAwardedPrize : null,
+    outcome:
+      r.outcome === "won" ||
+      r.outcome === "lost" ||
+      r.outcome === "walkaway" ||
+      r.outcome === "playing"
+        ? r.outcome
+        : "playing",
+    lifelinesUsed: {
+      fifty_fifty: Boolean(lifelines.fifty_fifty),
+      ask_team: Boolean(lifelines.ask_team),
+      change_question: Boolean(lifelines.change_question),
+    },
+    eliminatedOptionIndices: Array.isArray(r.eliminatedOptionIndices)
+      ? (r.eliminatedOptionIndices as number[])
+      : [],
+    locks:
+      r.locks && typeof r.locks === "object"
+        ? (r.locks as MillionaireState["locks"])
+        : {},
+    usedBankIds: Array.isArray(r.usedBankIds) ? (r.usedBankIds as number[]) : [],
+    teamChoiceIndex:
+      typeof r.teamChoiceIndex === "number" ? r.teamChoiceIndex : null,
+    askTeamActiveUntil:
+      typeof r.askTeamActiveUntil === "number" ? r.askTeamActiveUntil : null,
+  };
 }
 
 function parseAnswerLog(raw: unknown): AnswerLogEntry[] {
@@ -142,6 +184,7 @@ export function roomToDbRows(room: QuizRoom): {
       guest_question_order: room.guestQuestionOrder,
       joint_score: room.jointScore,
       answer_log: room.answerLog,
+      millionaire_state: room.millionaire ?? null,
     },
     players: playerRows,
   };
@@ -157,7 +200,12 @@ export function dbRowsToRoom(roomRow: FunquizRoomRow, playerRows: FunquizPlayerR
   return {
     code: roomRow.code,
     hostId: roomRow.host_id,
-    gameMode: roomRow.game_mode ?? GAME_MODE_PLAY_TOGETHER,
+    gameMode:
+      roomRow.game_mode === GAME_MODE_SHARED_MILLIONAIRE ||
+      roomRow.game_mode === GAME_MODE_TAKE_TURNS ||
+      roomRow.game_mode === GAME_MODE_PLAY_TOGETHER
+        ? roomRow.game_mode
+        : GAME_MODE_PLAY_TOGETHER,
     quizCategoryId:
       roomRow.quiz_category && isQuizCategoryId(roomRow.quiz_category)
         ? roomRow.quiz_category
@@ -178,13 +226,28 @@ export function dbRowsToRoom(roomRow: FunquizRoomRow, playerRows: FunquizPlayerR
     answerLog: parseAnswerLog(roomRow.answer_log),
     players,
     revealStartedAt: roomRow.reveal_started_at,
+    millionaire:
+      parseMillionaireState(roomRow.millionaire_state) ??
+      (roomRow.game_mode === GAME_MODE_SHARED_MILLIONAIRE
+        ? createInitialMillionaireState()
+        : undefined),
     createdAt: new Date(roomRow.created_at).getTime(),
     updatedAt: new Date(roomRow.updated_at).getTime(),
+    dbUpdatedAtIso: roomRow.updated_at,
   };
 }
 
-export function assertQuestionOrderLength(order: number[]): void {
-  if (order.length > 0 && order.length !== QUESTIONS_PER_GAME) {
+export function assertQuestionOrderLength(order: number[], gameMode?: GameMode): void {
+  if (order.length === 0) return;
+  if (gameMode === GAME_MODE_SHARED_MILLIONAIRE) {
+    if (order.length !== MILLIONAIRE_QUESTION_COUNT) {
+      throw new Error(
+        `question_order must have ${MILLIONAIRE_QUESTION_COUNT} ids for millionaire`,
+      );
+    }
+    return;
+  }
+  if (order.length !== QUESTIONS_PER_GAME) {
     throw new Error(`question_order must have ${QUESTIONS_PER_GAME} ids when set`);
   }
 }

@@ -19,6 +19,10 @@ import { OUTLINE_COUNTRY_DEFS, OUTLINE_COUNTRY_DEFS_EXTRA } from "./builders/cou
 import { EXPANDED_MCQ_DEFS } from "./builders/expanded-pools";
 import { GK_EXTRA_DEFS } from "./builders/general-knowledge-extra";
 import { GENERAL_MILITARY_DEFS } from "./builders/general-military";
+import {
+  GENERAL_MILITARY_HARD_SUPPLEMENT,
+  GENERAL_MILITARY_INTERMEDIATE_SUPPLEMENT,
+} from "./builders/general-military-supplement";
 import { GEOGRAPHY_QUESTION_DEFS } from "./builders/geography";
 import { HISTORY_QUESTION_DEFS } from "./builders/history";
 import { MILITARY_BATTLES_DEFS } from "./builders/military-battles";
@@ -111,8 +115,18 @@ export function buildQuestionBank(): QuizQuestionBankItem[] {
         "military",
       ]),
     ),
-    ...GENERAL_MILITARY_DEFS.map((d, i) =>
-      mcq(QUIZ_CATEGORY_GENERAL_MILITARY, "General Military", d, altDifficulty(i, 1), [
+    ...GENERAL_MILITARY_DEFS.map((d) =>
+      mcq(QUIZ_CATEGORY_GENERAL_MILITARY, "General Military", d, QUIZ_DIFFICULTY_INTERMEDIATE, [
+        "military",
+      ]),
+    ),
+    ...GENERAL_MILITARY_INTERMEDIATE_SUPPLEMENT.map((d) =>
+      mcq(QUIZ_CATEGORY_GENERAL_MILITARY, "General Military", d, QUIZ_DIFFICULTY_INTERMEDIATE, [
+        "military",
+      ]),
+    ),
+    ...GENERAL_MILITARY_HARD_SUPPLEMENT.map((d) =>
+      mcq(QUIZ_CATEGORY_GENERAL_MILITARY, "General Military", d, QUIZ_DIFFICULTY_HARD, [
         "military",
       ]),
     ),

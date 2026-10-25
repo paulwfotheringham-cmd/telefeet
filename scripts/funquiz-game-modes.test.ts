@@ -75,6 +75,8 @@ function runTakeTurnsFlow() {
   const bank0 = room.hostQuestionOrder[0]!;
   const q0 = getQuestionByBankId(bank0);
   room = submitAnswer(room, "host", q0.correctIndex);
+  assert.equal(room.phase, "reveal");
+  room = tickRoom(room, Date.now() + 5000);
   assert.equal(room.turnIndex, 1);
   assert.equal(room.activePlayerId, "guest");
 
@@ -91,6 +93,7 @@ function runTakeTurnsFlow() {
   assert.equal(guestTurn2.canSubmitAnswer, true);
   assert.throws(() => submitAnswer(room, "host", 0), /not your turn/i);
   room = submitAnswer(room, "guest", q1.correctIndex === 0 ? 1 : 0);
+  room = tickRoom(room, Date.now() + 5000);
 
   for (let i = 2; i < QUESTIONS_PER_GAME; i++) {
     const active = room.activePlayerId!;
@@ -101,6 +104,9 @@ function runTakeTurnsFlow() {
         : room.guestQuestionOrder[half]!;
     const q = getQuestionByBankId(bankId);
     room = submitAnswer(room, active, q.correctIndex);
+    if (room.phase === "reveal") {
+      room = tickRoom(room, Date.now() + 5000);
+    }
   }
   assert.equal(room.phase, "finished");
   const results = buildResultRows(room);
