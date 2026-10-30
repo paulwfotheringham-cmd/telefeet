@@ -70,6 +70,7 @@ export type PublicQuizQuestion = {
   options: QuizOptionList;
   category: string;
   outlineImageUrl?: string;
+  flagImageUrl?: string;
 };
 
 export type ScorecardPlayerBar = {
