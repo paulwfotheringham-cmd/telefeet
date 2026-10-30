@@ -32,7 +32,11 @@ import { MOVIES_POP_CULTURE_QUESTION_DEFS } from "./builders/movies-pop-culture"
 import { SPACE_QUESTION_DEFS } from "./builders/space";
 import { WORLD_FLAG_DEFS, WORLD_FLAG_DEFS_EXTRA } from "./builders/world-flags";
 import { LEGACY_QUESTION_DEFS } from "./legacy";
+import { mcqOptionSeed, shuffleMcqOptions } from "./shuffle-options";
 import type { QuizQuestionBankItem } from "./types";
+
+/** First N capitals in the bank are intermediate; remainder are hard (no easy/hard alternation). */
+const CAPITAL_INTERMEDIATE_COUNT = 34;
 
 function withIds(items: Omit<QuizQuestionBankItem, "id">[], startId: number): QuizQuestionBankItem[] {
   return items.map((item, i) => ({ ...item, id: startId + i }));
@@ -46,13 +50,19 @@ function capitalToQuestion(
   def: (typeof CAPITAL_QUESTION_DEFS)[0],
   difficulty: QuizDifficulty,
 ): Omit<QuizQuestionBankItem, "id"> {
-  const options = [def.capital, ...def.wrongCapitals] as [string, string, string, string];
+  const raw = [def.capital, ...def.wrongCapitals] as [string, string, string, string];
+  const prompt = `What is the capital of ${def.country}?`;
+  const { options, correctIndex } = shuffleMcqOptions(
+    raw,
+    0,
+    mcqOptionSeed(`capital:${def.country}:${difficulty}`),
+  );
   return {
     categoryId: QUIZ_CATEGORY_CAPITAL_CITIES,
     category: "Capital Cities",
-    prompt: `What is the capital of ${def.country}?`,
+    prompt,
     options,
-    correctIndex: 0,
+    correctIndex,
     generalKnowledgeSubjects: ["geography", "culture"],
     difficulty,
   };
@@ -62,13 +72,18 @@ function flagToQuestion(
   def: (typeof WORLD_FLAG_DEFS)[0],
   difficulty: QuizDifficulty,
 ): Omit<QuizQuestionBankItem, "id"> {
-  const options = [def.correctCountry, ...def.distractors] as [string, string, string, string];
+  const raw = [def.correctCountry, ...def.distractors] as [string, string, string, string];
+  const { options, correctIndex } = shuffleMcqOptions(
+    raw,
+    0,
+    mcqOptionSeed(`flag:${def.iso2}:${difficulty}`),
+  );
   return {
     categoryId: QUIZ_CATEGORY_WORLD_FLAGS,
     category: "Flags of the World",
     prompt: "Which country does this flag belong to?",
     options,
-    correctIndex: 0,
+    correctIndex,
     flagIso2: def.iso2,
     difficulty,
   };
@@ -78,13 +93,18 @@ function outlineToQuestion(
   def: (typeof OUTLINE_COUNTRY_DEFS)[0],
   difficulty: QuizDifficulty,
 ): Omit<QuizQuestionBankItem, "id"> {
-  const options = [def.correctCountry, ...def.distractors] as [string, string, string, string];
+  const raw = [def.correctCountry, ...def.distractors] as [string, string, string, string];
+  const { options, correctIndex } = shuffleMcqOptions(
+    raw,
+    0,
+    mcqOptionSeed(`outline:${def.assetKey}:${difficulty}`),
+  );
   return {
     categoryId: QUIZ_CATEGORY_COUNTRY_OUTLINES,
     category: "Country Outlines",
     prompt: "Which country is this?",
     options,
-    correctIndex: 0,
+    correctIndex,
     outlineAssetId: def.assetKey,
     difficulty,
   };
@@ -120,7 +140,12 @@ export function buildQuestionBank(): QuizQuestionBankItem[] {
         difficulty: altDifficulty(i, 0),
       };
     }),
-    ...CAPITAL_QUESTION_DEFS.map((d, i) => capitalToQuestion(d, altDifficulty(i, 0))),
+    ...CAPITAL_QUESTION_DEFS.map((d, i) =>
+      capitalToQuestion(
+        d,
+        i < CAPITAL_INTERMEDIATE_COUNT ? QUIZ_DIFFICULTY_INTERMEDIATE : QUIZ_DIFFICULTY_HARD,
+      ),
+    ),
     ...GEOGRAPHY_QUESTION_DEFS.map((d, i) =>
       mcq(QUIZ_CATEGORY_GEOGRAPHY, "Geography", d, altDifficulty(i, 1), ["geography"]),
     ),
@@ -170,9 +195,20 @@ export function buildQuestionBank(): QuizQuestionBankItem[] {
     ),
     ...WORLD_FLAG_DEFS.map((d, i) => flagToQuestion(d, altDifficulty(i, 1))),
     ...WORLD_FLAG_DEFS_EXTRA.map((d) => flagToQuestion(d, d.difficulty)),
-    ...EXPANDED_MCQ_DEFS.map((d) =>
-      mcq(d.categoryId, d.categoryLabel, d, d.difficulty, d.generalKnowledgeSubjects),
-    ),
+    ...EXPANDED_MCQ_DEFS.map((d) => {
+      const { options, correctIndex } = shuffleMcqOptions(
+        d.options,
+        d.correctIndex,
+        mcqOptionSeed(`${d.categoryId}:${d.difficulty}:${d.prompt}`),
+      );
+      return mcq(
+        d.categoryId,
+        d.categoryLabel,
+        { prompt: d.prompt, options, correctIndex },
+        d.difficulty,
+        d.generalKnowledgeSubjects,
+      );
+    }),
   ];
 
   return withIds(chunks, 0);
