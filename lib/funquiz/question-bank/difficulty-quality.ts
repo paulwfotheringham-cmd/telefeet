@@ -193,26 +193,3 @@ export function assertNoEasyHardQuestions(items: QuizQuestionBankItem[]): string
   }
   return errors;
 }
-
-export function difficultyFromIndex(
-  index: number,
-  skew: 0 | 1,
-  prompt: string,
-  categoryId: QuizCategoryId,
-): QuizDifficulty {
-  const fromIndex = (index + skew) % 2 === 0 ? QUIZ_DIFFICULTY_INTERMEDIATE : QUIZ_DIFFICULTY_HARD;
-  if (fromIndex === QUIZ_DIFFICULTY_HARD) {
-    const probe: Omit<QuizQuestionBankItem, "id"> = {
-      categoryId,
-      category: "",
-      prompt,
-      options: ["", "", "", ""] as [string, string, string, string],
-      correctIndex: 0,
-      difficulty: QUIZ_DIFFICULTY_HARD,
-    };
-    if (isTooEasyForHardQuestion(probe)) {
-      return QUIZ_DIFFICULTY_INTERMEDIATE;
-    }
-  }
-  return fromIndex;
-}
