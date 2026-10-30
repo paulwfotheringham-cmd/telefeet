@@ -2,6 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { FunQuizScorecardGraph } from "@/components/funquiz/scorecard-graph";
+import {
+  MILLIONAIRE_LIFELINE_LABELS,
+  MILLIONAIRE_LIFELINES,
+} from "@/lib/funquiz/millionaire/config";
 import type { ClientRoomState } from "@/lib/funquiz/types";
 
 type Props = {
@@ -295,6 +299,54 @@ export function MillionaireStage({
                 ) : null}
               </div>
 
+              {mv.phoneFriendHint ? (
+                <div
+                  className="mt-6 rounded-2xl border border-sky-400/35 bg-sky-950/40 px-4 py-4"
+                  role="status"
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wider text-sky-200">
+                    Phone a Friend
+                  </p>
+                  <p className="mt-2 text-sm text-slate-100">{mv.phoneFriendHint.message}</p>
+                </div>
+              ) : null}
+
+              {mv.audiencePercents && question ? (
+                <div
+                  className="mt-6 rounded-2xl border border-violet-400/35 bg-violet-950/40 px-4 py-4"
+                  role="status"
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wider text-violet-200">
+                    Ask the Audience
+                  </p>
+                  <ul className="mt-3 space-y-2">
+                    {question.options.map((opt, idx) => {
+                      if (eliminated.has(idx)) return null;
+                      const pct = mv.audiencePercents![idx] ?? 0;
+                      const letter = String.fromCharCode(65 + idx);
+                      return (
+                        <li key={`aud-${idx}`}>
+                          <div className="flex items-center justify-between gap-2 text-xs text-slate-300">
+                            <span>
+                              {letter}: {opt}
+                            </span>
+                            <span className="tabular-nums font-semibold text-violet-100">
+                              {pct}%
+                            </span>
+                          </div>
+                          <div className="mt-1 h-2 overflow-hidden rounded-full bg-black/40">
+                            <div
+                              className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-400"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ) : null}
+
               {phase === "reveal" && feedback ? (
                 <div
                   className={`mt-6 rounded-2xl border px-4 py-4 ${
@@ -317,27 +369,27 @@ export function MillionaireStage({
           )}
 
           <div className="mt-6 flex flex-wrap gap-2">
-            {(
-              [
-                ["fifty_fifty", "50:50"],
-                ["ask_team", "Ask the Team"],
-                ["change_question", "Change Question"],
-              ] as const
-            ).map(([id, label]) => {
+            {MILLIONAIRE_LIFELINES.map((id) => {
               const available = mv.lifelinesAvailable[id];
+              const label = MILLIONAIRE_LIFELINE_LABELS[id];
               return (
                 <button
                   key={id}
                   type="button"
                   disabled={busy || !mv.canUseLifelines || !available}
                   onClick={() => void postAction({ action: "lifeline", lifeline: id })}
-                  className="rounded-lg border border-white/15 px-3 py-1.5 text-xs text-slate-200 disabled:opacity-40"
+                  className="rounded-lg border border-amber-400/30 bg-black/30 px-3 py-2 text-xs font-medium text-amber-100 disabled:opacity-40"
                 >
                   {label}
                 </button>
               );
             })}
           </div>
+          {!isHost && phase === "question" ? (
+            <p className="mt-2 text-[11px] text-slate-500">
+              Lifelines are used by the room host.
+            </p>
+          ) : null}
 
           <ul className="mt-4 flex flex-wrap gap-3 text-xs text-slate-300">
             {mv.playerLocks.map((p) => (

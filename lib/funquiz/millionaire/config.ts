@@ -11,13 +11,19 @@ export const MILLIONAIRE_SAFETY_NET_INDICES = new Set<number>([2, 5]);
 export const MILLIONAIRE_REVEAL_MS = 3_500;
 export const MILLIONAIRE_DISCUSSION_MS = 45_000;
 
-export type MillionaireLifelineId = "fifty_fifty" | "ask_team" | "change_question";
+export type MillionaireLifelineId = "fifty_fifty" | "phone_a_friend" | "ask_audience";
 
 export const MILLIONAIRE_LIFELINES: MillionaireLifelineId[] = [
   "fifty_fifty",
-  "ask_team",
-  "change_question",
+  "phone_a_friend",
+  "ask_audience",
 ];
+
+export const MILLIONAIRE_LIFELINE_LABELS: Record<MillionaireLifelineId, string> = {
+  fifty_fifty: "50:50",
+  phone_a_friend: "Phone a Friend",
+  ask_audience: "Ask the Audience",
+};
 
 export function targetPrizeForQuestionIndex(index: number): number {
   return MILLIONAIRE_LADDER[index] ?? 0;

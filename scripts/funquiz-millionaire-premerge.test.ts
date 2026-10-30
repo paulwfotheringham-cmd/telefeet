@@ -126,14 +126,20 @@ function runDoubleLifelineNoOp() {
   assert.equal(again.millionaire!.lifelinesUsed.fifty_fifty, true);
 }
 
-function runChangeQuestionOnce() {
+function runPhoneAndAudienceLifelines() {
   let room = millionaireRoom("PM0006");
   room = startGame(room, "host");
-  const firstId = room.questionOrder[0]!;
-  room = millionaireUseLifeline(room, "host", "change_question");
-  assert.notEqual(room.questionOrder[0], firstId);
-  const second = millionaireUseLifeline(room, "host", "change_question");
-  assert.equal(second.questionOrder[0], room.questionOrder[0]);
+  room = millionaireUseLifeline(room, "host", "phone_a_friend");
+  assert.ok(room.millionaire!.phoneFriendHint);
+  assert.equal(room.millionaire!.lifelinesUsed.phone_a_friend, true);
+  room = millionaireUseLifeline(room, "host", "ask_audience");
+  assert.ok(room.millionaire!.audiencePercents);
+  assert.equal(
+    room.millionaire!.audiencePercents!.reduce((a, b) => a + b, 0),
+    100,
+  );
+  const secondPhone = millionaireUseLifeline(room, "host", "phone_a_friend");
+  assert.equal(secondPhone.millionaire!.phoneFriendHint?.message, room.millionaire!.phoneFriendHint?.message);
 }
 
 function runWrongBeforeQ3AwardsZero() {
@@ -228,7 +234,7 @@ runHostFinalizesGuestChoice();
 runDisagreementDiscussionTimeout();
 runDuplicateLockIdempotent();
 runDoubleLifelineNoOp();
-runChangeQuestionOnce();
+runPhoneAndAudienceLifelines();
 runWrongBeforeQ3AwardsZero();
 runWrongAfterQ3Awards500();
 runWrongAfterQ6Awards10k();

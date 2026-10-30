@@ -176,10 +176,16 @@ export type MillionaireClientView = {
   outcome: "playing" | "won" | "lost" | "walkaway";
   lifelinesAvailable: {
     fifty_fifty: boolean;
-    ask_team: boolean;
-    change_question: boolean;
+    phone_a_friend: boolean;
+    ask_audience: boolean;
   };
   eliminatedOptionIndices: number[];
+  audiencePercents: number[] | null;
+  phoneFriendHint: {
+    choiceIndex: number;
+    friendName: string;
+    message: string;
+  } | null;
   phase: QuizPhase;
   discussionEndsAt: number | null;
   revealEndsAt: number | null;
