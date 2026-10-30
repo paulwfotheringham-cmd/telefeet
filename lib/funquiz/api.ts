@@ -20,6 +20,12 @@ export function handleStoreError(err: unknown) {
     );
   }
   if (err instanceof Error) {
+    if (err.message.includes("funquiz_rooms_game_mode_check")) {
+      return jsonError(
+        "This game mode is not enabled on the server yet. Try “Play together” under Game 3, or retry in a minute after the app updates.",
+        503,
+      );
+    }
     return jsonError(err.message, 400);
   }
   return jsonError("Something went wrong", 500);
