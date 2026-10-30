@@ -1,6 +1,6 @@
 import type { QuizCategoryId } from "./categories";
 import type { QuizDifficulty } from "./difficulties";
-import { GAME_MODE_SHARED_MILLIONAIRE } from "./constants";
+import { GAME_MODE_PARALLEL_MILLIONAIRE, GAME_MODE_SHARED_MILLIONAIRE } from "./constants";
 import type { GameMode, QuizRoom } from "./types";
 import { allocatedBankIdsForSession } from "./session-questions";
 
@@ -11,7 +11,10 @@ export function topicKey(
   difficulty: QuizDifficulty,
   gameMode?: GameMode,
 ): string {
-  if (gameMode === GAME_MODE_SHARED_MILLIONAIRE) {
+  if (
+    gameMode === GAME_MODE_SHARED_MILLIONAIRE ||
+    gameMode === GAME_MODE_PARALLEL_MILLIONAIRE
+  ) {
     return `${categoryId}:millionaire`;
   }
   return `${categoryId}:${difficulty}`;

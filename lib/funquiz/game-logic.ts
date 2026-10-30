@@ -1,5 +1,6 @@
 import {
   GAME_MODE_PLAY_TOGETHER,
+  GAME_MODE_PARALLEL_MILLIONAIRE,
   GAME_MODE_SHARED_MILLIONAIRE,
   GAME_MODE_TAKE_TURNS,
   MAX_PLAYERS,
@@ -16,7 +17,10 @@ import {
   millionaireTickRoom,
   startMillionaireGame,
 } from "./millionaire/logic";
-import { createInitialMillionaireState } from "./millionaire/types";
+import {
+  createInitialMillionaireState,
+  createInitialParallelMillionaireState,
+} from "./millionaire/types";
 import type { QuizCategoryId } from "./categories";
 import { categoryTitle } from "./categories";
 import type { QuizDifficulty } from "./difficulties";
@@ -118,7 +122,9 @@ export function createRoom(
     millionaire:
       gameMode === GAME_MODE_SHARED_MILLIONAIRE
         ? createInitialMillionaireState()
-        : undefined,
+        : gameMode === GAME_MODE_PARALLEL_MILLIONAIRE
+          ? createInitialParallelMillionaireState()
+          : undefined,
     playedBankIdsByTopic: emptyPlayedBankIdsByTopic(),
     createdAt: now,
     updatedAt: now,
@@ -172,8 +178,14 @@ export function startGame(room: QuizRoom, playerId: string): QuizRoom {
     throw new Error("Game already started");
   }
 
-  if (room.gameMode === GAME_MODE_SHARED_MILLIONAIRE) {
-    if (room.players.length < 1) {
+  if (
+    room.gameMode === GAME_MODE_SHARED_MILLIONAIRE ||
+    room.gameMode === GAME_MODE_PARALLEL_MILLIONAIRE
+  ) {
+    if (room.gameMode === GAME_MODE_PARALLEL_MILLIONAIRE && room.players.length < MAX_PLAYERS) {
+      throw new Error("Waiting for a second player");
+    }
+    if (room.gameMode === GAME_MODE_SHARED_MILLIONAIRE && room.players.length < 1) {
       throw new Error("Waiting for at least one player");
     }
     return startMillionaireGame(initMillionaireOnCreate(room));
@@ -260,7 +272,9 @@ export function resetRoomForNewGame(
     millionaire:
       gameMode === GAME_MODE_SHARED_MILLIONAIRE
         ? createInitialMillionaireState()
-        : undefined,
+        : gameMode === GAME_MODE_PARALLEL_MILLIONAIRE
+          ? createInitialParallelMillionaireState()
+          : undefined,
     players: room.players.map((p) => ({ ...p, score: 0, answer: null })),
     updatedAt: Date.now(),
   };
@@ -372,7 +386,10 @@ function submitPlayTogether(room: QuizRoom, playerId: string, choiceIndex: numbe
 
 export function submitAnswer(room: QuizRoom, playerId: string, choiceIndexRaw: unknown): QuizRoom {
   const choiceIndex = normalizeChoiceIndex(choiceIndexRaw);
-  if (room.gameMode === GAME_MODE_SHARED_MILLIONAIRE) {
+  if (
+    room.gameMode === GAME_MODE_SHARED_MILLIONAIRE ||
+    room.gameMode === GAME_MODE_PARALLEL_MILLIONAIRE
+  ) {
     return millionaireSelectAnswer(room, playerId, choiceIndex);
   }
   if (room.gameMode === GAME_MODE_TAKE_TURNS) {

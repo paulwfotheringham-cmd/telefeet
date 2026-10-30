@@ -13,7 +13,28 @@ export type MillionairePhoneFriendHint = {
   message: string;
 };
 
+export type MillionaireRunPhase = "question" | "reveal" | "won" | "lost" | "walkaway";
+
+export type MillionairePlayerRun = {
+  questionOrder: number[];
+  questionIndex: number;
+  phase: MillionaireRunPhase;
+  securedPrize: number;
+  finalAwardedPrize: number | null;
+  outcome: MillionaireOutcome;
+  lifelinesUsed: Record<MillionaireLifelineId, boolean>;
+  eliminatedOptionIndices: number[];
+  audiencePercents: number[] | null;
+  phoneFriendHint: MillionairePhoneFriendHint | null;
+  revealStartedAt: number | null;
+  answerLocked: boolean;
+  usedBankIds: number[];
+};
+
 export type MillionaireState = {
+  variant: "shared" | "parallel";
+  /** Per-player ladders when variant is parallel. */
+  parallelRuns?: Record<string, MillionairePlayerRun>;
   securedPrize: number;
   finalAwardedPrize: number | null;
   outcome: MillionaireOutcome;
@@ -30,8 +51,31 @@ export type MillionaireState = {
   askTeamActiveUntil: number | null;
 };
 
+export function createInitialMillionairePlayerRun(questionOrder: number[]): MillionairePlayerRun {
+  return {
+    questionOrder,
+    questionIndex: 0,
+    phase: "question",
+    securedPrize: 0,
+    finalAwardedPrize: null,
+    outcome: "playing",
+    lifelinesUsed: {
+      fifty_fifty: false,
+      phone_a_friend: false,
+      ask_audience: false,
+    },
+    eliminatedOptionIndices: [],
+    audiencePercents: null,
+    phoneFriendHint: null,
+    revealStartedAt: null,
+    answerLocked: false,
+    usedBankIds: [...questionOrder],
+  };
+}
+
 export function createInitialMillionaireState(): MillionaireState {
   return {
+    variant: "shared",
     securedPrize: 0,
     finalAwardedPrize: null,
     outcome: "playing",
@@ -47,5 +91,13 @@ export function createInitialMillionaireState(): MillionaireState {
     usedBankIds: [],
     teamChoiceIndex: null,
     askTeamActiveUntil: null,
+  };
+}
+
+export function createInitialParallelMillionaireState(): MillionaireState {
+  return {
+    ...createInitialMillionaireState(),
+    variant: "parallel",
+    parallelRuns: {},
   };
 }

@@ -116,15 +116,21 @@ export function MillionaireStage({
         aria-hidden
       />
 
-      <div className="relative grid gap-6 lg:grid-cols-[1fr_220px]">
+      <div
+        className={`relative grid gap-6 ${
+          mv.playStyle === "parallel" ? "xl:grid-cols-[1fr_280px_220px]" : "lg:grid-cols-[1fr_220px]"
+        }`}
+      >
         <div>
           <header className="mb-4 flex flex-wrap items-end justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.25em] text-amber-200/90">
-                Shared Millionaire
+                {mv.playStyle === "parallel" ? "Dual Millionaire" : "Shared Millionaire"}
               </p>
               <h2 className="text-xl font-bold text-white md:text-2xl">
-                Work together. Beat the ladder.
+                {mv.playStyle === "parallel"
+                  ? "Your ladder — play side by side"
+                  : "Work together. Beat the ladder."}
               </h2>
             </div>
             <div className="rounded-xl border border-amber-400/30 bg-black/40 px-4 py-2 text-right">
@@ -251,7 +257,7 @@ export function MillionaireStage({
                 >
                   Lock in answer
                 </button>
-                {isHost && mv.canWalkAway ? (
+                {mv.canWalkAway && (mv.playStyle === "parallel" || isHost) ? (
                   <button
                     type="button"
                     disabled={busy}
@@ -385,22 +391,71 @@ export function MillionaireStage({
               );
             })}
           </div>
-          {!isHost && phase === "question" ? (
+          {!isHost && mv.playStyle === "shared" && phase === "question" ? (
             <p className="mt-2 text-[11px] text-slate-500">
               Lifelines are used by the room host.
             </p>
           ) : null}
 
-          <ul className="mt-4 flex flex-wrap gap-3 text-xs text-slate-300">
-            {mv.playerLocks.map((p) => (
-              <li key={p.id} className="rounded-lg bg-black/40 px-2 py-1">
-                {p.name}
-                {p.id === playerId ? " (you)" : ""}:{" "}
-                {p.locked ? "locked" : p.choiceIndex !== null ? "selected" : "—"}
-              </li>
-            ))}
-          </ul>
+          {mv.playStyle === "shared" ? (
+            <ul className="mt-4 flex flex-wrap gap-3 text-xs text-slate-300">
+              {mv.playerLocks.map((p) => (
+                <li key={p.id} className="rounded-lg bg-black/40 px-2 py-1">
+                  {p.name}
+                  {p.id === playerId ? " (you)" : ""}:{" "}
+                  {p.locked ? "locked" : p.choiceIndex !== null ? "selected" : "—"}
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
+
+        {mv.playStyle === "parallel" && mv.opponentWatch ? (
+          <aside
+            className="rounded-2xl border border-cyan-500/25 bg-black/40 p-3"
+            aria-label="Friend's question (spectator)"
+          >
+            <p className="text-center text-xs font-semibold uppercase tracking-widest text-cyan-200">
+              {mv.opponentWatch.name}&apos;s run
+            </p>
+            <p className="mt-2 text-center text-[11px] text-slate-400">
+              Q {mv.opponentWatch.questionNumber} · {formatMoney(mv.opponentWatch.securedPrize)}{" "}
+              secured
+            </p>
+            {mv.opponentWatch.question ? (
+              <>
+                <p className="mt-3 text-sm font-medium leading-snug text-slate-200">
+                  {mv.opponentWatch.question.prompt}
+                </p>
+                <ul className="mt-3 space-y-2">
+                  {mv.opponentWatch.question.options.map((opt, idx) => {
+                    if (mv.opponentWatch!.eliminatedOptionIndices.includes(idx)) return null;
+                    const letter = String.fromCharCode(65 + idx);
+                    return (
+                      <li
+                        key={`opp-${idx}`}
+                        className="rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-xs text-slate-400"
+                      >
+                        <span className="font-mono text-cyan-300/80">{letter}</span> {opt}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
+            ) : (
+              <p className="mt-4 text-center text-xs text-slate-500">
+                {mv.opponentWatch.phase === "won" ||
+                mv.opponentWatch.phase === "lost" ||
+                mv.opponentWatch.phase === "walkaway"
+                  ? "Run finished"
+                  : "Waiting…"}
+              </p>
+            )}
+            <p className="mt-3 text-center text-[10px] text-slate-500">
+              Spectator view — you cannot answer
+            </p>
+          </aside>
+        ) : null}
 
         <aside
           className="rounded-2xl border border-amber-500/25 bg-black/50 p-3"

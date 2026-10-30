@@ -10,6 +10,7 @@ import { MillionaireStage } from "@/components/funquiz/millionaire-stage";
 import { FunQuizScorecardGraph } from "@/components/funquiz/scorecard-graph";
 import {
   GAME_MODE_PLAY_TOGETHER,
+  GAME_MODE_PARALLEL_MILLIONAIRE,
   GAME_MODE_SHARED_MILLIONAIRE,
   GAME_MODE_TAKE_TURNS,
 } from "@/lib/funquiz/constants";
@@ -38,7 +39,12 @@ type Screen = "home" | "game";
 function gameModeLabel(mode: GameMode): string {
   if (mode === GAME_MODE_TAKE_TURNS) return "Take turns";
   if (mode === GAME_MODE_SHARED_MILLIONAIRE) return "Shared Millionaire";
+  if (mode === GAME_MODE_PARALLEL_MILLIONAIRE) return "Dual Millionaire";
   return "Play together";
+}
+
+function isMillionaireGameMode(mode: GameMode | null): boolean {
+  return mode === GAME_MODE_SHARED_MILLIONAIRE || mode === GAME_MODE_PARALLEL_MILLIONAIRE;
 }
 
 async function parseState(res: Response): Promise<ClientRoomState | null> {
@@ -91,6 +97,7 @@ export function FunQuizClient() {
   const [name, setName] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [selectedMode, setSelectedMode] = useState<GameMode | null>(null);
+  const [game3Expanded, setGame3Expanded] = useState(false);
   const [selectedDifficulty, setSelectedDifficulty] = useState<QuizDifficulty | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<QuizCategoryId | null>(null);
   const [newGameMode, setNewGameMode] = useState<GameMode | null>(null);
@@ -408,7 +415,10 @@ export function FunQuizClient() {
           <div className="mt-3 grid gap-3">
             <button
               type="button"
-              onClick={() => setSelectedMode(GAME_MODE_TAKE_TURNS)}
+              onClick={() => {
+                setSelectedMode(GAME_MODE_TAKE_TURNS);
+                setGame3Expanded(false);
+              }}
               className={`rounded-2xl border p-4 text-left transition ${
                 selectedMode === GAME_MODE_TAKE_TURNS
                   ? "border-violet-400 bg-violet-950/50"
@@ -423,7 +433,10 @@ export function FunQuizClient() {
             </button>
             <button
               type="button"
-              onClick={() => setSelectedMode(GAME_MODE_PLAY_TOGETHER)}
+              onClick={() => {
+                setSelectedMode(GAME_MODE_PLAY_TOGETHER);
+                setGame3Expanded(false);
+              }}
               className={`rounded-2xl border p-4 text-left transition ${
                 selectedMode === GAME_MODE_PLAY_TOGETHER
                   ? "border-violet-400 bg-violet-950/50"
@@ -437,21 +450,58 @@ export function FunQuizClient() {
                 question.
               </p>
             </button>
-            <button
-              type="button"
-              onClick={() => setSelectedMode(GAME_MODE_SHARED_MILLIONAIRE)}
-              className={`rounded-2xl border p-4 text-left transition ${
-                selectedMode === GAME_MODE_SHARED_MILLIONAIRE
+            <div
+              className={`rounded-2xl border p-4 transition ${
+                isMillionaireGameMode(selectedMode)
                   ? "border-amber-400 bg-amber-950/30"
-                  : "border-white/10 bg-black/30 hover:border-amber-400/40"
+                  : "border-white/10 bg-black/30"
               }`}
             >
-              <p className="text-sm font-semibold text-amber-200">Game 3 — Shared Millionaire</p>
-              <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                Work together. Beat the ladder. Win the million. Lock in answers together,
-                use 50:50, Phone a Friend, and Ask the Audience, and climb ten prize milestones.
-              </p>
-            </button>
+              <button
+                type="button"
+                onClick={() => setGame3Expanded((v) => !v)}
+                className="w-full text-left"
+              >
+                <p className="text-sm font-semibold text-amber-200">Game 3 — Millionaire</p>
+                <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                  Climb the prize ladder with a friend. Pick one way to play below.
+                </p>
+              </button>
+              {game3Expanded || isMillionaireGameMode(selectedMode) ? (
+                <div className="mt-4 grid gap-2 border-t border-white/10 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedMode(GAME_MODE_SHARED_MILLIONAIRE)}
+                    className={`rounded-xl border p-3 text-left transition ${
+                      selectedMode === GAME_MODE_SHARED_MILLIONAIRE
+                        ? "border-amber-400 bg-amber-950/50 ring-1 ring-amber-400/40"
+                        : "border-white/10 bg-black/20 hover:border-amber-400/40"
+                    }`}
+                  >
+                    <p className="text-xs font-semibold text-amber-100">1 — Play together</p>
+                    <p className="mt-1 text-[11px] text-slate-400">
+                      One shared question, one team ladder, lock in together, shared lifelines.
+                    </p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedMode(GAME_MODE_PARALLEL_MILLIONAIRE)}
+                    className={`rounded-xl border p-3 text-left transition ${
+                      selectedMode === GAME_MODE_PARALLEL_MILLIONAIRE
+                        ? "border-amber-400 bg-amber-950/50 ring-1 ring-amber-400/40"
+                        : "border-white/10 bg-black/20 hover:border-amber-400/40"
+                    }`}
+                  >
+                    <p className="text-xs font-semibold text-amber-100">
+                      2 — Same room, separate ladders
+                    </p>
+                    <p className="mt-1 text-[11px] text-slate-400">
+                      Your own questions and prize bar; see your friend&apos;s question read-only.
+                    </p>
+                  </button>
+                </div>
+              ) : null}
+            </div>
           </div>
 
           {selectedMode ? (
@@ -569,8 +619,12 @@ export function FunQuizClient() {
   const opponent = players.find((p) => p.id !== playerId);
   const bothIn = players.length >= 2;
   const canStartGame =
-    gameMode === GAME_MODE_SHARED_MILLIONAIRE ? players.length >= 1 : bothIn;
-  const isMillionaire = gameMode === GAME_MODE_SHARED_MILLIONAIRE;
+    gameMode === GAME_MODE_SHARED_MILLIONAIRE
+      ? players.length >= 1
+      : gameMode === GAME_MODE_PARALLEL_MILLIONAIRE
+        ? bothIn
+        : bothIn;
+  const isMillionaire = isMillionaireGameMode(gameMode);
 
   return (
     <div
