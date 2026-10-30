@@ -7,6 +7,7 @@ import type { QuizCategoryId } from "@/lib/funquiz/categories";
 import { QUIZ_DIFFICULTIES } from "@/lib/funquiz/difficulties";
 import type { QuizDifficulty } from "@/lib/funquiz/difficulties";
 import { MillionaireStage } from "@/components/funquiz/millionaire-stage";
+import { FunQuizScorecardGraph } from "@/components/funquiz/scorecard-graph";
 import {
   GAME_MODE_PLAY_TOGETHER,
   GAME_MODE_SHARED_MILLIONAIRE,
@@ -817,6 +818,11 @@ export function FunQuizClient() {
                 : `${players.find((p) => p.id === roomState.winnerIds[0])?.name ?? "Winner"} wins`}
             </p>
           )}
+          {roomState.scorecard ? (
+            <div className="mt-5">
+              <FunQuizScorecardGraph scorecard={roomState.scorecard} />
+            </div>
+          ) : null}
           <div className="mt-4 max-h-64 overflow-y-auto rounded-xl border border-white/10">
             <table className="w-full text-left text-xs text-slate-200">
               <thead className="sticky top-0 bg-slate-900 text-slate-400">
