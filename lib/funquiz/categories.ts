@@ -6,6 +6,7 @@ export const QUIZ_CATEGORY_GENERAL_MILITARY = "general_military" as const;
 export const QUIZ_CATEGORY_CAPITAL_CITIES = "capital_cities" as const;
 export const QUIZ_CATEGORY_COUNTRY_OUTLINES = "country_outlines" as const;
 export const QUIZ_CATEGORY_GEOGRAPHY = "geography" as const;
+export const QUIZ_CATEGORY_MOVIES_POP_CULTURE = "movies_pop_culture" as const;
 
 export type QuizCategoryId =
   | typeof QUIZ_CATEGORY_GENERAL_KNOWLEDGE
@@ -15,7 +16,8 @@ export type QuizCategoryId =
   | typeof QUIZ_CATEGORY_GENERAL_MILITARY
   | typeof QUIZ_CATEGORY_CAPITAL_CITIES
   | typeof QUIZ_CATEGORY_COUNTRY_OUTLINES
-  | typeof QUIZ_CATEGORY_GEOGRAPHY;
+  | typeof QUIZ_CATEGORY_GEOGRAPHY
+  | typeof QUIZ_CATEGORY_MOVIES_POP_CULTURE;
 
 export const QUIZ_CATEGORIES: {
   id: QuizCategoryId;
@@ -67,6 +69,12 @@ export const QUIZ_CATEGORIES: {
     title: "Geography",
     description:
       "Rivers, mountains, lakes, deserts, islands, seas, continents and geographical features.",
+  },
+  {
+    id: QUIZ_CATEGORY_MOVIES_POP_CULTURE,
+    title: "Movies & Pop Culture",
+    description:
+      "Films, TV, music, franchises, awards, quotes, and the celebrities and moments that define pop culture.",
   },
 ];
 

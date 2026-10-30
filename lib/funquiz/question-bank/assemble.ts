@@ -6,6 +6,7 @@ import {
   QUIZ_CATEGORY_GEOGRAPHY,
   QUIZ_CATEGORY_HISTORY,
   QUIZ_CATEGORY_MILITARY_BATTLES,
+  QUIZ_CATEGORY_MOVIES_POP_CULTURE,
   QUIZ_CATEGORY_SPACE,
   type QuizCategoryId,
 } from "../categories";
@@ -26,6 +27,7 @@ import {
 import { GEOGRAPHY_QUESTION_DEFS } from "./builders/geography";
 import { HISTORY_QUESTION_DEFS } from "./builders/history";
 import { MILITARY_BATTLES_DEFS } from "./builders/military-battles";
+import { MOVIES_POP_CULTURE_QUESTION_DEFS } from "./builders/movies-pop-culture";
 import { SPACE_QUESTION_DEFS } from "./builders/space";
 import { LEGACY_QUESTION_DEFS } from "./legacy";
 import type { QuizQuestionBankItem } from "./types";
@@ -109,6 +111,11 @@ export function buildQuestionBank(): QuizQuestionBankItem[] {
     ),
     ...HISTORY_QUESTION_DEFS.map((d, i) =>
       mcq(QUIZ_CATEGORY_HISTORY, "History", d, altDifficulty(i, 1), ["history"]),
+    ),
+    ...MOVIES_POP_CULTURE_QUESTION_DEFS.map((d, i) =>
+      mcq(QUIZ_CATEGORY_MOVIES_POP_CULTURE, "Movies & Pop Culture", d, altDifficulty(i, 0), [
+        "culture",
+      ]),
     ),
     ...MILITARY_BATTLES_DEFS.map((d, i) =>
       mcq(QUIZ_CATEGORY_MILITARY_BATTLES, "Military Battles", d, altDifficulty(i, 0), [
