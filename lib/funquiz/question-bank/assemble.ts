@@ -7,6 +7,7 @@ import {
   QUIZ_CATEGORY_HISTORY,
   QUIZ_CATEGORY_MILITARY_BATTLES,
   QUIZ_CATEGORY_MOVIES_POP_CULTURE,
+  QUIZ_CATEGORY_MOVIE_QUOTES,
   QUIZ_CATEGORY_SPACE,
   QUIZ_CATEGORY_WORLD_FLAGS,
   type QuizCategoryId,
@@ -28,6 +29,7 @@ import {
 import { GEOGRAPHY_QUESTION_DEFS } from "./builders/geography";
 import { HISTORY_QUESTION_DEFS } from "./builders/history";
 import { MILITARY_BATTLES_DEFS } from "./builders/military-battles";
+import { MOVIE_QUOTE_QUESTION_DEFS } from "./builders/movie-quotes";
 import { MOVIES_POP_CULTURE_QUESTION_DEFS } from "./builders/movies-pop-culture";
 import { SPACE_QUESTION_DEFS } from "./builders/space";
 import { WORLD_FLAG_DEFS, WORLD_FLAG_DEFS_EXTRA } from "./builders/world-flags";
@@ -132,6 +134,11 @@ export function buildQuestionBank(): QuizQuestionBankItem[] {
     ),
     ...MOVIES_POP_CULTURE_QUESTION_DEFS.map((d, i) =>
       mcq(QUIZ_CATEGORY_MOVIES_POP_CULTURE, "Movies & Pop Culture", d, altDifficulty(i, 0), [
+        "culture",
+      ]),
+    ),
+    ...MOVIE_QUOTE_QUESTION_DEFS.map((d, i) =>
+      mcq(QUIZ_CATEGORY_MOVIE_QUOTES, "Movie Quotes (1980–2026)", d, altDifficulty(i, 1), [
         "culture",
       ]),
     ),

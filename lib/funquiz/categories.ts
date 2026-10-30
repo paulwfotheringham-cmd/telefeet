@@ -8,6 +8,7 @@ export const QUIZ_CATEGORY_COUNTRY_OUTLINES = "country_outlines" as const;
 export const QUIZ_CATEGORY_GEOGRAPHY = "geography" as const;
 export const QUIZ_CATEGORY_MOVIES_POP_CULTURE = "movies_pop_culture" as const;
 export const QUIZ_CATEGORY_WORLD_FLAGS = "world_flags" as const;
+export const QUIZ_CATEGORY_MOVIE_QUOTES = "movie_quotes" as const;
 
 export type QuizCategoryId =
   | typeof QUIZ_CATEGORY_GENERAL_KNOWLEDGE
@@ -19,7 +20,8 @@ export type QuizCategoryId =
   | typeof QUIZ_CATEGORY_COUNTRY_OUTLINES
   | typeof QUIZ_CATEGORY_GEOGRAPHY
   | typeof QUIZ_CATEGORY_MOVIES_POP_CULTURE
-  | typeof QUIZ_CATEGORY_WORLD_FLAGS;
+  | typeof QUIZ_CATEGORY_WORLD_FLAGS
+  | typeof QUIZ_CATEGORY_MOVIE_QUOTES;
 
 export const QUIZ_CATEGORIES: {
   id: QuizCategoryId;
@@ -82,6 +84,12 @@ export const QUIZ_CATEGORIES: {
     id: QUIZ_CATEGORY_WORLD_FLAGS,
     title: "Flags of the World",
     description: "Identify countries from their national flags — from familiar banners to trickier ones.",
+  },
+  {
+    id: QUIZ_CATEGORY_MOVIE_QUOTES,
+    title: "Movie Quotes (1980–2026)",
+    description:
+      "Classic and modern cinema — match famous lines to the film they came from (1980 through 2026).",
   },
 ];
 
