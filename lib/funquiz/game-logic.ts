@@ -551,11 +551,20 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
   let statusMessage: string | null = null;
 
   if (room.gameMode === GAME_MODE_TAKE_TURNS) {
-    if ((room.phase === "question" || room.phase === "reveal") && room.activePlayerId) {
+    if (room.phase === "reveal" && revealEntry) {
+      question = toPublicQuestion(getQuestionByBankId(revealEntry.bankId));
+      const answerer = room.players.find((p) => p.id === revealEntry.playerId);
+      if (answerer) {
+        statusMessage =
+          viewerId === revealEntry.playerId
+            ? null
+            : `${answerer.name} answered — see result below.`;
+      }
+    } else if (room.phase === "question" && room.activePlayerId) {
       isYourTurn = viewerId === room.activePlayerId;
-      canSubmitAnswer = room.phase === "question" && isYourTurn && you.answer === null;
+      canSubmitAnswer = isYourTurn && you.answer === null;
       const activePlayer = room.players.find((p) => p.id === room.activePlayerId);
-      if (room.phase === "question" && !isYourTurn && activePlayer) {
+      if (!isYourTurn && activePlayer) {
         statusMessage = `It's ${activePlayer.name}'s turn — watch along!`;
       }
       if (bankId !== null) {

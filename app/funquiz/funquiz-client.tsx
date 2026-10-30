@@ -139,9 +139,14 @@ export function FunQuizClient() {
   useEffect(() => {
     if (screen !== "game" || !code) return;
     poll();
-    const id = setInterval(poll, 3000);
+    const inActiveRound =
+      roomState?.phase === "question" ||
+      roomState?.phase === "reveal" ||
+      roomState?.phase === "discussion";
+    const pollMs = inActiveRound ? 1000 : 3000;
+    const id = setInterval(poll, pollMs);
     return () => clearInterval(id);
-  }, [screen, code, poll]);
+  }, [screen, code, poll, roomState?.phase]);
 
   useEffect(() => {
     if (screen !== "game" || !code) return;
@@ -723,10 +728,10 @@ export function FunQuizClient() {
         </section>
       ) : null}
 
-      {!isMillionaire && phase === "reveal" && question && roomState.answerFeedback ? (
+      {!isMillionaire && phase === "reveal" && roomState.answerFeedback ? (
         <section className="mt-6 flex flex-1 flex-col rounded-3xl border border-amber-400/30 bg-amber-950/20 p-6">
           <h2 className="text-lg font-semibold text-amber-100">Answer reveal</h2>
-          {question.outlineImageUrl ? (
+          {question?.outlineImageUrl ? (
             <div className="mt-3 flex justify-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -736,7 +741,9 @@ export function FunQuizClient() {
               />
             </div>
           ) : null}
-          <p className="mt-2 text-sm text-slate-300">{question.prompt}</p>
+          {question ? (
+            <p className="mt-2 text-sm text-slate-300">{question.prompt}</p>
+          ) : null}
           <p
             className={`mt-4 rounded-xl px-4 py-3 text-sm font-semibold ${
               roomState.answerFeedback.correct
@@ -744,9 +751,22 @@ export function FunQuizClient() {
                 : "bg-red-950/50 text-red-100"
             }`}
           >
-            {roomState.answerFeedback.correct ? "Correct!" : "Incorrect"}
+            {gameMode === GAME_MODE_TAKE_TURNS
+              ? roomState.answerFeedback.correct
+                ? "Correct answer!"
+                : "Incorrect answer"
+              : roomState.answerFeedback.correct
+                ? "Correct!"
+                : "Incorrect"}
           </p>
-          {!roomState.answerFeedback.correct ? (
+          <p className="mt-3 rounded-xl border border-white/10 bg-slate-900/60 px-4 py-3 text-sm text-slate-200">
+            Choice:{" "}
+            <strong>
+              {String.fromCharCode(65 + roomState.answerFeedback.choiceIndex)}.{" "}
+              {roomState.answerFeedback.chosenLabel}
+            </strong>
+          </p>
+          {!roomState.answerFeedback.correct || gameMode === GAME_MODE_TAKE_TURNS ? (
             <p className="mt-3 rounded-xl bg-emerald-900/40 px-4 py-3 text-emerald-100">
               Correct answer:{" "}
               <strong>
@@ -760,6 +780,8 @@ export function FunQuizClient() {
               Team score: {roomState.jointScore ?? 0} out of {roomState.questionIndex + 1}{" "}
               answered.
             </p>
+          ) : gameMode === GAME_MODE_TAKE_TURNS ? (
+            <p className="mt-4 text-sm text-slate-200">Next turn in a moment…</p>
           ) : (
             <p className="mt-4 text-sm text-slate-200">
               {roomState.answerFeedback.correct
