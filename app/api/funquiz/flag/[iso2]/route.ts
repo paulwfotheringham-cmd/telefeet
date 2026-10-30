@@ -10,6 +10,18 @@ export async function GET(_request: Request, { params }: Params) {
   if (!iso2 || !/^[a-z]{2}$/.test(iso2) || !WORLD_FLAG_ISO2_CODES.has(iso2)) {
     return new NextResponse("Not found", { status: 404 });
   }
-  const url = `https://flagcdn.com/w640/${iso2}.png`;
-  return NextResponse.redirect(url, 302);
+  const upstream = await fetch(`https://flagcdn.com/w640/${iso2}.png`, {
+    next: { revalidate: 60 * 60 * 24 * 7 },
+  });
+  if (!upstream.ok) {
+    return new NextResponse("Flag unavailable", { status: upstream.status === 404 ? 404 : 502 });
+  }
+  const body = await upstream.arrayBuffer();
+  return new NextResponse(body, {
+    status: 200,
+    headers: {
+      "Content-Type": "image/png",
+      "Cache-Control": "public, max-age=86400, s-maxage=86400",
+    },
+  });
 }

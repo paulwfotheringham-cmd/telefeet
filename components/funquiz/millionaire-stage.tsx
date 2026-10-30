@@ -243,6 +243,26 @@ export function MillionaireStage({
                 Question {mv.questionNumber} of {mv.totalQuestions} · Next:{" "}
                 {formatMoney(mv.targetPrize)}
               </p>
+              {question.flagImageUrl ? (
+                <div className="mt-4 flex justify-center rounded-2xl border border-white/10 bg-slate-950/80 p-4">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={question.flagImageUrl}
+                    alt="Country flag"
+                    className="max-h-36 w-full max-w-md rounded-md object-contain shadow-lg"
+                  />
+                </div>
+              ) : null}
+              {question.outlineImageUrl ? (
+                <div className="mt-4 flex justify-center rounded-2xl border border-white/10 bg-slate-950/80 p-4">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={question.outlineImageUrl}
+                    alt="Country outline"
+                    className="max-h-40 w-full max-w-sm object-contain"
+                  />
+                </div>
+              ) : null}
               <h3 className="mt-3 text-lg font-semibold leading-snug text-white md:text-2xl">
                 {question.prompt}
               </h3>
@@ -462,6 +482,16 @@ export function MillionaireStage({
             </p>
             {mv.opponentWatch.question ? (
               <>
+                {mv.opponentWatch.question.flagImageUrl ? (
+                  <div className="mt-3 flex justify-center">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={mv.opponentWatch.question.flagImageUrl}
+                      alt="Country flag"
+                      className="max-h-24 max-w-full rounded object-contain"
+                    />
+                  </div>
+                ) : null}
                 <p className="mt-3 text-sm font-medium leading-snug text-slate-200">
                   {mv.opponentWatch.question.prompt}
                 </p>
