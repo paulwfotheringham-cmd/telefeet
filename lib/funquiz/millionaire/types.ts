@@ -7,12 +7,21 @@ export type MillionairePlayerLock = {
 
 export type MillionaireOutcome = "playing" | "won" | "lost" | "walkaway";
 
+export type MillionairePhoneFriendHint = {
+  choiceIndex: number;
+  friendName: string;
+  message: string;
+};
+
 export type MillionaireState = {
   securedPrize: number;
   finalAwardedPrize: number | null;
   outcome: MillionaireOutcome;
   lifelinesUsed: Record<MillionaireLifelineId, boolean>;
   eliminatedOptionIndices: number[];
+  /** One percentage per answer option (sums to 100) after Ask the Audience. */
+  audiencePercents: number[] | null;
+  phoneFriendHint: MillionairePhoneFriendHint | null;
   locks: Record<string, MillionairePlayerLock>;
   /** Bank ids consumed in this session (includes replaced questions). */
   usedBankIds: number[];
@@ -28,10 +37,12 @@ export function createInitialMillionaireState(): MillionaireState {
     outcome: "playing",
     lifelinesUsed: {
       fifty_fifty: false,
-      ask_team: false,
-      change_question: false,
+      phone_a_friend: false,
+      ask_audience: false,
     },
     eliminatedOptionIndices: [],
+    audiencePercents: null,
+    phoneFriendHint: null,
     locks: {},
     usedBankIds: [],
     teamChoiceIndex: null,

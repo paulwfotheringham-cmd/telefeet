@@ -449,7 +449,7 @@ export function FunQuizClient() {
               <p className="text-sm font-semibold text-amber-200">Game 3 — Shared Millionaire</p>
               <p className="mt-2 text-xs leading-relaxed text-slate-300">
                 Work together. Beat the ladder. Win the million. Lock in answers together,
-                use shared lifelines, and climb ten prize milestones.
+                use 50:50, Phone a Friend, and Ask the Audience, and climb ten prize milestones.
               </p>
             </button>
           </div>

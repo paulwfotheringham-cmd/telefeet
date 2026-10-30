@@ -108,12 +108,19 @@ function parseMillionaireState(raw: unknown): MillionaireState | undefined {
         : "playing",
     lifelinesUsed: {
       fifty_fifty: Boolean(lifelines.fifty_fifty),
-      ask_team: Boolean(lifelines.ask_team),
-      change_question: Boolean(lifelines.change_question),
+      phone_a_friend: Boolean(lifelines.phone_a_friend || lifelines.change_question),
+      ask_audience: Boolean(lifelines.ask_audience || lifelines.ask_team),
     },
     eliminatedOptionIndices: Array.isArray(r.eliminatedOptionIndices)
       ? (r.eliminatedOptionIndices as number[])
       : [],
+    audiencePercents: Array.isArray(r.audiencePercents)
+      ? (r.audiencePercents as number[])
+      : null,
+    phoneFriendHint:
+      r.phoneFriendHint && typeof r.phoneFriendHint === "object"
+        ? (r.phoneFriendHint as MillionaireState["phoneFriendHint"])
+        : null,
     locks:
       r.locks && typeof r.locks === "object"
         ? (r.locks as MillionaireState["locks"])

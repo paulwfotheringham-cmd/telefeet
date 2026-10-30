@@ -22,7 +22,17 @@ type Body =
   | { playerId?: string; action: "lifeline"; lifeline?: string };
 
 function isLifeline(value: string): value is MillionaireLifelineId {
-  return value === "fifty_fifty" || value === "ask_team" || value === "change_question";
+  if (value === "fifty_fifty" || value === "phone_a_friend" || value === "ask_audience") {
+    return true;
+  }
+  // Legacy lifeline ids from older clients / in-flight rooms
+  return value === "ask_team" || value === "change_question";
+}
+
+function normalizeLifeline(value: string): MillionaireLifelineId {
+  if (value === "ask_team") return "ask_audience";
+  if (value === "change_question") return "phone_a_friend";
+  return value as MillionaireLifelineId;
 }
 
 export async function POST(request: Request, { params }: Params) {
@@ -55,7 +65,7 @@ export async function POST(request: Request, { params }: Params) {
           if (!isLifeline(lifeline)) {
             throw new Error("Invalid lifeline");
           }
-          return millionaireUseLifeline(room, playerId, lifeline);
+          return millionaireUseLifeline(room, playerId, normalizeLifeline(lifeline));
         }
         default:
           throw new Error("Unknown action");

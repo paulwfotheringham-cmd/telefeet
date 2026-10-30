@@ -13,7 +13,8 @@ import {
   targetPrizeForQuestionIndex,
 } from "./config";
 import { playedIdsForTopic, reserveBankIdsForTopic } from "../question-history";
-import { replacementQuestionId, selectMillionaireQuestionIds } from "./select-questions";
+import { buildAudiencePoll, pickPhoneFriendSuggestion } from "./lifeline-helpers";
+import { selectMillionaireQuestionIds } from "./select-questions";
 import {
   createInitialMillionaireState,
   type MillionaireState,
@@ -40,6 +41,9 @@ function resetLocksForQuestion(players: QuizPlayer[], millionaire: MillionaireSt
     locks,
     teamChoiceIndex: null,
     askTeamActiveUntil: null,
+    eliminatedOptionIndices: [],
+    audiencePercents: null,
+    phoneFriendHint: null,
   };
 }
 
@@ -335,55 +339,30 @@ export function millionaireUseLifeline(
     };
   }
 
-  if (lifeline === "ask_team") {
+  if (lifeline === "phone_a_friend") {
+    const hint = pickPhoneFriendSuggestion(q.correctIndex, q.options.length);
     return {
       ...room,
-      phase: "discussion",
-      revealStartedAt: Date.now(),
       millionaire: {
         ...m,
-        lifelinesUsed: { ...m.lifelinesUsed, ask_team: true },
-        askTeamActiveUntil: Date.now() + MILLIONAIRE_DISCUSSION_MS,
+        lifelinesUsed: { ...m.lifelinesUsed, phone_a_friend: true },
+        phoneFriendHint: hint,
       },
       updatedAt: Date.now(),
     };
   }
 
-  if (lifeline === "change_question") {
-    const used = new Set([
-      ...m.usedBankIds,
-      ...playedIdsForTopic(
-        room,
-        room.quizCategoryId,
-        room.quizDifficulty,
-        GAME_MODE_SHARED_MILLIONAIRE,
-      ),
-    ]);
-    const newId = replacementQuestionId(room.quizCategoryId, room.questionIndex, used);
-    const order = [...room.questionOrder];
-    order[room.questionIndex] = newId;
-    let updated: QuizRoom = {
+  if (lifeline === "ask_audience") {
+    const percents = buildAudiencePoll(q.correctIndex, q.options.length);
+    return {
       ...room,
-      questionOrder: order,
       millionaire: {
-        ...resetLocksForQuestion(room.players, m),
-        lifelinesUsed: { ...m.lifelinesUsed, change_question: true },
-        usedBankIds: [...m.usedBankIds, newId],
-        securedPrize: m.securedPrize,
-        finalAwardedPrize: m.finalAwardedPrize,
-        outcome: m.outcome,
+        ...m,
+        lifelinesUsed: { ...m.lifelinesUsed, ask_audience: true },
+        audiencePercents: percents,
       },
-      players: room.players.map((p) => ({ ...p, answer: null })),
       updatedAt: Date.now(),
     };
-    updated = reserveBankIdsForTopic(
-      updated,
-      updated.quizCategoryId,
-      updated.quizDifficulty,
-      [newId],
-      GAME_MODE_SHARED_MILLIONAIRE,
-    );
-    return updated;
   }
 
   return room;

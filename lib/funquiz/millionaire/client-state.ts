@@ -31,7 +31,7 @@ function disagreementMessage(room: QuizRoom): string {
     }
   }
   if (m.askTeamActiveUntil !== null) {
-    return "Ask the Team — discuss, then lock the same answer or the host finalises.";
+    return "Discuss, then lock the same answer or the host finalises.";
   }
   return "Discuss and lock the same answer, or the host can finalise the team choice.";
 }
@@ -66,10 +66,12 @@ export function buildMillionaireClientView(
     outcome: m.outcome,
     lifelinesAvailable: {
       fifty_fifty: !m.lifelinesUsed.fifty_fifty,
-      ask_team: !m.lifelinesUsed.ask_team,
-      change_question: !m.lifelinesUsed.change_question,
+      phone_a_friend: !m.lifelinesUsed.phone_a_friend,
+      ask_audience: !m.lifelinesUsed.ask_audience,
     },
     eliminatedOptionIndices: [...m.eliminatedOptionIndices],
+    audiencePercents: m.audiencePercents ? [...m.audiencePercents] : null,
+    phoneFriendHint: m.phoneFriendHint ? { ...m.phoneFriendHint } : null,
     phase: room.phase,
     discussionEndsAt:
       room.phase === "discussion" && room.revealStartedAt
