@@ -1,6 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import {
+  lifelineSoundId,
+  playMillionaireSound,
+} from "@/lib/funquiz/millionaire/millionaire-sounds";
+import {
+  readMillionaireSoundMuted,
+  useMillionaireSoundEffects,
+  writeMillionaireSoundMuted,
+} from "@/components/funquiz/use-millionaire-sound-effects";
 import { FunQuizScorecardGraph } from "@/components/funquiz/scorecard-graph";
 import {
   MILLIONAIRE_LIFELINE_LABELS,
@@ -45,6 +54,11 @@ export function MillionaireStage({
     return [...indices].sort((a, b) => a - b);
   }, [mv?.playerLocks]);
   const [finalizeChoice, setFinalizeChoice] = useState<number | null>(null);
+  const [soundMuted, setSoundMuted] = useState(true);
+  useEffect(() => {
+    setSoundMuted(readMillionaireSoundMuted());
+  }, []);
+  useMillionaireSoundEffects(roomState, soundMuted);
   useEffect(() => {
     if (!mv?.canFinalizeTeam) {
       setFinalizeChoice(null);
@@ -73,6 +87,10 @@ export function MillionaireStage({
       const data = (await res.json()) as { state?: ClientRoomState; error?: string };
       if (!res.ok) throw new Error(data.error ?? "Request failed");
       if (data.state) onRefreshState(data.state);
+      if (body.action === "lock") playMillionaireSound("lock", soundMuted);
+      if (body.action === "lifeline" && typeof body.lifeline === "string") {
+        playMillionaireSound(lifelineSoundId(body.lifeline), soundMuted);
+      }
     } catch (e) {
       onError(e instanceof Error ? e.message : "Request failed");
     } finally {
@@ -95,6 +113,7 @@ export function MillionaireStage({
       const data = (await res.json()) as { state?: ClientRoomState; error?: string };
       if (!res.ok) throw new Error(data.error ?? "Request failed");
       if (data.state) onRefreshState(data.state);
+      playMillionaireSound("select", soundMuted);
     } catch (e) {
       onError(e instanceof Error ? e.message : "Request failed");
     } finally {
@@ -133,12 +152,31 @@ export function MillionaireStage({
                   : "Work together. Beat the ladder."}
               </h2>
             </div>
-            <div className="rounded-xl border border-amber-400/30 bg-black/40 px-4 py-2 text-right">
-              <p className="text-[10px] uppercase tracking-wider text-slate-400">Team prize</p>
-              <p className="text-lg font-bold tabular-nums text-amber-100">
-                {formatMoney(mv.securedPrize)}
-                <span className="text-xs font-normal text-slate-400"> secured</span>
-              </p>
+            <div className="flex flex-wrap items-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setSoundMuted((m) => {
+                    const next = !m;
+                    writeMillionaireSoundMuted(next);
+                    if (!next) playMillionaireSound("select", false);
+                    return next;
+                  });
+                }}
+                className="rounded-lg border border-white/15 px-3 py-2 text-xs text-slate-200 hover:bg-white/5"
+                aria-pressed={!soundMuted}
+              >
+                {soundMuted ? "Sound off" : "Sound on"}
+              </button>
+              <div className="rounded-xl border border-amber-400/30 bg-black/40 px-4 py-2 text-right">
+                <p className="text-[10px] uppercase tracking-wider text-slate-400">
+                  {mv.playStyle === "parallel" ? "Your prize" : "Team prize"}
+                </p>
+                <p className="text-lg font-bold tabular-nums text-amber-100">
+                  {formatMoney(mv.securedPrize)}
+                  <span className="text-xs font-normal text-slate-400"> secured</span>
+                </p>
+              </div>
             </div>
           </header>
 
