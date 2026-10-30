@@ -7,6 +7,7 @@ import {
   type FunquizRoomRow,
 } from "./db-mapper";
 import { MAX_PLAYERS } from "./constants";
+import { normalizeRoomCode } from "./room-code";
 import { broadcastRoomSync } from "./realtime-server";
 import { tickRoom } from "./game-logic";
 import type { QuizPlayer, QuizRoom } from "./types";
@@ -119,7 +120,10 @@ export async function deleteRoomForTest(code: string): Promise<void> {
 export async function loadRoom(code: string): Promise<QuizRoom | null> {
   assertSupabaseConfigured();
   const supabase = createAdminClient();
-  const normalized = code.toUpperCase();
+  const normalized = normalizeRoomCode(code);
+  if (!normalized) {
+    return null;
+  }
 
   const { data: roomRow, error: roomError } = await supabase
     .from("funquiz_rooms")

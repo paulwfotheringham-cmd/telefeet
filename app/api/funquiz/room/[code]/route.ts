@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { handleStoreError } from "@/lib/funquiz/api";
 import { tickRoom, toClientState } from "@/lib/funquiz/game-logic";
+import { isValidRoomCode, normalizeRoomCode } from "@/lib/funquiz/room-code";
 import { loadRoom, mutateRoomPersisted } from "@/lib/funquiz/store";
 
 export const dynamic = "force-dynamic";
@@ -9,10 +10,10 @@ type Params = { params: { code: string } };
 
 export async function GET(request: Request, { params }: Params) {
   try {
-    const code = params.code?.trim().toUpperCase();
+    const code = normalizeRoomCode(params.code ?? "");
     const { searchParams } = new URL(request.url);
     const playerId = searchParams.get("playerId")?.trim();
-    if (!code || !playerId) {
+    if (!isValidRoomCode(code) || !playerId) {
       return NextResponse.json({ error: "code and playerId required" }, { status: 400 });
     }
 
