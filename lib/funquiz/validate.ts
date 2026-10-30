@@ -1,4 +1,5 @@
-import { QUIZ_CATEGORIES } from "./categories";
+import { QUIZ_CATEGORIES, QUIZ_CATEGORY_CAPITAL_CITIES } from "./categories";
+import { QUIZ_DIFFICULTY_HARD } from "./difficulties";
 import { QUIZ_DIFFICULTIES } from "./difficulties";
 import { getOutlineSvg } from "./outline-paths";
 import { WORLD_FLAG_ISO2_CODES } from "./question-bank/builders/world-flags";
@@ -38,6 +39,26 @@ export function validateQuestionBank(): string[] {
       if (!/^[a-z]{2}$/.test(q.flagIso2) || !WORLD_FLAG_ISO2_CODES.has(q.flagIso2)) {
         errors.push(`Question ${q.id} has invalid flagIso2`);
       }
+    }
+  }
+
+  const capitalHard = QUIZ_QUESTIONS.filter(
+    (q) => q.categoryId === QUIZ_CATEGORY_CAPITAL_CITIES && q.difficulty === QUIZ_DIFFICULTY_HARD,
+  );
+  if (capitalHard.length > 0) {
+    const correctIndices = new Set(capitalHard.map((q) => q.correctIndex));
+    if (correctIndices.size < 2) {
+      errors.push(
+        `Capital Cities hard questions must shuffle answer positions (found correctIndex only on ${[...correctIndices].join(", ")})`,
+      );
+    }
+    const easyHardPrompts = capitalHard.filter((q) =>
+      /Japan|France|Germany|United States|Brazil|Australia/i.test(q.prompt),
+    );
+    if (easyHardPrompts.length > 0) {
+      errors.push(
+        `Capital Cities hard pool includes well-known countries: ${easyHardPrompts.map((q) => q.prompt).join("; ")}`,
+      );
     }
   }
 
