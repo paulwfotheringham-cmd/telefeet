@@ -12,7 +12,7 @@
     "test:funquiz:e2e": "playwright test e2e/funquiz-multiplayer.spec.ts e2e/funquiz-game1-game2.spec.ts e2e/funquiz-millionaire.spec.ts",
     "test:funquiz:join-race": "npx tsx scripts/funquiz-join-race.test.ts",
     "db:migrate:funquiz": "node scripts/apply-funquiz-migration.mjs",
-    "db:migrate:funquiz:incremental": "node scripts/apply-supabase-sql.mjs supabase/migrations/20251024270000_funquiz_shared_millionaire.sql supabase/migrations/20251024280000_funquiz_parallel_millionaire.sql supabase/migrations/20251030200000_funquiz_movies_pop_culture_category.sql supabase/migrations/20251030210000_funquiz_played_bank_ids_by_topic.sql supabase/migrations/20251030220000_funquiz_world_flags_category.sql supabase/migrations/20251030230000_funquiz_texas_holdem.sql",
+    "db:migrate:funquiz:incremental": "node scripts/apply-supabase-sql.mjs supabase/migrations/20251024270000_funquiz_shared_millionaire.sql supabase/migrations/20251024280000_funquiz_parallel_millionaire.sql supabase/migrations/20251030200000_funquiz_movies_pop_culture_category.sql supabase/migrations/20251030210000_funquiz_played_bank_ids_by_topic.sql supabase/migrations/20251030220000_funquiz_world_flags_category.sql supabase/migrations/20251030230000_funquiz_texas_holdem.sql supabase/migrations/20251030240000_funquiz_movie_quotes_category.sql",
     "db:migrate": "node scripts/apply-migration.mjs",
     "db:seed": "node scripts/seed-demo-users.mjs",
     "db:setup": "node scripts/apply-migration.mjs && node scripts/seed-demo-users.mjs",
