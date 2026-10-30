@@ -12,6 +12,7 @@
     "test:funquiz:e2e": "playwright test e2e/funquiz-multiplayer.spec.ts e2e/funquiz-game1-game2.spec.ts e2e/funquiz-millionaire.spec.ts",
     "test:funquiz:join-race": "npx tsx scripts/funquiz-join-race.test.ts",
     "db:migrate:funquiz": "node scripts/apply-funquiz-migration.mjs",
+    "bootstrap:funquiz:prod": "node scripts/funquiz-production-bootstrap.mjs",
     "db:migrate": "node scripts/apply-migration.mjs",
     "db:seed": "node scripts/seed-demo-users.mjs",
     "db:setup": "node scripts/apply-migration.mjs && node scripts/seed-demo-users.mjs",
