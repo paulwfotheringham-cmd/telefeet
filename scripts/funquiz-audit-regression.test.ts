@@ -204,7 +204,8 @@ function runTakeTurnsIndividualScoringUnchanged() {
   room = tickRoom(room, Date.now() + 5000);
   const after = toClientState(room, "host");
   assert.equal(after.jointScore, null);
-  assert.equal(after.scoresHidden, true);
+  assert.equal(after.scoresHidden, false);
+  assert.equal(after.players.find((p) => p.id === "host")!.score, 1);
   assert.equal(room.players.find((p) => p.id === "host")!.score, 1);
   assert.equal(room.players.find((p) => p.id === "guest")!.score, 0);
 }

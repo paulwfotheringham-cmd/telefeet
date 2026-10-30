@@ -535,7 +535,7 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
     };
   }
 
-  const scoresHidden = room.gameMode === GAME_MODE_TAKE_TURNS && room.phase !== "finished";
+  const scoresHidden = false;
   const jointScore =
     room.gameMode === GAME_MODE_PLAY_TOGETHER ? room.jointScore : null;
 

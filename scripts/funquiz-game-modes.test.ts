@@ -61,7 +61,8 @@ function runTakeTurnsFlow() {
   const hostView = toClientState(room, "host");
   assert.ok(hostView.question);
   assert.equal(hostView.canSubmitAnswer, true);
-  assert.equal(hostView.scoresHidden, true);
+  assert.equal(hostView.scoresHidden, false);
+  assert.equal(hostView.players.find((p) => p.id === "host")!.score, 0);
 
   const guestView = toClientState(room, "guest");
   assert.ok(guestView.question);
