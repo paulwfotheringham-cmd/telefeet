@@ -8,6 +8,7 @@ import {
   QUIZ_CATEGORY_MILITARY_BATTLES,
   QUIZ_CATEGORY_MOVIES_POP_CULTURE,
   QUIZ_CATEGORY_SPACE,
+  QUIZ_CATEGORY_WORLD_FLAGS,
   type QuizCategoryId,
 } from "../categories";
 import {
@@ -29,6 +30,7 @@ import { HISTORY_QUESTION_DEFS } from "./builders/history";
 import { MILITARY_BATTLES_DEFS } from "./builders/military-battles";
 import { MOVIES_POP_CULTURE_QUESTION_DEFS } from "./builders/movies-pop-culture";
 import { SPACE_QUESTION_DEFS } from "./builders/space";
+import { WORLD_FLAG_DEFS, WORLD_FLAG_DEFS_EXTRA } from "./builders/world-flags";
 import { LEGACY_QUESTION_DEFS } from "./legacy";
 import type { QuizQuestionBankItem } from "./types";
 
@@ -52,6 +54,22 @@ function capitalToQuestion(
     options,
     correctIndex: 0,
     generalKnowledgeSubjects: ["geography", "culture"],
+    difficulty,
+  };
+}
+
+function flagToQuestion(
+  def: (typeof WORLD_FLAG_DEFS)[0],
+  difficulty: QuizDifficulty,
+): Omit<QuizQuestionBankItem, "id"> {
+  const options = [def.correctCountry, ...def.distractors] as [string, string, string, string];
+  return {
+    categoryId: QUIZ_CATEGORY_WORLD_FLAGS,
+    category: "Flags of the World",
+    prompt: "Which country does this flag belong to?",
+    options,
+    correctIndex: 0,
+    flagIso2: def.iso2,
     difficulty,
   };
 }
@@ -150,6 +168,8 @@ export function buildQuestionBank(): QuizQuestionBankItem[] {
     ...OUTLINE_COUNTRY_DEFS_EXTRA.map((d) =>
       outlineToQuestion(d, d.difficulty),
     ),
+    ...WORLD_FLAG_DEFS.map((d, i) => flagToQuestion(d, altDifficulty(i, 1))),
+    ...WORLD_FLAG_DEFS_EXTRA.map((d) => flagToQuestion(d, d.difficulty)),
     ...EXPANDED_MCQ_DEFS.map((d) =>
       mcq(d.categoryId, d.categoryLabel, d, d.difficulty, d.generalKnowledgeSubjects),
     ),

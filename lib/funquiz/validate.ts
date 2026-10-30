@@ -1,6 +1,7 @@
 import { QUIZ_CATEGORIES } from "./categories";
 import { QUIZ_DIFFICULTIES } from "./difficulties";
 import { getOutlineSvg } from "./outline-paths";
+import { WORLD_FLAG_ISO2_CODES } from "./question-bank/builders/world-flags";
 import { countQuestionsByCategoryAndDifficulty } from "./question-selection";
 import { QUIZ_QUESTIONS, QUIZ_QUESTION_COUNT } from "./questions";
 
@@ -31,6 +32,11 @@ export function validateQuestionBank(): string[] {
       }
       if (!getOutlineSvg(q.outlineAssetId)) {
         errors.push(`Question ${q.id} missing outline geometry for ${q.outlineAssetId}`);
+      }
+    }
+    if (q.flagIso2) {
+      if (!/^[a-z]{2}$/.test(q.flagIso2) || !WORLD_FLAG_ISO2_CODES.has(q.flagIso2)) {
+        errors.push(`Question ${q.id} has invalid flagIso2`);
       }
     }
   }

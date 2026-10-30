@@ -7,6 +7,7 @@ export const QUIZ_CATEGORY_CAPITAL_CITIES = "capital_cities" as const;
 export const QUIZ_CATEGORY_COUNTRY_OUTLINES = "country_outlines" as const;
 export const QUIZ_CATEGORY_GEOGRAPHY = "geography" as const;
 export const QUIZ_CATEGORY_MOVIES_POP_CULTURE = "movies_pop_culture" as const;
+export const QUIZ_CATEGORY_WORLD_FLAGS = "world_flags" as const;
 
 export type QuizCategoryId =
   | typeof QUIZ_CATEGORY_GENERAL_KNOWLEDGE
@@ -17,7 +18,8 @@ export type QuizCategoryId =
   | typeof QUIZ_CATEGORY_CAPITAL_CITIES
   | typeof QUIZ_CATEGORY_COUNTRY_OUTLINES
   | typeof QUIZ_CATEGORY_GEOGRAPHY
-  | typeof QUIZ_CATEGORY_MOVIES_POP_CULTURE;
+  | typeof QUIZ_CATEGORY_MOVIES_POP_CULTURE
+  | typeof QUIZ_CATEGORY_WORLD_FLAGS;
 
 export const QUIZ_CATEGORIES: {
   id: QuizCategoryId;
@@ -75,6 +77,11 @@ export const QUIZ_CATEGORIES: {
     title: "Movies & Pop Culture",
     description:
       "Films, TV, music, franchises, awards, quotes, and the celebrities and moments that define pop culture.",
+  },
+  {
+    id: QUIZ_CATEGORY_WORLD_FLAGS,
+    title: "Flags of the World",
+    description: "Identify countries from their national flags — from familiar banners to trickier ones.",
   },
 ];
 

@@ -693,6 +693,16 @@ export function FunQuizClient() {
           {roomState.statusMessage ? (
             <p className="mt-4 text-center text-sm text-slate-400">{roomState.statusMessage}</p>
           ) : null}
+          {question.flagImageUrl ? (
+            <div className="mt-6 flex justify-center rounded-2xl border border-white/10 bg-slate-950/80 p-4">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={question.flagImageUrl}
+                alt="Country flag"
+                className="max-h-40 w-full max-w-md rounded-md object-contain shadow-lg"
+              />
+            </div>
+          ) : null}
           {question.outlineImageUrl ? (
             <div className="mt-6 flex justify-center rounded-2xl border border-white/10 bg-slate-950/80 p-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -736,6 +746,16 @@ export function FunQuizClient() {
       {!isMillionaire && phase === "reveal" && roomState.answerFeedback ? (
         <section className="mt-6 flex flex-1 flex-col rounded-3xl border border-amber-400/30 bg-amber-950/20 p-6">
           <h2 className="text-lg font-semibold text-amber-100">Answer reveal</h2>
+          {question?.flagImageUrl ? (
+            <div className="mt-3 flex justify-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={question.flagImageUrl}
+                alt="Country flag"
+                className="max-h-32 max-w-sm rounded object-contain"
+              />
+            </div>
+          ) : null}
           {question?.outlineImageUrl ? (
             <div className="mt-3 flex justify-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
