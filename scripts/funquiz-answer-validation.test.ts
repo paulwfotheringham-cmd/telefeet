@@ -75,6 +75,13 @@ function runTakeTurnsRevealFeedback() {
   assert.equal(view.phase, "reveal");
   assert.equal(view.answerFeedback?.correct, true);
   assert.equal(view.players.find((p) => p.id === "host")!.wasCorrect, true);
+
+  const guestReveal = toClientState(room, "guest");
+  assert.equal(guestReveal.phase, "reveal");
+  assert.ok(guestReveal.answerFeedback);
+  assert.equal(guestReveal.answerFeedback!.correct, true);
+  assert.ok(guestReveal.question);
+  assert.equal(guestReveal.question!.id, bankId);
 }
 
 runGradeEveryOptionPosition();

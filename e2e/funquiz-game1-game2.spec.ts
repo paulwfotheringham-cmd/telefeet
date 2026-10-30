@@ -46,9 +46,14 @@ test.describe("Game 1 and Game 2 multiplayer", () => {
       await expect(host.getByText(/Turn 1\//)).toBeVisible({ timeout: 20_000 });
       const firstOption = host.locator('button[type="button"]').filter({ hasText: /^A\./ }).first();
       await firstOption.click();
-      await expect(host.getByText("Correct!").or(host.getByText("Incorrect"))).toBeVisible({
-        timeout: 15_000,
-      });
+      await expect(host.getByText("Answer reveal")).toBeVisible({ timeout: 15_000 });
+      await expect(
+        host.getByText(/Correct answer!|Incorrect answer/),
+      ).toBeVisible({ timeout: 5_000 });
+      await expect(guest.getByText("Answer reveal")).toBeVisible({ timeout: 15_000 });
+      await expect(
+        guest.getByText(/Correct answer!|Incorrect answer/),
+      ).toBeVisible({ timeout: 5_000 });
     } finally {
       await hostCtx.close();
       await guestCtx.close();
