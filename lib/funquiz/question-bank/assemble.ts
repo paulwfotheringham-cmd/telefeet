@@ -17,6 +17,13 @@ import {
   type QuizDifficulty,
 } from "../difficulties";
 import { CAPITAL_QUESTION_DEFS } from "./builders/capitals";
+import { CAPITAL_HARD_SUPPLEMENT } from "./builders/capitals-hard-supplement";
+import { capitalDifficultyForCountry, outlineDifficultyForCountry } from "./difficulty-quality";
+import { GEOGRAPHY_HARD_SUPPLEMENT } from "./builders/geography-hard-supplement";
+import { HISTORY_HARD_SUPPLEMENT } from "./builders/history-hard-supplement";
+import { MILITARY_BATTLES_HARD_SUPPLEMENT } from "./builders/military-battles-hard-supplement";
+import { MOVIES_POP_CULTURE_HARD_SUPPLEMENT } from "./builders/movies-pop-culture-hard-supplement";
+import { SPACE_HARD_SUPPLEMENT } from "./builders/space-hard-supplement";
 import { OUTLINE_COUNTRY_DEFS, OUTLINE_COUNTRY_DEFS_EXTRA } from "./builders/country-outlines";
 import { EXPANDED_MCQ_DEFS } from "./builders/expanded-pools";
 import { GK_EXTRA_DEFS } from "./builders/general-knowledge-extra";
@@ -36,19 +43,15 @@ import { rebalanceExplicitDifficulties } from "./difficulty-quality";
 import { mcqOptionSeed, shuffleMcqOptions } from "./shuffle-options";
 import type { QuizQuestionBankItem } from "./types";
 
-/** First N capitals in the bank are intermediate; remainder are hard (no easy/hard alternation). */
-const CAPITAL_INTERMEDIATE_COUNT = 34;
 /** Familiar flags first; lesser-known flags are hard. */
 const WORLD_FLAG_INTERMEDIATE_COUNT = 86;
-/** First half of outline silhouettes are intermediate. */
-const OUTLINE_INTERMEDIATE_COUNT = 25;
 
 function withIds(items: Omit<QuizQuestionBankItem, "id">[], startId: number): QuizQuestionBankItem[] {
   return items.map((item, i) => ({ ...item, id: startId + i }));
 }
 
-function tierDifficulty(index: number, intermediateCount: number): QuizDifficulty {
-  return index < intermediateCount ? QUIZ_DIFFICULTY_INTERMEDIATE : QUIZ_DIFFICULTY_HARD;
+function flagTierDifficulty(index: number): QuizDifficulty {
+  return index < WORLD_FLAG_INTERMEDIATE_COUNT ? QUIZ_DIFFICULTY_INTERMEDIATE : QUIZ_DIFFICULTY_HARD;
 }
 
 function capitalToQuestion(
@@ -135,66 +138,55 @@ function mcq(
 
 export function buildQuestionBank(): QuizQuestionBankItem[] {
   const chunks: Omit<QuizQuestionBankItem, "id">[] = [
-    ...LEGACY_QUESTION_DEFS.map((q, i) => {
+    ...LEGACY_QUESTION_DEFS.map((q) => {
       const base =
         q.category === "Science"
           ? { ...q, categoryId: QUIZ_CATEGORY_GENERAL_KNOWLEDGE as QuizCategoryId }
           : q;
       return {
         ...base,
-        difficulty: tierDifficulty(i, Math.ceil(LEGACY_QUESTION_DEFS.length / 2)),
+        difficulty: QUIZ_DIFFICULTY_INTERMEDIATE,
       };
     }),
-    ...CAPITAL_QUESTION_DEFS.map((d, i) =>
-      capitalToQuestion(
-        d,
-        i < CAPITAL_INTERMEDIATE_COUNT ? QUIZ_DIFFICULTY_INTERMEDIATE : QUIZ_DIFFICULTY_HARD,
-      ),
+    ...CAPITAL_QUESTION_DEFS.map((d) => capitalToQuestion(d, capitalDifficultyForCountry(d.country))),
+    ...CAPITAL_HARD_SUPPLEMENT.map((d) =>
+      capitalToQuestion(d, QUIZ_DIFFICULTY_HARD),
     ),
-    ...GEOGRAPHY_QUESTION_DEFS.map((d, i) =>
-      mcq(
-        QUIZ_CATEGORY_GEOGRAPHY,
-        "Geography",
-        d,
-        tierDifficulty(i, Math.ceil(GEOGRAPHY_QUESTION_DEFS.length / 2)),
-        ["geography"],
-      ),
+    ...GEOGRAPHY_QUESTION_DEFS.map((d) =>
+      mcq(QUIZ_CATEGORY_GEOGRAPHY, "Geography", d, QUIZ_DIFFICULTY_INTERMEDIATE, ["geography"]),
     ),
-    ...SPACE_QUESTION_DEFS.map((d, i) =>
-      mcq(
-        QUIZ_CATEGORY_SPACE,
-        "Space",
-        d,
-        tierDifficulty(i, Math.ceil(SPACE_QUESTION_DEFS.length / 2)),
-        ["space"],
-      ),
+    ...GEOGRAPHY_HARD_SUPPLEMENT.map((d) =>
+      mcq(QUIZ_CATEGORY_GEOGRAPHY, "Geography", d, QUIZ_DIFFICULTY_HARD, ["geography"]),
     ),
-    ...HISTORY_QUESTION_DEFS.map((d, i) =>
-      mcq(
-        QUIZ_CATEGORY_HISTORY,
-        "History",
-        d,
-        tierDifficulty(i, Math.ceil(HISTORY_QUESTION_DEFS.length / 2)),
-        ["history"],
-      ),
+    ...SPACE_QUESTION_DEFS.map((d) =>
+      mcq(QUIZ_CATEGORY_SPACE, "Space", d, QUIZ_DIFFICULTY_INTERMEDIATE, ["space"]),
     ),
-    ...MOVIES_POP_CULTURE_QUESTION_DEFS.map((d, i) =>
-      mcq(
-        QUIZ_CATEGORY_MOVIES_POP_CULTURE,
-        "Movies & Pop Culture",
-        d,
-        tierDifficulty(i, Math.ceil(MOVIES_POP_CULTURE_QUESTION_DEFS.length / 2)),
-        ["culture"],
-      ),
+    ...SPACE_HARD_SUPPLEMENT.map((d) =>
+      mcq(QUIZ_CATEGORY_SPACE, "Space", d, QUIZ_DIFFICULTY_HARD, ["space"]),
     ),
-    ...MILITARY_BATTLES_DEFS.map((d, i) =>
-      mcq(
-        QUIZ_CATEGORY_MILITARY_BATTLES,
-        "Military Battles",
-        d,
-        tierDifficulty(i, Math.ceil(MILITARY_BATTLES_DEFS.length / 2)),
-        ["military"],
-      ),
+    ...HISTORY_QUESTION_DEFS.map((d) =>
+      mcq(QUIZ_CATEGORY_HISTORY, "History", d, QUIZ_DIFFICULTY_INTERMEDIATE, ["history"]),
+    ),
+    ...HISTORY_HARD_SUPPLEMENT.map((d) =>
+      mcq(QUIZ_CATEGORY_HISTORY, "History", d, QUIZ_DIFFICULTY_HARD, ["history"]),
+    ),
+    ...MOVIES_POP_CULTURE_QUESTION_DEFS.map((d) =>
+      mcq(QUIZ_CATEGORY_MOVIES_POP_CULTURE, "Movies & Pop Culture", d, QUIZ_DIFFICULTY_INTERMEDIATE, [
+        "culture",
+      ]),
+    ),
+    ...MOVIES_POP_CULTURE_HARD_SUPPLEMENT.map((d) =>
+      mcq(QUIZ_CATEGORY_MOVIES_POP_CULTURE, "Movies & Pop Culture", d, QUIZ_DIFFICULTY_HARD, [
+        "culture",
+      ]),
+    ),
+    ...MILITARY_BATTLES_DEFS.map((d) =>
+      mcq(QUIZ_CATEGORY_MILITARY_BATTLES, "Military Battles", d, QUIZ_DIFFICULTY_INTERMEDIATE, [
+        "military",
+      ]),
+    ),
+    ...MILITARY_BATTLES_HARD_SUPPLEMENT.map((d) =>
+      mcq(QUIZ_CATEGORY_MILITARY_BATTLES, "Military Battles", d, QUIZ_DIFFICULTY_HARD, ["military"]),
     ),
     ...GENERAL_MILITARY_DEFS.map((d) =>
       mcq(QUIZ_CATEGORY_GENERAL_MILITARY, "General Military", d, QUIZ_DIFFICULTY_INTERMEDIATE, [
@@ -211,23 +203,23 @@ export function buildQuestionBank(): QuizQuestionBankItem[] {
         "military",
       ]),
     ),
-    ...GK_EXTRA_DEFS.map((d, i) =>
+    ...GK_EXTRA_DEFS.map((d) =>
       mcq(
         QUIZ_CATEGORY_GENERAL_KNOWLEDGE,
         "General Knowledge",
         d,
-        tierDifficulty(i, Math.ceil(GK_EXTRA_DEFS.length / 2)),
+        QUIZ_DIFFICULTY_INTERMEDIATE,
         d.generalKnowledgeSubjects,
       ),
     ),
-    ...OUTLINE_COUNTRY_DEFS.map((d, i) =>
-      outlineToQuestion(d, tierDifficulty(i, OUTLINE_INTERMEDIATE_COUNT)),
+    ...OUTLINE_COUNTRY_DEFS.map((d) =>
+      outlineToQuestion(d, outlineDifficultyForCountry(d.correctCountry)),
     ),
     ...OUTLINE_COUNTRY_DEFS_EXTRA.map((d) =>
       outlineToQuestion(d, d.difficulty),
     ),
     ...WORLD_FLAG_DEFS.map((d, i) =>
-      flagToQuestion(d, tierDifficulty(i, WORLD_FLAG_INTERMEDIATE_COUNT)),
+      flagToQuestion(d, flagTierDifficulty(i)),
     ),
     ...WORLD_FLAG_DEFS_EXTRA.map((d) => flagToQuestion(d, d.difficulty)),
     ...EXPANDED_MCQ_DEFS.map((d) => {

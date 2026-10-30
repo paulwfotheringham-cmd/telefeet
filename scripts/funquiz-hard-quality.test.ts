@@ -35,7 +35,11 @@ function runCapitalHardNotHousehold() {
     (q) => q.categoryId === QUIZ_CATEGORY_CAPITAL_CITIES && q.difficulty === QUIZ_DIFFICULTY_HARD,
   );
   assert.ok(hardCaps.length >= 50);
-  const easy = hardCaps.filter((q) => /capital of (Japan|France|Germany|United States)\?/i.test(q.prompt));
+  const easy = hardCaps.filter((q) =>
+    /capital of (Japan|France|Germany|United States|Cuba|Jamaica|Ireland|Norway|Canada|Australia)\?/i.test(
+      q.prompt,
+    ),
+  );
   assert.equal(easy.length, 0);
 }
 

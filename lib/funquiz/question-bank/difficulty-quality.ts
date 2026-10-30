@@ -1,7 +1,6 @@
 import {
   QUIZ_CATEGORY_CAPITAL_CITIES,
   QUIZ_CATEGORY_COUNTRY_OUTLINES,
-  QUIZ_CATEGORY_GENERAL_KNOWLEDGE,
   QUIZ_CATEGORY_WORLD_FLAGS,
   type QuizCategoryId,
 } from "../categories";
@@ -11,7 +10,7 @@ import type { QuizQuestionBankItem } from "./types";
 const MIN_PER_POOL = 50;
 
 /** Countries that should not appear in hard flag / outline / capital pools. */
-const WELL_KNOWN_COUNTRIES = new Set(
+export const WELL_KNOWN_COUNTRIES = new Set(
   [
     "Japan",
     "Brazil",
@@ -72,6 +71,38 @@ const WELL_KNOWN_COUNTRIES = new Set(
   ].map((c) => c.toLowerCase()),
 );
 
+/** Capitals in the main bank tagged hard only when the country is in this set. */
+export const OBSCURE_CAPITAL_COUNTRIES = new Set(
+  [
+    "Myanmar",
+    "Bolivia",
+    "Ivory Coast",
+    "Sri Lanka",
+    "Tanzania",
+    "Ethiopia",
+    "North Korea",
+    "Mongolia",
+    "Kazakhstan",
+    "Uzbekistan",
+    "Afghanistan",
+    "Nepal",
+    "Bangladesh",
+    "Iraq",
+  ].map((c) => c.toLowerCase()),
+);
+
+export function capitalDifficultyForCountry(country: string): QuizDifficulty {
+  return OBSCURE_CAPITAL_COUNTRIES.has(country.toLowerCase())
+    ? QUIZ_DIFFICULTY_HARD
+    : QUIZ_DIFFICULTY_INTERMEDIATE;
+}
+
+export function outlineDifficultyForCountry(country: string): QuizDifficulty {
+  return WELL_KNOWN_COUNTRIES.has(country.toLowerCase())
+    ? QUIZ_DIFFICULTY_INTERMEDIATE
+    : QUIZ_DIFFICULTY_HARD;
+}
+
 const EASY_PROMPT_PATTERNS: RegExp[] = [
   /\bRed Planet\b/i,
   /\blargest planet\b/i,
@@ -90,12 +121,57 @@ const EASY_PROMPT_PATTERNS: RegExp[] = [
   /\bHarry Potter\b/i,
   /\bIron Man\b/i,
   /\bSpider-Man\b/i,
+  /\bweb-slinger\b/i,
   /\bLet It Go\b/i,
   /\bMay the Force\b/i,
   /\bNile\b.*\bCairo\b/i,
   /\bMount Everest\b/i,
   /\bMediterranean Sea\b/i,
+  /\bMachu Picchu\b/i,
+  /\bD-Day\b/i,
+  /\bNormandy\b/i,
+  /\bPearl Harbor\b/i,
+  /\bJurassic Park\b/i,
+  /\bShawshank\b/i,
+  /\bStranger Things\b/i,
+  /\bKing of Pop\b/i,
+  /\bIndiana Jones\b/i,
+  /\bApollo 11\b/i,
+  /\bfirst humans on the Moon\b/i,
+  /\bNorth Star\b/i,
+  /\bPolaris\b/i,
+  /\btotal solar eclipse\b/i,
+  /\bHubble\b/i,
+  /\btype of galaxy is the Milky Way\b/i,
+  /\bnearest the Milky Way\b/i,
+  /\bAndromeda\b/i,
+  /\bWhat is a supernova\b/i,
+  /\bGanymede\b/i,
+  /\bBattle of Hastings\b/i,
+  /\bBattle of Waterloo\b/i,
+  /\bNapoleon Bonaparte\b/i,
+  /\bTreaty of Versailles\b/i,
+  /\bBattle of Stalingrad\b/i,
+  /\bMargaret Thatcher\b/i,
+  /\bCleopatra\b/i,
+  /\bBlack Death\b/i,
+  /\bMagna Carta\b/i,
+  /\bMichael Jackson\b/i,
+  /\bLeonardo DiCaprio\b/i,
+  /\bTitanic \(1997\)\b/i,
+  /\bOscars are awarded\b/i,
+  /\bFriends\b.*\bNew York\b/i,
+  /\bFrozen\b/i,
+  /\bGuardians of the Galaxy\b/i,
+  /\bMCU\b/i,
+  /\bAvengers\b/i,
+  /\bWizard of Oz\b/i,
 ];
+
+function countryFromCapitalPrompt(prompt: string): string | null {
+  const m = prompt.match(/capital of (.+)\?/i);
+  return m?.[1]?.trim() ?? null;
+}
 
 function countryFromQuestion(q: Omit<QuizQuestionBankItem, "id">): string | null {
   const label = q.options[q.correctIndex];
@@ -103,9 +179,11 @@ function countryFromQuestion(q: Omit<QuizQuestionBankItem, "id">): string | null
 }
 
 export function isTooEasyForHardQuestion(q: Omit<QuizQuestionBankItem, "id">): boolean {
-  // Capital difficulty is assigned by curated tier in assemble.ts, not blocklist rebalance.
   if (q.categoryId === QUIZ_CATEGORY_CAPITAL_CITIES) {
-    return false;
+    const country = countryFromCapitalPrompt(q.prompt);
+    if (country && WELL_KNOWN_COUNTRIES.has(country.toLowerCase())) {
+      return true;
+    }
   }
   if (q.categoryId === QUIZ_CATEGORY_WORLD_FLAGS || q.categoryId === QUIZ_CATEGORY_COUNTRY_OUTLINES) {
     const country = countryFromQuestion(q);
@@ -142,27 +220,10 @@ function rebalanceSingleCategory(
     }
   }
 
-  const promoteCandidate = (): Omit<QuizQuestionBankItem, "id"> | null => {
-    for (let i = intermediate.length - 1; i >= 0; i--) {
-      const q = intermediate[i]!;
-      if (!isTooEasyForHardQuestion(q)) {
-        intermediate.splice(i, 1);
-        return { ...q, difficulty: QUIZ_DIFFICULTY_HARD };
-      }
-    }
-    return null;
-  };
-
-  while (hard.length < MIN_PER_POOL) {
-    const next = promoteCandidate();
-    if (!next) break;
-    hard.push(next);
-  }
+  // Never promote intermediate questions into hard — hard pools must stay curated.
 
   while (intermediate.length < MIN_PER_POOL && hard.length > MIN_PER_POOL) {
-    const demote =
-      hard.find((q) => isTooEasyForHardQuestion(q)) ??
-      hard[hard.length - 1];
+    const demote = hard.find((q) => isTooEasyForHardQuestion(q)) ?? hard[hard.length - 1];
     if (!demote) break;
     hard.splice(hard.indexOf(demote), 1);
     intermediate.push({ ...demote, difficulty: QUIZ_DIFFICULTY_INTERMEDIATE });
@@ -171,14 +232,13 @@ function rebalanceSingleCategory(
   return [...other, ...intermediate, ...hard];
 }
 
-/** Ensure hard pools exclude trivia-easy items; keep at least 50 hard when possible. */
+/** Demote trivia-easy items from hard pools; do not backfill hard with easier questions. */
 export function rebalanceExplicitDifficulties(
   items: Omit<QuizQuestionBankItem, "id">[],
 ): Omit<QuizQuestionBankItem, "id">[] {
   let out = items;
   const categories = new Set(items.map((q) => q.categoryId));
   for (const categoryId of categories) {
-    if (categoryId === QUIZ_CATEGORY_GENERAL_KNOWLEDGE) continue;
     out = rebalanceSingleCategory(out, categoryId);
   }
   return out;
