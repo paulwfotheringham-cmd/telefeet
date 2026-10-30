@@ -5,6 +5,7 @@ import {
   GAME_MODE_PARALLEL_MILLIONAIRE,
   GAME_MODE_SHARED_MILLIONAIRE,
   GAME_MODE_TAKE_TURNS,
+  GAME_MODE_TEXAS_HOLDEM,
 } from "@/lib/funquiz/constants";
 import { isQuizCategoryId } from "@/lib/funquiz/categories";
 import { isQuizDifficulty } from "@/lib/funquiz/difficulties";
@@ -46,7 +47,8 @@ export async function POST(request: Request, { params }: Params) {
       gameModeRaw !== GAME_MODE_TAKE_TURNS &&
       gameModeRaw !== GAME_MODE_PLAY_TOGETHER &&
       gameModeRaw !== GAME_MODE_SHARED_MILLIONAIRE &&
-      gameModeRaw !== GAME_MODE_PARALLEL_MILLIONAIRE
+      gameModeRaw !== GAME_MODE_PARALLEL_MILLIONAIRE &&
+      gameModeRaw !== GAME_MODE_TEXAS_HOLDEM
     ) {
       return NextResponse.json({ error: "Invalid gameMode" }, { status: 400 });
     }

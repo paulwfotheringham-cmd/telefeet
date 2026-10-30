@@ -5,6 +5,7 @@ import {
   GAME_MODE_PARALLEL_MILLIONAIRE,
   GAME_MODE_SHARED_MILLIONAIRE,
   GAME_MODE_TAKE_TURNS,
+  GAME_MODE_TEXAS_HOLDEM,
 } from "@/lib/funquiz/constants";
 import { isQuizCategoryId } from "@/lib/funquiz/categories";
 import { isQuizDifficulty } from "@/lib/funquiz/difficulties";
@@ -35,21 +36,31 @@ export async function POST(request: Request) {
         gameModeRaw !== GAME_MODE_TAKE_TURNS &&
         gameModeRaw !== GAME_MODE_PLAY_TOGETHER &&
         gameModeRaw !== GAME_MODE_SHARED_MILLIONAIRE &&
-        gameModeRaw !== GAME_MODE_PARALLEL_MILLIONAIRE
+        gameModeRaw !== GAME_MODE_PARALLEL_MILLIONAIRE &&
+        gameModeRaw !== GAME_MODE_TEXAS_HOLDEM
       ) {
         return NextResponse.json({ error: "Invalid gameMode" }, { status: 400 });
       }
       gameMode = gameModeRaw;
     }
     const quizCategoryRaw = body.quizCategory?.trim();
-    if (!quizCategoryRaw || !isQuizCategoryId(quizCategoryRaw)) {
-      return NextResponse.json({ error: "quizCategory required" }, { status: 400 });
-    }
-    const quizCategoryId = quizCategoryRaw;
     const quizDifficultyRaw = body.quizDifficulty?.trim();
-    if (!quizDifficultyRaw || !isQuizDifficulty(quizDifficultyRaw)) {
-      return NextResponse.json({ error: "quizDifficulty required" }, { status: 400 });
+    if (gameMode !== GAME_MODE_TEXAS_HOLDEM) {
+      if (!quizCategoryRaw || !isQuizCategoryId(quizCategoryRaw)) {
+        return NextResponse.json({ error: "quizCategory required" }, { status: 400 });
+      }
+      if (!quizDifficultyRaw || !isQuizDifficulty(quizDifficultyRaw)) {
+        return NextResponse.json({ error: "quizDifficulty required" }, { status: 400 });
+      }
     }
+    const quizCategoryId =
+      quizCategoryRaw && isQuizCategoryId(quizCategoryRaw)
+        ? quizCategoryRaw
+        : ("general_knowledge" as const);
+    const quizDifficultyFinal =
+      quizDifficultyRaw && isQuizDifficulty(quizDifficultyRaw)
+        ? quizDifficultyRaw
+        : ("intermediate" as const);
 
     let code = generateRoomCode();
     for (let attempt = 0; attempt < 8; attempt++) {
@@ -64,7 +75,7 @@ export async function POST(request: Request) {
       code,
       gameMode,
       quizCategoryId,
-      quizDifficultyRaw,
+      quizDifficultyFinal,
     );
     await persistNewRoom(room);
     return NextResponse.json({ state: toClientState(room, playerId) });

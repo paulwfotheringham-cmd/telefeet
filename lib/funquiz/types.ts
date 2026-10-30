@@ -1,5 +1,6 @@
 import type { QuizCategoryId } from "./categories";
 import type { QuizDifficulty } from "./difficulties";
+import type { HoldemState } from "./holdem/types";
 import type { MillionaireState } from "./millionaire/types";
 import type { PlayedBankIdsByTopic } from "./question-history";
 
@@ -7,7 +8,8 @@ export type GameMode =
   | "take_turns"
   | "play_together"
   | "shared_millionaire"
-  | "parallel_millionaire";
+  | "parallel_millionaire"
+  | "texas_holdem";
 
 export type QuizOptionList =
   | readonly [string, string, string]
@@ -60,6 +62,7 @@ export type QuizRoom = {
   players: QuizPlayer[];
   revealStartedAt: number | null;
   millionaire?: MillionaireState;
+  holdem?: HoldemState;
   /** Bank question IDs already used in prior games in this room, keyed by topic (category:difficulty or category:millionaire). */
   playedBankIdsByTopic: PlayedBankIdsByTopic;
   createdAt: number;
@@ -166,7 +169,36 @@ export type ClientRoomState = {
   results: ResultRow[] | null;
   scorecard: ScorecardData | null;
   millionaireView: MillionaireClientView | null;
+  holdemView: HoldemClientView | null;
   error?: string;
+};
+
+export type HoldemClientView = {
+  street: string;
+  handNumber: number;
+  dealerSeat: 0 | 1;
+  dealerName: string;
+  pot: number;
+  board: string[];
+  yourCards: string[];
+  opponentCards: string[] | null;
+  yourStack: number;
+  opponentStack: number;
+  toCall: number;
+  minRaise: number;
+  currentBet: number;
+  actionOn: string | null;
+  isYourAction: boolean;
+  canFold: boolean;
+  canCheck: boolean;
+  canCall: boolean;
+  canRaise: boolean;
+  canAllIn: boolean;
+  canDealNextHand: boolean;
+  lastHandSummary: string | null;
+  showdownLabel: string | null;
+  smallBlind: number;
+  bigBlind: number;
 };
 
 export type MillionaireOpponentWatch = {
