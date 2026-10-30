@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { handleStoreError } from "@/lib/funquiz/api";
 import { submitAnswer, toClientState } from "@/lib/funquiz/game-logic";
+import { normalizeRoomCode } from "@/lib/funquiz/room-code";
 import { loadRoom, mutateRoomPersisted } from "@/lib/funquiz/store";
 
 export const dynamic = "force-dynamic";
@@ -9,7 +10,7 @@ type Params = { params: { code: string } };
 
 export async function POST(request: Request, { params }: Params) {
   try {
-    const code = params.code?.trim().toUpperCase();
+    const code = normalizeRoomCode(params.code ?? "");
     const body = (await request.json()) as { playerId?: string; choiceIndex?: number };
     const playerId = body.playerId?.trim();
     const choiceIndex = body.choiceIndex;

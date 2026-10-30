@@ -8,6 +8,7 @@ import {
 } from "@/lib/funquiz/millionaire/logic";
 import type { MillionaireLifelineId } from "@/lib/funquiz/millionaire/config";
 import { toClientState } from "@/lib/funquiz/game-logic";
+import { normalizeRoomCode } from "@/lib/funquiz/room-code";
 import { mutateRoomPersisted } from "@/lib/funquiz/store";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +27,7 @@ function isLifeline(value: string): value is MillionaireLifelineId {
 
 export async function POST(request: Request, { params }: Params) {
   try {
-    const code = params.code?.trim().toUpperCase();
+    const code = normalizeRoomCode(params.code ?? "");
     const body = (await request.json()) as Body;
     const playerId = body.playerId?.trim();
     if (!code || !playerId || !body.action) {

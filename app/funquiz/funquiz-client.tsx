@@ -13,6 +13,11 @@ import {
   GAME_MODE_SHARED_MILLIONAIRE,
   GAME_MODE_TAKE_TURNS,
 } from "@/lib/funquiz/constants";
+import {
+  formatRoomCodeSpaced,
+  isValidRoomCode,
+  normalizeRoomCode,
+} from "@/lib/funquiz/room-code";
 import type { ClientRoomState, GameMode } from "@/lib/funquiz/types";
 
 const PLAYER_ID_KEY = "funquiz-player-id";
@@ -101,6 +106,10 @@ export function FunQuizClient() {
     setPlayerId(id);
     const saved = localStorage.getItem(PLAYER_NAME_KEY);
     if (saved) setName(saved);
+    if (typeof window !== "undefined") {
+      const fromUrl = new URLSearchParams(window.location.search).get("join");
+      if (fromUrl) setJoinCode(normalizeRoomCode(fromUrl));
+    }
     fetch("/api/funquiz/health")
       .then((r) => r.json())
       .then((h: { ok?: boolean; store?: string; missingEnv?: string[]; hint?: string }) => {
@@ -119,7 +128,7 @@ export function FunQuizClient() {
       .catch(() => {});
   }, []);
 
-  const code = roomState?.code ?? joinCode.toUpperCase();
+  const code = roomState?.code ?? normalizeRoomCode(joinCode);
 
   const poll = useCallback(async () => {
     if (!code || !playerId || screen !== "game") return;
@@ -222,8 +231,13 @@ export function FunQuizClient() {
       setError("Enter your name first.");
       return;
     }
-    if (!joinCode.trim()) {
+    const normalizedJoin = normalizeRoomCode(joinCode);
+    if (!normalizedJoin) {
       setError("Enter a room code.");
+      return;
+    }
+    if (!isValidRoomCode(normalizedJoin)) {
+      setError("Room code must be 6 letters or numbers.");
       return;
     }
     const activePlayerId = resolvePlayerId();
@@ -235,7 +249,7 @@ export function FunQuizClient() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          code: joinCode.trim().toUpperCase(),
+          code: normalizedJoin,
           playerId: activePlayerId,
           playerName: name.trim(),
         }),
@@ -509,9 +523,18 @@ export function FunQuizClient() {
             <input
               className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-center font-mono text-lg tracking-[0.35em] text-white uppercase outline-none focus:ring-2 focus:ring-violet-400/60"
               value={joinCode}
-              onChange={(e) => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
+              onChange={(e) => setJoinCode(normalizeRoomCode(e.target.value))}
+              onPaste={(e) => {
+                e.preventDefault();
+                const text = e.clipboardData.getData("text");
+                setJoinCode(normalizeRoomCode(text));
+              }}
               placeholder="ABC123"
-              maxLength={6}
+              maxLength={18}
+              inputMode="text"
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck={false}
             />
           </label>
 
@@ -637,7 +660,19 @@ export function FunQuizClient() {
             Mode: <strong className="text-violet-200">{gameModeLabel(gameMode)}</strong>
           </p>
           <p className="mt-2 text-sm text-slate-300">
-            Share code <span className="font-mono text-lg text-violet-200">{roomState.code}</span>
+            Share code{" "}
+            <span className="select-none font-mono text-lg tracking-[0.2em] text-violet-200">
+              {formatRoomCodeSpaced(roomState.code)}
+            </span>
+            <button
+              type="button"
+              className="ml-2 rounded-lg border border-violet-400/40 px-2 py-0.5 text-xs text-violet-200"
+              onClick={() => {
+                void navigator.clipboard?.writeText(roomState.code);
+              }}
+            >
+              Copy code
+            </button>
           </p>
           <ul className="mt-4 space-y-2 text-sm text-slate-200">
             {players.map((p) => (

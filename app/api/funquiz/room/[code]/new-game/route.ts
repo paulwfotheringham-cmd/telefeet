@@ -9,6 +9,7 @@ import { isQuizCategoryId } from "@/lib/funquiz/categories";
 import { isQuizDifficulty } from "@/lib/funquiz/difficulties";
 import { resetRoomForNewGame, toClientState } from "@/lib/funquiz/game-logic";
 import type { GameMode } from "@/lib/funquiz/types";
+import { normalizeRoomCode } from "@/lib/funquiz/room-code";
 import { loadRoom, mutateRoomPersisted } from "@/lib/funquiz/store";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +18,7 @@ type Params = { params: { code: string } };
 
 export async function POST(request: Request, { params }: Params) {
   try {
-    const code = params.code?.trim().toUpperCase();
+    const code = normalizeRoomCode(params.code ?? "");
     const body = (await request.json()) as {
       playerId?: string;
       gameMode?: string;
