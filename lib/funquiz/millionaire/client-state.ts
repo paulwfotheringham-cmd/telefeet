@@ -267,7 +267,8 @@ function toParallelMillionaireClientState(room: QuizRoom, viewerId: string): Cli
 }
 
 export function toMillionaireClientState(room: QuizRoom, viewerId: string): ClientRoomState {
-  if (isParallelMillionaireRoom(room)) {
+  // Parallel runs are allocated when the host starts the game; until then use the shared lobby view.
+  if (isParallelMillionaireRoom(room) && room.phase !== "lobby") {
     return toParallelMillionaireClientState(room, viewerId);
   }
   const you = room.players.find((p) => p.id === viewerId)!;

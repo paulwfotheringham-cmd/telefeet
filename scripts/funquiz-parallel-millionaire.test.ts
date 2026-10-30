@@ -2,10 +2,34 @@ import assert from "node:assert/strict";
 import { GAME_MODE_PARALLEL_MILLIONAIRE } from "../lib/funquiz/constants";
 import { QUIZ_CATEGORY_SPACE } from "../lib/funquiz/categories";
 import { QUIZ_DIFFICULTY_INTERMEDIATE } from "../lib/funquiz/difficulties";
-import { addPlayer, createRoom, startGame, submitAnswer } from "../lib/funquiz/game-logic";
+import {
+  addPlayer,
+  createRoom,
+  startGame,
+  submitAnswer,
+  toClientState,
+} from "../lib/funquiz/game-logic";
 import { millionaireLockAnswer } from "../lib/funquiz/millionaire/logic";
 import { parallelTickRoom } from "../lib/funquiz/millionaire/parallel-logic";
 import { getQuestionByBankId } from "../lib/funquiz/questions";
+
+function runLobbyClientStateBeforeStart() {
+  let room = createRoom(
+    "host",
+    "Host",
+    "PL0002",
+    GAME_MODE_PARALLEL_MILLIONAIRE,
+    QUIZ_CATEGORY_SPACE,
+    QUIZ_DIFFICULTY_INTERMEDIATE,
+  );
+  const hostView = toClientState(room, "host");
+  assert.equal(hostView.phase, "lobby");
+  assert.equal(hostView.millionaireView?.playStyle, "shared");
+  room = addPlayer(room, "guest", "Guest");
+  const guestView = toClientState(room, "guest");
+  assert.equal(guestView.phase, "lobby");
+  assert.doesNotThrow(() => toClientState(room, "guest"));
+}
 
 function runSeparateOrdersAndProgress() {
   let room = createRoom(
@@ -40,6 +64,7 @@ function runSeparateOrdersAndProgress() {
 }
 
 try {
+  runLobbyClientStateBeforeStart();
   runSeparateOrdersAndProgress();
   console.log("funquiz-parallel-millionaire.test.ts OK");
 } catch (err) {
