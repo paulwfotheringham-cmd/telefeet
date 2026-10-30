@@ -610,7 +610,11 @@ export function FunQuizClient() {
                 {p!.id === playerId ? " (you)" : ""}
               </p>
               <p className="mt-1 text-2xl font-bold tabular-nums text-violet-200">
-                {roomState.scoresHidden ? "—" : `${p!.score} / 25`}
+                {gameMode === GAME_MODE_TAKE_TURNS
+                  ? `${p!.score} / 25`
+                  : roomState.scoresHidden
+                    ? "—"
+                    : `${p!.score} / 25`}
               </p>
             </div>
           ))}
