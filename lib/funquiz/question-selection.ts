@@ -91,8 +91,12 @@ function selectBalancedGeneralKnowledge(pool: number[]): number[] {
 export function selectQuestionIdsForCategory(
   categoryId: QuizCategoryId,
   difficulty: QuizDifficulty,
+  excludeBankIds: number[] = [],
 ): number[] {
-  const pool = eligibleForCategoryAndDifficulty(categoryId, difficulty);
+  const exclude = new Set(excludeBankIds);
+  const pool = eligibleForCategoryAndDifficulty(categoryId, difficulty).filter(
+    (id) => !exclude.has(id),
+  );
   if (pool.length < QUESTIONS_PER_GAME) {
     throw new InsufficientQuestionsError(categoryId, difficulty, pool.length);
   }

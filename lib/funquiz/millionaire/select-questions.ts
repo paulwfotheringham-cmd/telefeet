@@ -36,14 +36,22 @@ function poolFor(categoryId: QuizCategoryId, difficulty: QuizDifficulty): number
 
 export function selectMillionaireQuestionIds(
   categoryId: QuizCategoryId,
+  excludeOrRandom: number[] | (() => number) = [],
   random: () => number = Math.random,
 ): number[] {
+  let excludeBankIds: number[] = [];
+  let rng = random;
+  if (typeof excludeOrRandom === "function") {
+    rng = excludeOrRandom;
+  } else {
+    excludeBankIds = excludeOrRandom;
+  }
   const picked: number[] = [];
-  const used = new Set<number>();
+  const used = new Set<number>(excludeBankIds);
 
   for (let step = 0; step < MILLIONAIRE_QUESTION_COUNT; step++) {
     const difficulty = MILLIONAIRE_TIER_DIFFICULTY[step]!;
-    let pool = shuffleWithRng(poolFor(categoryId, difficulty), random).filter(
+    let pool = shuffleWithRng(poolFor(categoryId, difficulty), rng).filter(
       (id) => !used.has(id),
     );
     if (pool.length === 0) {
@@ -51,7 +59,7 @@ export function selectMillionaireQuestionIds(
         QUIZ_QUESTIONS.filter((q) => q.categoryId === categoryId && !used.has(q.id)).map(
           (q) => q.id,
         ),
-        random,
+        rng,
       );
     }
     if (pool.length === 0) {

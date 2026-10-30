@@ -12,6 +12,7 @@ import {
   securedPrizeAfterCorrect,
   targetPrizeForQuestionIndex,
 } from "./config";
+import { playedIdsForTopic, reserveBankIdsForTopic } from "../question-history";
 import { replacementQuestionId, selectMillionaireQuestionIds } from "./select-questions";
 import {
   createInitialMillionaireState,
@@ -46,14 +47,20 @@ export function startMillionaireGame(room: QuizRoom): QuizRoom {
   if (room.players.length < 1) {
     throw new Error("Waiting for at least one player");
   }
-  const questionOrder = selectMillionaireQuestionIds(room.quizCategoryId);
+  const exclude = playedIdsForTopic(
+    room,
+    room.quizCategoryId,
+    room.quizDifficulty,
+    GAME_MODE_SHARED_MILLIONAIRE,
+  );
+  const questionOrder = selectMillionaireQuestionIds(room.quizCategoryId, exclude);
   const millionaire = resetLocksForQuestion(
     room.players,
     createInitialMillionaireState(),
   );
   millionaire.usedBankIds = [...questionOrder];
 
-  return {
+  let started: QuizRoom = {
     ...room,
     phase: "question",
     questionIndex: 0,
@@ -69,6 +76,14 @@ export function startMillionaireGame(room: QuizRoom): QuizRoom {
     players: room.players.map((p) => ({ ...p, score: 0, answer: null })),
     updatedAt: Date.now(),
   };
+  started = reserveBankIdsForTopic(
+    started,
+    started.quizCategoryId,
+    started.quizDifficulty,
+    questionOrder,
+    GAME_MODE_SHARED_MILLIONAIRE,
+  );
+  return started;
 }
 
 function currentBankId(room: QuizRoom): number {
@@ -335,11 +350,19 @@ export function millionaireUseLifeline(
   }
 
   if (lifeline === "change_question") {
-    const used = new Set(m.usedBankIds);
+    const used = new Set([
+      ...m.usedBankIds,
+      ...playedIdsForTopic(
+        room,
+        room.quizCategoryId,
+        room.quizDifficulty,
+        GAME_MODE_SHARED_MILLIONAIRE,
+      ),
+    ]);
     const newId = replacementQuestionId(room.quizCategoryId, room.questionIndex, used);
     const order = [...room.questionOrder];
     order[room.questionIndex] = newId;
-    return {
+    let updated: QuizRoom = {
       ...room,
       questionOrder: order,
       millionaire: {
@@ -353,6 +376,14 @@ export function millionaireUseLifeline(
       players: room.players.map((p) => ({ ...p, answer: null })),
       updatedAt: Date.now(),
     };
+    updated = reserveBankIdsForTopic(
+      updated,
+      updated.quizCategoryId,
+      updated.quizDifficulty,
+      [newId],
+      GAME_MODE_SHARED_MILLIONAIRE,
+    );
+    return updated;
   }
 
   return room;

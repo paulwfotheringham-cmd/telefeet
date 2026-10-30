@@ -22,8 +22,14 @@ import { categoryTitle } from "./categories";
 import type { QuizDifficulty } from "./difficulties";
 import { difficultyTitle } from "./difficulties";
 import { gradeAnswer, normalizeChoiceIndex } from "./answer-validation";
+import {
+  emptyPlayedBankIdsByTopic,
+  playedIdsForTopic,
+  reserveBankIdsForTopic,
+} from "./question-history";
 import { selectQuestionIdsForCategory } from "./question-selection";
-import { assertRoomQuestionAllocation } from "./session-questions";
+import { buildScorecard } from "./scorecard";
+import { allocatedBankIdsForSession, assertRoomQuestionAllocation } from "./session-questions";
 import { getQuestionByBankId, toPublicQuestion } from "./questions";
 import type {
   AnswerLogEntry,
@@ -55,12 +61,17 @@ function shuffleInPlace<T>(arr: T[]): T[] {
 export function allocateQuestionsForGame(
   quizCategoryId: QuizCategoryId,
   quizDifficulty: QuizDifficulty,
+  excludeBankIds: number[] = [],
 ): {
   questionOrder: number[];
   hostQuestionOrder: number[];
   guestQuestionOrder: number[];
 } {
-  const questionOrder = selectQuestionIdsForCategory(quizCategoryId, quizDifficulty);
+  const questionOrder = selectQuestionIdsForCategory(
+    quizCategoryId,
+    quizDifficulty,
+    excludeBankIds,
+  );
   const hostQuestionOrder = shuffleInPlace(
     questionOrder.slice(0, TAKE_TURNS_QUESTIONS_PER_PLAYER),
   );
@@ -108,6 +119,7 @@ export function createRoom(
       gameMode === GAME_MODE_SHARED_MILLIONAIRE
         ? createInitialMillionaireState()
         : undefined,
+    playedBankIdsByTopic: emptyPlayedBankIdsByTopic(),
     createdAt: now,
     updatedAt: now,
   };
@@ -171,13 +183,23 @@ export function startGame(room: QuizRoom, playerId: string): QuizRoom {
     throw new Error("Waiting for a second player");
   }
 
-  const allocated = allocateQuestionsForGame(room.quizCategoryId, room.quizDifficulty);
+  const exclude = playedIdsForTopic(
+    room,
+    room.quizCategoryId,
+    room.quizDifficulty,
+    room.gameMode,
+  );
+  const allocated = allocateQuestionsForGame(
+    room.quizCategoryId,
+    room.quizDifficulty,
+    exclude,
+  );
   const guestId = guestPlayerId(room);
   if (!guestId) {
     throw new Error("Waiting for a second player");
   }
 
-  const started: QuizRoom = {
+  let started: QuizRoom = {
     ...room,
     ...allocated,
     phase: "question",
@@ -191,6 +213,13 @@ export function startGame(room: QuizRoom, playerId: string): QuizRoom {
     updatedAt: Date.now(),
   };
   assertRoomQuestionAllocation(started);
+  started = reserveBankIdsForTopic(
+    started,
+    started.quizCategoryId,
+    started.quizDifficulty,
+    allocatedBankIdsForSession(started),
+    started.gameMode,
+  );
   return started;
 }
 
@@ -530,6 +559,7 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
       winnerIds: [],
       you: { id: viewerId, name: "", score: 0, answer: null },
       results: null,
+      scorecard: null,
       millionaireView: null,
       error: "You are not in this room",
     };
@@ -609,6 +639,7 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
   };
 
   const results = room.phase === "finished" ? buildResultRows(room) : null;
+  const scorecard = buildScorecard(room);
 
   return {
     code: room.code,
@@ -659,6 +690,7 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
       answer: you.answer,
     },
     results,
+    scorecard,
     millionaireView: null,
   };
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { FunQuizScorecardGraph } from "@/components/funquiz/scorecard-graph";
 import type { ClientRoomState } from "@/lib/funquiz/types";
 
 type Props = {
@@ -157,6 +158,11 @@ export function MillionaireStage({
                 <p className="mt-1 text-xs text-slate-400">
                   All {mv.totalQuestions} questions answered correctly.
                 </p>
+              ) : null}
+              {roomState.scorecard ? (
+                <div className="mt-5 text-left">
+                  <FunQuizScorecardGraph scorecard={roomState.scorecard} />
+                </div>
               ) : null}
               <div className="mt-5 flex flex-wrap justify-center gap-3">
                 {isHost && onPlayAgain ? (

@@ -2,6 +2,7 @@ import { categoryTitle } from "../categories";
 import { difficultyTitle } from "../difficulties";
 import { MILLIONAIRE_REVEAL_MS } from "../constants";
 import { getQuestionByBankId, toPublicQuestion } from "../questions";
+import { buildScorecard } from "../scorecard";
 import type {
   ClientRoomState,
   MillionaireClientView,
@@ -175,6 +176,7 @@ export function toMillionaireClientState(room: QuizRoom, viewerId: string): Clie
       answer: you.answer,
     },
     results: null,
+    scorecard: buildScorecard(room),
     millionaireView: buildMillionaireClientView(room, viewerId),
   };
 }

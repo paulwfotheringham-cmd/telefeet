@@ -1,6 +1,7 @@
 import type { QuizCategoryId } from "./categories";
 import type { QuizDifficulty } from "./difficulties";
 import type { MillionaireState } from "./millionaire/types";
+import type { PlayedBankIdsByTopic } from "./question-history";
 
 export type GameMode = "take_turns" | "play_together" | "shared_millionaire";
 
@@ -55,6 +56,8 @@ export type QuizRoom = {
   players: QuizPlayer[];
   revealStartedAt: number | null;
   millionaire?: MillionaireState;
+  /** Bank question IDs already used in prior games in this room, keyed by topic (category:difficulty or category:millionaire). */
+  playedBankIdsByTopic: PlayedBankIdsByTopic;
   createdAt: number;
   updatedAt: number;
   /** ISO timestamp last read from `funquiz_rooms.updated_at` (optimistic concurrency). */
@@ -68,6 +71,39 @@ export type PublicQuizQuestion = {
   category: string;
   outlineImageUrl?: string;
 };
+
+export type ScorecardPlayerBar = {
+  id: string;
+  name: string;
+  correct: number;
+  total: number;
+};
+
+export type ScorecardSeriesPoint = {
+  label: string;
+  value: number;
+};
+
+export type ScorecardData =
+  | {
+      kind: "take_turns";
+      players: ScorecardPlayerBar[];
+    }
+  | {
+      kind: "play_together";
+      correct: number;
+      total: number;
+      cumulativeSeries: ScorecardSeriesPoint[];
+    }
+  | {
+      kind: "millionaire";
+      questionsAnswered: number;
+      totalQuestions: number;
+      correctCount: number;
+      finalPrize: number;
+      maxPrize: number;
+      stepSeries: ScorecardSeriesPoint[];
+    };
 
 export type ResultRow = {
   turnIndex: number;
@@ -123,6 +159,7 @@ export type ClientRoomState = {
   winnerIds: string[];
   you: { id: string; name: string; score: number; answer: number | null };
   results: ResultRow[] | null;
+  scorecard: ScorecardData | null;
   millionaireView: MillionaireClientView | null;
   error?: string;
 };

@@ -2,6 +2,8 @@ import { isQuizCategoryId } from "./categories";
 import { QUIZ_CATEGORY_GENERAL_KNOWLEDGE } from "./categories";
 import { isQuizDifficulty } from "./difficulties";
 import { QUIZ_DIFFICULTY_INTERMEDIATE } from "./difficulties";
+import type { PlayedBankIdsByTopic } from "./question-history";
+import { emptyPlayedBankIdsByTopic } from "./question-history";
 import type { AnswerLogEntry, GameMode, QuizPhase, QuizPlayer, QuizRoom } from "./types";
 import type { MillionaireState } from "./millionaire/types";
 import { createInitialMillionaireState } from "./millionaire/types";
@@ -35,6 +37,7 @@ export type FunquizRoomRow = {
   joint_score?: number;
   answer_log?: unknown;
   millionaire_state?: unknown;
+  played_bank_ids_by_topic?: unknown;
 };
 
 export type FunquizPlayerRow = {
@@ -123,6 +126,22 @@ function parseMillionaireState(raw: unknown): MillionaireState | undefined {
   };
 }
 
+function parsePlayedBankIdsByTopic(raw: unknown): PlayedBankIdsByTopic {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return emptyPlayedBankIdsByTopic();
+  }
+  const out: PlayedBankIdsByTopic = {};
+  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (!Array.isArray(value)) continue;
+    const ids: number[] = [];
+    for (const item of value) {
+      if (typeof item === "number" && Number.isInteger(item)) ids.push(item);
+    }
+    if (ids.length > 0) out[key] = ids;
+  }
+  return out;
+}
+
 function parseAnswerLog(raw: unknown): AnswerLogEntry[] {
   if (!Array.isArray(raw)) return [];
   const out: AnswerLogEntry[] = [];
@@ -185,6 +204,7 @@ export function roomToDbRows(room: QuizRoom): {
       joint_score: room.jointScore,
       answer_log: room.answerLog,
       millionaire_state: room.millionaire ?? null,
+      played_bank_ids_by_topic: room.playedBankIdsByTopic,
     },
     players: playerRows,
   };
@@ -231,6 +251,7 @@ export function dbRowsToRoom(roomRow: FunquizRoomRow, playerRows: FunquizPlayerR
       (roomRow.game_mode === GAME_MODE_SHARED_MILLIONAIRE
         ? createInitialMillionaireState()
         : undefined),
+    playedBankIdsByTopic: parsePlayedBankIdsByTopic(roomRow.played_bank_ids_by_topic),
     createdAt: new Date(roomRow.created_at).getTime(),
     updatedAt: new Date(roomRow.updated_at).getTime(),
     dbUpdatedAtIso: roomRow.updated_at,
