@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { QUIZ_CATEGORIES } from "@/lib/funquiz/categories";
+import { QUIZ_CATEGORIES, QUIZ_CATEGORY_GENERAL_KNOWLEDGE } from "@/lib/funquiz/categories";
 import type { QuizCategoryId } from "@/lib/funquiz/categories";
-import { QUIZ_DIFFICULTIES } from "@/lib/funquiz/difficulties";
+import { QUIZ_DIFFICULTIES, QUIZ_DIFFICULTY_INTERMEDIATE } from "@/lib/funquiz/difficulties";
 import type { QuizDifficulty } from "@/lib/funquiz/difficulties";
+import { HoldemStage } from "@/components/funquiz/holdem-stage";
 import { MillionaireStage } from "@/components/funquiz/millionaire-stage";
 import { FunQuizScorecardGraph } from "@/components/funquiz/scorecard-graph";
 import {
@@ -13,6 +14,7 @@ import {
   GAME_MODE_PARALLEL_MILLIONAIRE,
   GAME_MODE_SHARED_MILLIONAIRE,
   GAME_MODE_TAKE_TURNS,
+  GAME_MODE_TEXAS_HOLDEM,
 } from "@/lib/funquiz/constants";
 import {
   formatRoomCodeSpaced,
@@ -40,7 +42,12 @@ function gameModeLabel(mode: GameMode): string {
   if (mode === GAME_MODE_TAKE_TURNS) return "Take turns";
   if (mode === GAME_MODE_SHARED_MILLIONAIRE) return "Shared Millionaire";
   if (mode === GAME_MODE_PARALLEL_MILLIONAIRE) return "Dual Millionaire";
+  if (mode === GAME_MODE_TEXAS_HOLDEM) return "Texas Hold'em";
   return "Play together";
+}
+
+function isHoldemGameMode(mode: GameMode | null): boolean {
+  return mode === GAME_MODE_TEXAS_HOLDEM;
 }
 
 function isMillionaireGameMode(mode: GameMode | null): boolean {
@@ -195,11 +202,12 @@ export function FunQuizClient() {
       setError("Select a game mode before creating a room.");
       return;
     }
-    if (!selectedDifficulty) {
+    const isHoldem = selectedMode === GAME_MODE_TEXAS_HOLDEM;
+    if (!isHoldem && !selectedDifficulty) {
       setError("Select a difficulty before creating a room.");
       return;
     }
-    if (!selectedCategory) {
+    if (!isHoldem && !selectedCategory) {
       setError("Choose a quiz category before creating a room.");
       return;
     }
@@ -215,8 +223,8 @@ export function FunQuizClient() {
           playerId: activePlayerId,
           playerName: name.trim(),
           gameMode: selectedMode,
-          quizDifficulty: selectedDifficulty,
-          quizCategory: selectedCategory,
+          quizDifficulty: isHoldem ? QUIZ_DIFFICULTY_INTERMEDIATE : selectedDifficulty,
+          quizCategory: isHoldem ? QUIZ_CATEGORY_GENERAL_KNOWLEDGE : selectedCategory,
         }),
       });
       const state = await parseState(res);
@@ -502,9 +510,27 @@ export function FunQuizClient() {
                 </div>
               ) : null}
             </div>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedMode(GAME_MODE_TEXAS_HOLDEM);
+                setGame3Expanded(false);
+              }}
+              className={`mt-3 w-full rounded-2xl border p-4 text-left transition ${
+                selectedMode === GAME_MODE_TEXAS_HOLDEM
+                  ? "border-emerald-400 bg-emerald-950/40"
+                  : "border-white/10 bg-black/30 hover:border-emerald-400/40"
+              }`}
+            >
+              <p className="text-sm font-semibold text-emerald-200">Game 4 — Texas Hold&apos;em</p>
+              <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                Heads-up poker with a dealer button, blinds, and rotating dealer each hand. Play
+                from the same room code as your friend.
+              </p>
+            </button>
           </div>
 
-          {selectedMode ? (
+          {selectedMode && !isHoldemGameMode(selectedMode) ? (
             <>
               <p className="mt-6 text-sm font-medium text-slate-200">Difficulty</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -530,7 +556,7 @@ export function FunQuizClient() {
             </>
           ) : null}
 
-          {selectedMode && selectedDifficulty ? (
+          {selectedMode && !isHoldemGameMode(selectedMode) && selectedDifficulty ? (
             <>
               <p className="mt-6 text-sm font-medium text-slate-200">Choose your quiz</p>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -555,7 +581,13 @@ export function FunQuizClient() {
 
           <button
             type="button"
-            disabled={busy || !selectedMode || !selectedDifficulty || !selectedCategory}
+            disabled={
+              busy ||
+              !selectedMode ||
+              (isHoldemGameMode(selectedMode)
+                ? false
+                : !selectedDifficulty || !selectedCategory)
+            }
             onClick={createRoom}
             className="mt-6 w-full rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 py-3.5 text-sm font-semibold text-white shadow-lg shadow-violet-700/30 transition hover:brightness-110 disabled:opacity-60"
           >
@@ -621,20 +653,25 @@ export function FunQuizClient() {
   const canStartGame =
     gameMode === GAME_MODE_SHARED_MILLIONAIRE
       ? players.length >= 1
-      : gameMode === GAME_MODE_PARALLEL_MILLIONAIRE
-        ? bothIn
-        : bothIn;
+      : bothIn;
   const isMillionaire = isMillionaireGameMode(gameMode);
+  const isHoldem = isHoldemGameMode(gameMode);
 
   return (
     <div
-      className={`mx-auto flex min-h-[100dvh] flex-col px-4 py-6 pb-10 ${isMillionaire ? "max-w-5xl" : "max-w-2xl"}`}
+      className={`mx-auto flex min-h-[100dvh] flex-col px-4 py-6 pb-10 ${isMillionaire || isHoldem ? "max-w-5xl" : "max-w-2xl"}`}
     >
       <header className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-violet-300">
-            Room {roomState.code} · {roomState.quizDifficultyTitle} · {roomState.quizCategoryTitle} ·{" "}
-            {gameModeLabel(gameMode)}
+            Room {roomState.code}
+            {isHoldem ? null : (
+              <>
+                {" "}
+                · {roomState.quizDifficultyTitle} · {roomState.quizCategoryTitle}
+              </>
+            )}{" "}
+            · {gameModeLabel(gameMode)}
           </p>
           <h1 className="text-2xl font-bold text-white">Fun Quiz</h1>
         </div>
@@ -646,6 +683,18 @@ export function FunQuizClient() {
           Leave
         </button>
       </header>
+
+      {isHoldem && phase !== "lobby" ? (
+        <HoldemStage
+          roomState={roomState}
+          playerId={playerId}
+          busy={busy}
+          setBusy={setBusy}
+          onRefreshState={setRoomState}
+          onError={setError}
+          onLeaveLobby={leaveRoom}
+        />
+      ) : null}
 
       {isMillionaire && phase !== "lobby" ? (
         <MillionaireStage
@@ -661,7 +710,7 @@ export function FunQuizClient() {
         />
       ) : null}
 
-      {!isMillionaire && gameMode === GAME_MODE_PLAY_TOGETHER ? (
+      {!isMillionaire && !isHoldem && gameMode === GAME_MODE_PLAY_TOGETHER ? (
         <div className="mt-4 rounded-2xl border border-violet-400/50 bg-violet-950/40 px-5 py-4">
           <p className="text-sm font-semibold text-violet-200">Team score</p>
           <p className="mt-1 text-3xl font-bold tabular-nums text-white">

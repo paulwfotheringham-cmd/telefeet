@@ -5,6 +5,8 @@ import { QUIZ_DIFFICULTY_INTERMEDIATE } from "./difficulties";
 import type { PlayedBankIdsByTopic } from "./question-history";
 import { emptyPlayedBankIdsByTopic } from "./question-history";
 import type { AnswerLogEntry, GameMode, QuizPhase, QuizPlayer, QuizRoom } from "./types";
+import { parseHoldemState } from "./db-mapper-holdem";
+import { createInitialHoldemState } from "./holdem/types";
 import type { MillionairePlayerRun, MillionaireState } from "./millionaire/types";
 import {
   createInitialMillionaireState,
@@ -15,6 +17,7 @@ import {
   GAME_MODE_PLAY_TOGETHER,
   GAME_MODE_SHARED_MILLIONAIRE,
   GAME_MODE_TAKE_TURNS,
+  GAME_MODE_TEXAS_HOLDEM,
   QUESTIONS_PER_GAME,
 } from "./constants";
 import { MILLIONAIRE_QUESTION_COUNT } from "./millionaire/config";
@@ -41,6 +44,7 @@ export type FunquizRoomRow = {
   joint_score?: number;
   answer_log?: unknown;
   millionaire_state?: unknown;
+  holdem_state?: unknown;
   played_bank_ids_by_topic?: unknown;
 };
 
@@ -274,6 +278,7 @@ export function roomToDbRows(room: QuizRoom): {
       joint_score: room.jointScore,
       answer_log: room.answerLog,
       millionaire_state: room.millionaire ?? null,
+      holdem_state: room.holdem ?? null,
       played_bank_ids_by_topic: room.playedBankIdsByTopic,
     },
     players: playerRows,
@@ -294,7 +299,8 @@ export function dbRowsToRoom(roomRow: FunquizRoomRow, playerRows: FunquizPlayerR
       roomRow.game_mode === GAME_MODE_SHARED_MILLIONAIRE ||
       roomRow.game_mode === GAME_MODE_PARALLEL_MILLIONAIRE ||
       roomRow.game_mode === GAME_MODE_TAKE_TURNS ||
-      roomRow.game_mode === GAME_MODE_PLAY_TOGETHER
+      roomRow.game_mode === GAME_MODE_PLAY_TOGETHER ||
+      roomRow.game_mode === GAME_MODE_TEXAS_HOLDEM
         ? roomRow.game_mode
         : GAME_MODE_PLAY_TOGETHER,
     quizCategoryId:
@@ -324,6 +330,9 @@ export function dbRowsToRoom(roomRow: FunquizRoomRow, playerRows: FunquizPlayerR
         : roomRow.game_mode === GAME_MODE_PARALLEL_MILLIONAIRE
           ? createInitialParallelMillionaireState()
           : undefined),
+    holdem:
+      parseHoldemState(roomRow.holdem_state) ??
+      (roomRow.game_mode === GAME_MODE_TEXAS_HOLDEM ? createInitialHoldemState() : undefined),
     playedBankIdsByTopic: parsePlayedBankIdsByTopic(roomRow.played_bank_ids_by_topic),
     createdAt: new Date(roomRow.created_at).getTime(),
     updatedAt: new Date(roomRow.updated_at).getTime(),

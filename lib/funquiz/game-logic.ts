@@ -3,13 +3,21 @@ import {
   GAME_MODE_PARALLEL_MILLIONAIRE,
   GAME_MODE_SHARED_MILLIONAIRE,
   GAME_MODE_TAKE_TURNS,
+  GAME_MODE_TEXAS_HOLDEM,
   MAX_PLAYERS,
   QUESTIONS_PER_GAME,
   REVEAL_MS,
   ROOM_CODE_LENGTH,
   TAKE_TURNS_QUESTIONS_PER_PLAYER,
 } from "./constants";
+import { toHoldemClientState } from "./holdem/client-state";
 import { toMillionaireClientState } from "./millionaire/client-state";
+import {
+  dealNewHand,
+  initHoldemOnCreate,
+  isHoldemRoom,
+  startHoldemGame,
+} from "./holdem/logic";
 import {
   initMillionaireOnCreate,
   isMillionaireRoom,
@@ -17,6 +25,7 @@ import {
   millionaireTickRoom,
   startMillionaireGame,
 } from "./millionaire/logic";
+import { createInitialHoldemState } from "./holdem/types";
 import {
   createInitialMillionaireState,
   createInitialParallelMillionaireState,
@@ -125,6 +134,7 @@ export function createRoom(
         : gameMode === GAME_MODE_PARALLEL_MILLIONAIRE
           ? createInitialParallelMillionaireState()
           : undefined,
+    holdem: gameMode === GAME_MODE_TEXAS_HOLDEM ? createInitialHoldemState() : undefined,
     playedBankIdsByTopic: emptyPlayedBankIdsByTopic(),
     createdAt: now,
     updatedAt: now,
@@ -176,6 +186,13 @@ export function startGame(room: QuizRoom, playerId: string): QuizRoom {
   }
   if (room.phase !== "lobby") {
     throw new Error("Game already started");
+  }
+
+  if (room.gameMode === GAME_MODE_TEXAS_HOLDEM) {
+    if (room.players.length < MAX_PLAYERS) {
+      throw new Error("Waiting for a second player");
+    }
+    return startHoldemGame(initHoldemOnCreate(room));
   }
 
   if (
@@ -275,6 +292,7 @@ export function resetRoomForNewGame(
         : gameMode === GAME_MODE_PARALLEL_MILLIONAIRE
           ? createInitialParallelMillionaireState()
           : undefined,
+    holdem: gameMode === GAME_MODE_TEXAS_HOLDEM ? createInitialHoldemState() : undefined,
     players: room.players.map((p) => ({ ...p, score: 0, answer: null })),
     updatedAt: Date.now(),
   };
@@ -536,6 +554,44 @@ function revealLogEntryForCurrentStep(room: QuizRoom): AnswerLogEntry | null {
 }
 
 export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState {
+  if (isHoldemRoom(room)) {
+    const you = room.players.find((p) => p.id === viewerId);
+    if (!you || !room.holdem) {
+      return {
+        code: room.code,
+        hostId: room.hostId,
+        gameMode: room.gameMode,
+        quizCategoryId: room.quizCategoryId,
+        quizCategoryTitle: categoryTitle(room.quizCategoryId),
+        quizDifficulty: room.quizDifficulty,
+        quizDifficultyTitle: difficultyTitle(room.quizDifficulty),
+        phase: room.phase,
+        questionIndex: 0,
+        totalQuestions: 0,
+        turnIndex: 0,
+        activePlayerId: null,
+        isYourTurn: false,
+        canSubmitAnswer: false,
+        statusMessage: null,
+        scoresHidden: false,
+        jointScore: null,
+        players: [],
+        question: null,
+        correctIndex: null,
+        answerFeedback: null,
+        revealEndsAt: null,
+        winnerIds: [],
+        you: { id: viewerId, name: "", score: 0, answer: null },
+        results: null,
+        scorecard: null,
+        millionaireView: null,
+        holdemView: null,
+        error: "You are not in this room",
+      };
+    }
+    return toHoldemClientState(room, viewerId);
+  }
+
   if (isMillionaireRoom(room)) {
     const you = room.players.find((p) => p.id === viewerId);
     if (!you) {
@@ -543,6 +599,7 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
         ...toMillionaireClientState(room, room.hostId),
         error: "You are not in this room",
         millionaireView: null,
+        holdemView: null,
       };
     }
     return toMillionaireClientState(room, viewerId);
@@ -578,6 +635,7 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
       results: null,
       scorecard: null,
       millionaireView: null,
+      holdemView: null,
       error: "You are not in this room",
     };
   }
@@ -709,6 +767,7 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
     results,
     scorecard,
     millionaireView: null,
+    holdemView: null,
   };
 }
 
