@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { handleStoreError } from "@/lib/funquiz/api";
 import {
   GAME_MODE_PLAY_TOGETHER,
+  GAME_MODE_PARALLEL_MILLIONAIRE,
   GAME_MODE_SHARED_MILLIONAIRE,
   GAME_MODE_TAKE_TURNS,
 } from "@/lib/funquiz/constants";
@@ -33,7 +34,8 @@ export async function POST(request: Request) {
       if (
         gameModeRaw !== GAME_MODE_TAKE_TURNS &&
         gameModeRaw !== GAME_MODE_PLAY_TOGETHER &&
-        gameModeRaw !== GAME_MODE_SHARED_MILLIONAIRE
+        gameModeRaw !== GAME_MODE_SHARED_MILLIONAIRE &&
+        gameModeRaw !== GAME_MODE_PARALLEL_MILLIONAIRE
       ) {
         return NextResponse.json({ error: "Invalid gameMode" }, { status: 400 });
       }

@@ -1,4 +1,9 @@
-import { GAME_MODE_PLAY_TOGETHER, GAME_MODE_SHARED_MILLIONAIRE, GAME_MODE_TAKE_TURNS } from "./constants";
+import {
+  GAME_MODE_PARALLEL_MILLIONAIRE,
+  GAME_MODE_PLAY_TOGETHER,
+  GAME_MODE_SHARED_MILLIONAIRE,
+  GAME_MODE_TAKE_TURNS,
+} from "./constants";
 import { MILLIONAIRE_LADDER, MILLIONAIRE_QUESTION_COUNT } from "./millionaire/config";
 import type { QuizRoom, ScorecardData } from "./types";
 
@@ -37,6 +42,25 @@ export function buildScorecard(room: QuizRoom): ScorecardData | null {
       correct: room.jointScore,
       total: rows.length,
       cumulativeSeries,
+    };
+  }
+
+  if (room.gameMode === GAME_MODE_PARALLEL_MILLIONAIRE && room.millionaire?.parallelRuns) {
+    const runs = room.millionaire.parallelRuns;
+    return {
+      kind: "take_turns",
+      players: room.players.map((p) => {
+        const run = runs[p.id];
+        const correct = room.answerLog.filter(
+          (e) => e.sessionId === room.sessionId && e.playerId === p.id && e.correct,
+        ).length;
+        return {
+          id: p.id,
+          name: p.name,
+          correct,
+          total: run?.questionIndex ?? 0,
+        };
+      }),
     };
   }
 

@@ -3,7 +3,11 @@ import type { QuizDifficulty } from "./difficulties";
 import type { MillionaireState } from "./millionaire/types";
 import type { PlayedBankIdsByTopic } from "./question-history";
 
-export type GameMode = "take_turns" | "play_together" | "shared_millionaire";
+export type GameMode =
+  | "take_turns"
+  | "play_together"
+  | "shared_millionaire"
+  | "parallel_millionaire";
 
 export type QuizOptionList =
   | readonly [string, string, string]
@@ -165,7 +169,21 @@ export type ClientRoomState = {
   error?: string;
 };
 
+export type MillionaireOpponentWatch = {
+  playerId: string;
+  name: string;
+  questionNumber: number;
+  targetPrize: number;
+  securedPrize: number;
+  phase: QuizPhase;
+  question: PublicQuizQuestion | null;
+  eliminatedOptionIndices: number[];
+  outcome: "playing" | "won" | "lost" | "walkaway";
+};
+
 export type MillionaireClientView = {
+  playStyle: "shared" | "parallel";
+  opponentWatch: MillionaireOpponentWatch | null;
   ladder: readonly number[];
   safetyNetIndices: readonly number[];
   questionNumber: number;

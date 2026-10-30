@@ -5,9 +5,13 @@ import { QUIZ_DIFFICULTY_INTERMEDIATE } from "./difficulties";
 import type { PlayedBankIdsByTopic } from "./question-history";
 import { emptyPlayedBankIdsByTopic } from "./question-history";
 import type { AnswerLogEntry, GameMode, QuizPhase, QuizPlayer, QuizRoom } from "./types";
-import type { MillionaireState } from "./millionaire/types";
-import { createInitialMillionaireState } from "./millionaire/types";
+import type { MillionairePlayerRun, MillionaireState } from "./millionaire/types";
 import {
+  createInitialMillionaireState,
+  createInitialParallelMillionaireState,
+} from "./millionaire/types";
+import {
+  GAME_MODE_PARALLEL_MILLIONAIRE,
   GAME_MODE_PLAY_TOGETHER,
   GAME_MODE_SHARED_MILLIONAIRE,
   GAME_MODE_TAKE_TURNS,
@@ -90,12 +94,71 @@ export function playerRowsFromSnapshot(roomCode: string, snapshot: unknown): Fun
   return rows;
 }
 
+function parsePlayerRun(raw: unknown): MillionairePlayerRun | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  const lifelines = r.lifelinesUsed as Record<string, boolean> | undefined;
+  if (!lifelines || !Array.isArray(r.questionOrder)) return null;
+  return {
+    questionOrder: r.questionOrder as number[],
+    questionIndex: typeof r.questionIndex === "number" ? r.questionIndex : 0,
+    phase:
+      r.phase === "question" ||
+      r.phase === "reveal" ||
+      r.phase === "won" ||
+      r.phase === "lost" ||
+      r.phase === "walkaway"
+        ? r.phase
+        : "question",
+    securedPrize: typeof r.securedPrize === "number" ? r.securedPrize : 0,
+    finalAwardedPrize:
+      typeof r.finalAwardedPrize === "number" ? r.finalAwardedPrize : null,
+    outcome:
+      r.outcome === "won" ||
+      r.outcome === "lost" ||
+      r.outcome === "walkaway" ||
+      r.outcome === "playing"
+        ? r.outcome
+        : "playing",
+    lifelinesUsed: {
+      fifty_fifty: Boolean(lifelines.fifty_fifty),
+      phone_a_friend: Boolean(lifelines.phone_a_friend),
+      ask_audience: Boolean(lifelines.ask_audience),
+    },
+    eliminatedOptionIndices: Array.isArray(r.eliminatedOptionIndices)
+      ? (r.eliminatedOptionIndices as number[])
+      : [],
+    audiencePercents: Array.isArray(r.audiencePercents)
+      ? (r.audiencePercents as number[])
+      : null,
+    phoneFriendHint:
+      r.phoneFriendHint && typeof r.phoneFriendHint === "object"
+        ? (r.phoneFriendHint as MillionairePlayerRun["phoneFriendHint"])
+        : null,
+    revealStartedAt:
+      typeof r.revealStartedAt === "number" ? r.revealStartedAt : null,
+    answerLocked: Boolean(r.answerLocked),
+    usedBankIds: Array.isArray(r.usedBankIds) ? (r.usedBankIds as number[]) : [],
+  };
+}
+
 function parseMillionaireState(raw: unknown): MillionaireState | undefined {
   if (!raw || typeof raw !== "object") return undefined;
   const r = raw as Record<string, unknown>;
   const lifelines = r.lifelinesUsed as Record<string, boolean> | undefined;
   if (!lifelines) return undefined;
+  const variant = r.variant === "parallel" ? "parallel" : "shared";
+  let parallelRuns: Record<string, MillionairePlayerRun> | undefined;
+  if (r.parallelRuns && typeof r.parallelRuns === "object") {
+    parallelRuns = {};
+    for (const [id, runRaw] of Object.entries(r.parallelRuns as Record<string, unknown>)) {
+      const run = parsePlayerRun(runRaw);
+      if (run) parallelRuns[id] = run;
+    }
+  }
   return {
+    variant,
+    parallelRuns,
     securedPrize: typeof r.securedPrize === "number" ? r.securedPrize : 0,
     finalAwardedPrize:
       typeof r.finalAwardedPrize === "number" ? r.finalAwardedPrize : null,
@@ -229,6 +292,7 @@ export function dbRowsToRoom(roomRow: FunquizRoomRow, playerRows: FunquizPlayerR
     hostId: roomRow.host_id,
     gameMode:
       roomRow.game_mode === GAME_MODE_SHARED_MILLIONAIRE ||
+      roomRow.game_mode === GAME_MODE_PARALLEL_MILLIONAIRE ||
       roomRow.game_mode === GAME_MODE_TAKE_TURNS ||
       roomRow.game_mode === GAME_MODE_PLAY_TOGETHER
         ? roomRow.game_mode
@@ -257,7 +321,9 @@ export function dbRowsToRoom(roomRow: FunquizRoomRow, playerRows: FunquizPlayerR
       parseMillionaireState(roomRow.millionaire_state) ??
       (roomRow.game_mode === GAME_MODE_SHARED_MILLIONAIRE
         ? createInitialMillionaireState()
-        : undefined),
+        : roomRow.game_mode === GAME_MODE_PARALLEL_MILLIONAIRE
+          ? createInitialParallelMillionaireState()
+          : undefined),
     playedBankIdsByTopic: parsePlayedBankIdsByTopic(roomRow.played_bank_ids_by_topic),
     createdAt: new Date(roomRow.created_at).getTime(),
     updatedAt: new Date(roomRow.updated_at).getTime(),

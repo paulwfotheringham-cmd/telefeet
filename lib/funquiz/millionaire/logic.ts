@@ -1,4 +1,14 @@
-import { GAME_MODE_SHARED_MILLIONAIRE, MAX_PLAYERS } from "../constants";
+import { GAME_MODE_PARALLEL_MILLIONAIRE, GAME_MODE_SHARED_MILLIONAIRE, MAX_PLAYERS } from "../constants";
+import { isMillionaireRoom, isParallelMillionaireRoom } from "./modes";
+import {
+  initParallelMillionaireOnCreate,
+  parallelLockAnswer,
+  parallelSelectAnswer,
+  parallelTickRoom,
+  parallelUseLifeline,
+  parallelWalkAway,
+  startParallelMillionaireGame,
+} from "./parallel-logic";
 import type { QuizCategoryId } from "../categories";
 import { gradeAnswer } from "../answer-validation";
 import { getQuestionByBankId } from "../questions";
@@ -20,9 +30,7 @@ import {
   type MillionaireState,
 } from "./types";
 
-export function isMillionaireRoom(room: QuizRoom): boolean {
-  return room.gameMode === GAME_MODE_SHARED_MILLIONAIRE;
-}
+export { isMillionaireRoom, isParallelMillionaireRoom, isSharedMillionaireRoom } from "./modes";
 
 function ensureMillionaire(room: QuizRoom): MillionaireState {
   if (!room.millionaire) {
@@ -48,6 +56,9 @@ function resetLocksForQuestion(players: QuizPlayer[], millionaire: MillionaireSt
 }
 
 export function startMillionaireGame(room: QuizRoom): QuizRoom {
+  if (isParallelMillionaireRoom(room)) {
+    return startParallelMillionaireGame(initMillionaireOnCreate(room));
+  }
   if (room.players.length < 1) {
     throw new Error("Waiting for at least one player");
   }
@@ -195,7 +206,10 @@ export function millionaireSelectAnswer(
   playerId: string,
   choiceIndex: number,
 ): QuizRoom {
-  if (!isMillionaireRoom(room) || room.phase !== "question") {
+  if (isParallelMillionaireRoom(room)) {
+    return parallelSelectAnswer(room, playerId, choiceIndex);
+  }
+  if (room.gameMode !== GAME_MODE_SHARED_MILLIONAIRE || room.phase !== "question") {
     throw new Error("Not accepting selections right now");
   }
   const m = ensureMillionaire(room);
@@ -226,7 +240,10 @@ export function millionaireLockAnswer(
   playerId: string,
   choiceIndex: number,
 ): QuizRoom {
-  if (!isMillionaireRoom(room) || (room.phase !== "question" && room.phase !== "discussion")) {
+  if (isParallelMillionaireRoom(room)) {
+    return parallelLockAnswer(room, playerId, choiceIndex);
+  }
+  if (room.gameMode !== GAME_MODE_SHARED_MILLIONAIRE || (room.phase !== "question" && room.phase !== "discussion")) {
     throw new Error("Not accepting lock-ins right now");
   }
   const m = ensureMillionaire(room);
@@ -271,7 +288,10 @@ export function millionaireFinalizeTeamAnswer(
 }
 
 export function millionaireWalkAway(room: QuizRoom, playerId: string): QuizRoom {
-  if (!isMillionaireRoom(room) || room.phase !== "question") {
+  if (isParallelMillionaireRoom(room)) {
+    return parallelWalkAway(room, playerId);
+  }
+  if (room.gameMode !== GAME_MODE_SHARED_MILLIONAIRE || room.phase !== "question") {
     throw new Error("Walk away is not available right now");
   }
   if (playerId !== room.hostId) {
@@ -309,7 +329,10 @@ export function millionaireUseLifeline(
   playerId: string,
   lifeline: MillionaireLifelineId,
 ): QuizRoom {
-  if (!isMillionaireRoom(room) || room.phase !== "question") {
+  if (isParallelMillionaireRoom(room)) {
+    return parallelUseLifeline(room, playerId, lifeline);
+  }
+  if (room.gameMode !== GAME_MODE_SHARED_MILLIONAIRE || room.phase !== "question") {
     throw new Error("Lifelines can only be used on an open question");
   }
   if (playerId !== room.hostId) {
@@ -431,7 +454,10 @@ function advanceAfterReveal(room: QuizRoom): QuizRoom {
 }
 
 export function millionaireTickRoom(room: QuizRoom, now = Date.now()): QuizRoom {
-  if (!isMillionaireRoom(room)) {
+  if (isParallelMillionaireRoom(room)) {
+    return parallelTickRoom(room, now);
+  }
+  if (room.gameMode !== GAME_MODE_SHARED_MILLIONAIRE) {
     return room;
   }
 
@@ -489,6 +515,9 @@ export function assertMillionaireQuestionOrder(order: number[]): void {
 }
 
 export function initMillionaireOnCreate(room: QuizRoom): QuizRoom {
+  if (room.gameMode === GAME_MODE_PARALLEL_MILLIONAIRE) {
+    return initParallelMillionaireOnCreate(room);
+  }
   if (room.gameMode !== GAME_MODE_SHARED_MILLIONAIRE) {
     return room;
   }
