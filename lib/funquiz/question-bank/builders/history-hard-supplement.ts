@@ -176,4 +176,79 @@ export const HISTORY_HARD_SUPPLEMENT: HistoryQuestionDef[] = [
     options: ["Hannibal", "Scipio Africanus", "Hamilcar Barca", "Hasdrubal"],
     correctIndex: 0,
   },
+  {
+    prompt: "Which 1453 event ended the Byzantine Empire?",
+    options: ["Fall of Constantinople", "Battle of Manzikert", "Fourth Crusade", "Treaty of Karlowitz"],
+    correctIndex: 0,
+  },
+  {
+    prompt: "The Khmer Rouge ruled Cambodia under which leader?",
+    options: ["Pol Pot", "Ho Chi Minh", "Suharto", "Ne Win"],
+    correctIndex: 0,
+  },
+  {
+    prompt: "Which 1899–1902 conflict was fought between Britain and Boer republics?",
+    options: ["Second Boer War", "Crimean War", "Anglo-Zulu War", "Mahdist War"],
+    correctIndex: 0,
+  },
+  {
+    prompt: "Who was the Abbasid caliph during the peak of the House of Wisdom in Baghdad?",
+    options: ["Al-Ma'mun", "Harun al-Rashid only", "Saladin", "Mehmed II"],
+    correctIndex: 0,
+  },
+  {
+    prompt: "The Mfecane refers to widespread upheaval in which region?",
+    options: ["Southern Africa", "Andean South America", "Central Europe", "Anatolia"],
+    correctIndex: 0,
+  },
+  {
+    prompt: "Which 1971 document led to Bangladesh's independence declaration?",
+    options: ["Proclamation of Independence", "Treaty of Versailles", "Camp David Accords", "Good Friday Agreement"],
+    correctIndex: 0,
+  },
+  {
+    prompt: "The Young Turk Revolution (1908) primarily affected which empire?",
+    options: ["Ottoman Empire", "Russian Empire", "Qing China", "Austro-Hungarian Empire only"],
+    correctIndex: 0,
+  },
+  {
+    prompt: "Who founded the Mali Empire according to the Epic of Sundiata tradition?",
+    options: ["Sundiata Keita", "Mansa Musa only", "Askia Muhammad", "Shaka Zulu"],
+    correctIndex: 0,
+  },
+  {
+    prompt: "Which 1962 conflict between India and China is known as the Sino-Indian War?",
+    options: ["Sino-Indian War of 1962", "Indo-Pakistani War of 1971", "Kargil War", "First Kashmir War only"],
+    correctIndex: 0,
+  },
+  {
+    prompt: "The Peace of Westphalia (1648) is often linked to the rise of what concept?",
+    options: ["Modern state sovereignty", "Universal suffrage", "Colonial free trade zones", "League of Nations mandates"],
+    correctIndex: 0,
+  },
+  {
+    prompt: "Which Safavid shah made Twelver Shia Islam the state religion of Persia?",
+    options: ["Ismail I", "Cyrus the Great", "Reza Shah Pahlavi", "Nader Shah only"],
+    correctIndex: 0,
+  },
+  {
+    prompt: "The Great Trek (1830s–40s) involved which group's migration in southern Africa?",
+    options: ["Boers (Voortrekkers)", "Maori", "Bantu only", "Sephardic Jews"],
+    correctIndex: 0,
+  },
+  {
+    prompt: "Which medieval English peasant revolt occurred in 1381?",
+    options: ["Peasants' Revolt", "Glorious Revolution", "Pilgrimage of Grace", "Swing Riots"],
+    correctIndex: 0,
+  },
+  {
+    prompt: "The Tonkin Gulf Resolution (1964) escalated US involvement in which war?",
+    options: ["Vietnam War", "Korean War", "Gulf War", "War in Afghanistan"],
+    correctIndex: 0,
+  },
+  {
+    prompt: "Who was the last Aztec emperor captured by Hernán Cortés?",
+    options: ["Cuauhtémoc", "Moctezuma II only", "Atahualpa", "Pachacuti"],
+    correctIndex: 0,
+  },
 ];

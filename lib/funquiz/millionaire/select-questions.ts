@@ -1,8 +1,10 @@
 import type { QuizCategoryId } from "../categories";
 import { QUIZ_DIFFICULTY_HARD, QUIZ_DIFFICULTY_INTERMEDIATE } from "../difficulties";
 import type { QuizDifficulty } from "../difficulties";
-import { QUIZ_QUESTIONS } from "../question-bank";
+import { getQuestionByBankId, QUIZ_QUESTIONS } from "../question-bank";
 import { InsufficientQuestionsError } from "../question-selection";
+import { questionDedupeKey } from "../question-prompt-key";
+import { randomUnit } from "../random";
 import { MILLIONAIRE_QUESTION_COUNT } from "./config";
 
 /** Difficulty tier per ladder step (0-based index). */
@@ -37,7 +39,7 @@ function poolFor(categoryId: QuizCategoryId, difficulty: QuizDifficulty): number
 export function selectMillionaireQuestionIds(
   categoryId: QuizCategoryId,
   excludeOrRandom: number[] | (() => number) = [],
-  random: () => number = Math.random,
+  random: () => number = randomUnit,
 ): number[] {
   let excludeBankIds: number[] = [];
   let rng = random;
@@ -48,25 +50,29 @@ export function selectMillionaireQuestionIds(
   }
   const picked: number[] = [];
   const used = new Set<number>(excludeBankIds);
+  const usedKeys = new Set(excludeBankIds.map((id) => questionDedupeKey(getQuestionByBankId(id))));
 
   for (let step = 0; step < MILLIONAIRE_QUESTION_COUNT; step++) {
     const difficulty = MILLIONAIRE_TIER_DIFFICULTY[step]!;
-    let pool = shuffleWithRng(poolFor(categoryId, difficulty), rng).filter(
-      (id) => !used.has(id),
-    );
+    let pool = shuffleWithRng(poolFor(categoryId, difficulty), rng).filter((id) => {
+      if (used.has(id)) return false;
+      const key = questionDedupeKey(getQuestionByBankId(id));
+      return !usedKeys.has(key);
+    });
     if (pool.length === 0) {
       pool = shuffleWithRng(
         QUIZ_QUESTIONS.filter((q) => q.categoryId === categoryId && !used.has(q.id)).map(
           (q) => q.id,
         ),
         rng,
-      );
+      ).filter((id) => !usedKeys.has(questionDedupeKey(getQuestionByBankId(id))));
     }
     if (pool.length === 0) {
       throw new InsufficientQuestionsError(categoryId, difficulty, 0);
     }
     const id = pool[0]!;
     used.add(id);
+    usedKeys.add(questionDedupeKey(getQuestionByBankId(id)));
     picked.push(id);
   }
 
@@ -77,19 +83,21 @@ export function replacementQuestionId(
   categoryId: QuizCategoryId,
   stepIndex: number,
   used: Set<number>,
-  random: () => number = Math.random,
+  random: () => number = randomUnit,
 ): number {
   const difficulty = MILLIONAIRE_TIER_DIFFICULTY[stepIndex]!;
-  let pool = shuffleWithRng(poolFor(categoryId, difficulty), random).filter(
-    (id) => !used.has(id),
-  );
+  const usedKeys = new Set([...used].map((id) => questionDedupeKey(getQuestionByBankId(id))));
+  let pool = shuffleWithRng(poolFor(categoryId, difficulty), random).filter((id) => {
+    if (used.has(id)) return false;
+    return !usedKeys.has(questionDedupeKey(getQuestionByBankId(id)));
+  });
   if (pool.length === 0) {
     pool = shuffleWithRng(
       QUIZ_QUESTIONS.filter((q) => q.categoryId === categoryId && !used.has(q.id)).map(
         (q) => q.id,
       ),
       random,
-    );
+    ).filter((id) => !usedKeys.has(questionDedupeKey(getQuestionByBankId(id))));
   }
   if (pool.length === 0) {
     throw new InsufficientQuestionsError(categoryId, difficulty, 0);

@@ -44,6 +44,7 @@ import { selectQuestionIdsForCategory } from "./question-selection";
 import { buildScorecard } from "./scorecard";
 import { allocatedBankIdsForSession, assertRoomQuestionAllocation } from "./session-questions";
 import { getQuestionByBankId, toPublicQuestion } from "./questions";
+import { randomUnit, shuffleInPlace } from "./random";
 import type {
   AnswerLogEntry,
   ClientRoomState,
@@ -63,14 +64,6 @@ export function generateRoomCode(): string {
   return code;
 }
 
-function shuffleInPlace<T>(arr: T[]): T[] {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
-
 export function allocateQuestionsForGame(
   quizCategoryId: QuizCategoryId,
   quizDifficulty: QuizDifficulty,
@@ -87,9 +80,11 @@ export function allocateQuestionsForGame(
   );
   const hostQuestionOrder = shuffleInPlace(
     questionOrder.slice(0, TAKE_TURNS_QUESTIONS_PER_PLAYER),
+    randomUnit,
   );
   const guestQuestionOrder = shuffleInPlace(
     questionOrder.slice(TAKE_TURNS_QUESTIONS_PER_PLAYER, QUESTIONS_PER_GAME),
+    randomUnit,
   );
   return { questionOrder, hostQuestionOrder, guestQuestionOrder };
 }
