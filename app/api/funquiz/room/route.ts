@@ -5,6 +5,8 @@ import {
   GAME_MODE_PARALLEL_MILLIONAIRE,
   GAME_MODE_SHARED_MILLIONAIRE,
   GAME_MODE_TAKE_TURNS,
+  GAME_MODE_CATCHPHRASE,
+  GAME_MODE_BLOCKBUSTERS,
   GAME_MODE_TEXAS_HOLDEM,
 } from "@/lib/funquiz/constants";
 import { isQuizCategoryId } from "@/lib/funquiz/categories";
@@ -37,7 +39,9 @@ export async function POST(request: Request) {
         gameModeRaw !== GAME_MODE_PLAY_TOGETHER &&
         gameModeRaw !== GAME_MODE_SHARED_MILLIONAIRE &&
         gameModeRaw !== GAME_MODE_PARALLEL_MILLIONAIRE &&
-        gameModeRaw !== GAME_MODE_TEXAS_HOLDEM
+        gameModeRaw !== GAME_MODE_TEXAS_HOLDEM &&
+        gameModeRaw !== GAME_MODE_CATCHPHRASE &&
+        gameModeRaw !== GAME_MODE_BLOCKBUSTERS
       ) {
         return NextResponse.json({ error: "Invalid gameMode" }, { status: 400 });
       }
@@ -45,7 +49,7 @@ export async function POST(request: Request) {
     }
     const quizCategoryRaw = body.quizCategory?.trim();
     const quizDifficultyRaw = body.quizDifficulty?.trim();
-    if (gameMode !== GAME_MODE_TEXAS_HOLDEM) {
+    if (gameMode !== GAME_MODE_TEXAS_HOLDEM && gameMode !== GAME_MODE_CATCHPHRASE) {
       if (!quizCategoryRaw || !isQuizCategoryId(quizCategoryRaw)) {
         return NextResponse.json({ error: "quizCategory required" }, { status: 400 });
       }

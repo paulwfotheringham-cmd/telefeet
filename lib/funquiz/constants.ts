@@ -8,6 +8,8 @@ export const GAME_MODE_PLAY_TOGETHER = "play_together" as const;
 export const GAME_MODE_SHARED_MILLIONAIRE = "shared_millionaire" as const;
 export const GAME_MODE_PARALLEL_MILLIONAIRE = "parallel_millionaire" as const;
 export const GAME_MODE_TEXAS_HOLDEM = "texas_holdem" as const;
+export const GAME_MODE_CATCHPHRASE = "catchphrase" as const;
+export const GAME_MODE_BLOCKBUSTERS = "blockbusters" as const;
 
 export const MILLIONAIRE_REVEAL_MS = 3_500;
 

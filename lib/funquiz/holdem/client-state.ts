@@ -100,5 +100,7 @@ export function toHoldemClientState(room: QuizRoom, viewerId: string): ClientRoo
     scorecard: null,
     millionaireView: null,
     holdemView,
+    catchphraseView: null,
+    blockbustersView: null,
   };
 }

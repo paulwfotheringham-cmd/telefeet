@@ -1,5 +1,9 @@
 import type { QuizCategoryId } from "./categories";
 import type { QuizDifficulty } from "./difficulties";
+import type { CatchphraseState } from "./catchphrase/types";
+import type { CatchphraseClientView } from "./catchphrase/client-state";
+import type { BlockbustersState } from "./blockbusters/types";
+import type { BlockbustersClientView } from "./blockbusters/client-state";
 import type { HoldemState } from "./holdem/types";
 import type { MillionaireState } from "./millionaire/types";
 import type { PlayedBankIdsByTopic } from "./question-history";
@@ -9,7 +13,9 @@ export type GameMode =
   | "play_together"
   | "shared_millionaire"
   | "parallel_millionaire"
-  | "texas_holdem";
+  | "texas_holdem"
+  | "catchphrase"
+  | "blockbusters";
 
 export type QuizOptionList =
   | readonly [string, string, string]
@@ -63,6 +69,8 @@ export type QuizRoom = {
   revealStartedAt: number | null;
   millionaire?: MillionaireState;
   holdem?: HoldemState;
+  catchphrase?: CatchphraseState;
+  blockbusters?: BlockbustersState;
   /** Bank question IDs already used in prior games in this room, keyed by topic (category:difficulty or category:millionaire). */
   playedBankIdsByTopic: PlayedBankIdsByTopic;
   createdAt: number;
@@ -170,6 +178,8 @@ export type ClientRoomState = {
   scorecard: ScorecardData | null;
   millionaireView: MillionaireClientView | null;
   holdemView: HoldemClientView | null;
+  catchphraseView: CatchphraseClientView | null;
+  blockbustersView: BlockbustersClientView | null;
   error?: string;
 };
 

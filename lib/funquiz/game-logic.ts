@@ -3,6 +3,8 @@ import {
   GAME_MODE_PARALLEL_MILLIONAIRE,
   GAME_MODE_SHARED_MILLIONAIRE,
   GAME_MODE_TAKE_TURNS,
+  GAME_MODE_CATCHPHRASE,
+  GAME_MODE_BLOCKBUSTERS,
   GAME_MODE_TEXAS_HOLDEM,
   MAX_PLAYERS,
   QUESTIONS_PER_GAME,
@@ -10,6 +12,20 @@ import {
   ROOM_CODE_LENGTH,
   TAKE_TURNS_QUESTIONS_PER_PLAYER,
 } from "./constants";
+import {
+  catchphraseTickRoom,
+  initCatchphraseOnCreate,
+  isCatchphraseRoom,
+  startCatchphraseGame,
+} from "./catchphrase/logic";
+import { toCatchphraseClientState } from "./catchphrase/client-state";
+import {
+  blockbustersTickRoom,
+  initBlockbustersOnCreate,
+  isBlockbustersRoom,
+  startBlockbustersGame,
+} from "./blockbusters/logic";
+import { toBlockbustersClientState } from "./blockbusters/client-state";
 import { toHoldemClientState } from "./holdem/client-state";
 import { toMillionaireClientState } from "./millionaire/client-state";
 import {
@@ -25,6 +41,8 @@ import {
   millionaireTickRoom,
   startMillionaireGame,
 } from "./millionaire/logic";
+import { createInitialCatchphraseState } from "./catchphrase/types";
+import { createInitialBlockbustersState } from "./blockbusters/types";
 import { createInitialHoldemState } from "./holdem/types";
 import {
   createInitialMillionaireState,
@@ -135,6 +153,9 @@ export function createRoom(
           ? createInitialParallelMillionaireState()
           : undefined,
     holdem: gameMode === GAME_MODE_TEXAS_HOLDEM ? createInitialHoldemState() : undefined,
+    catchphrase: gameMode === GAME_MODE_CATCHPHRASE ? createInitialCatchphraseState() : undefined,
+    blockbusters:
+      gameMode === GAME_MODE_BLOCKBUSTERS ? createInitialBlockbustersState() : undefined,
     playedBankIdsByTopic: emptyPlayedBankIdsByTopic(),
     createdAt: now,
     updatedAt: now,
@@ -193,6 +214,28 @@ export function startGame(room: QuizRoom, playerId: string): QuizRoom {
       throw new Error("Waiting for a second player");
     }
     return startHoldemGame(initHoldemOnCreate(room));
+  }
+
+  if (room.gameMode === GAME_MODE_CATCHPHRASE) {
+    if (room.players.length < MAX_PLAYERS) {
+      throw new Error("Waiting for a second player");
+    }
+    return startCatchphraseGame(initCatchphraseOnCreate(room));
+  }
+
+  if (room.gameMode === GAME_MODE_BLOCKBUSTERS) {
+    if (room.players.length < MAX_PLAYERS) {
+      throw new Error("Waiting for a second player");
+    }
+    let started = startBlockbustersGame(initBlockbustersOnCreate(room));
+    started = reserveBankIdsForTopic(
+      started,
+      started.quizCategoryId,
+      started.quizDifficulty,
+      started.questionOrder,
+      started.gameMode,
+    );
+    return started;
   }
 
   if (
@@ -293,6 +336,9 @@ export function resetRoomForNewGame(
           ? createInitialParallelMillionaireState()
           : undefined,
     holdem: gameMode === GAME_MODE_TEXAS_HOLDEM ? createInitialHoldemState() : undefined,
+    catchphrase: gameMode === GAME_MODE_CATCHPHRASE ? createInitialCatchphraseState() : undefined,
+    blockbusters:
+      gameMode === GAME_MODE_BLOCKBUSTERS ? createInitialBlockbustersState() : undefined,
     players: room.players.map((p) => ({ ...p, score: 0, answer: null })),
     updatedAt: Date.now(),
   };
@@ -477,6 +523,12 @@ export function tickRoom(room: QuizRoom, now = Date.now()): QuizRoom {
   if (isMillionaireRoom(room)) {
     return millionaireTickRoom(room, now);
   }
+  if (isCatchphraseRoom(room)) {
+    return catchphraseTickRoom(room, now);
+  }
+  if (isBlockbustersRoom(room)) {
+    return blockbustersTickRoom(room, now);
+  }
   if (room.phase === "reveal" && room.revealStartedAt !== null) {
     if (now - room.revealStartedAt >= REVEAL_MS) {
       return advanceFromReveal(room);
@@ -554,6 +606,86 @@ function revealLogEntryForCurrentStep(room: QuizRoom): AnswerLogEntry | null {
 }
 
 export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState {
+  if (isBlockbustersRoom(room)) {
+    const you = room.players.find((p) => p.id === viewerId);
+    if (!you || !room.blockbusters) {
+      return {
+        code: room.code,
+        hostId: room.hostId,
+        gameMode: room.gameMode,
+        quizCategoryId: room.quizCategoryId,
+        quizCategoryTitle: categoryTitle(room.quizCategoryId),
+        quizDifficulty: room.quizDifficulty,
+        quizDifficultyTitle: difficultyTitle(room.quizDifficulty),
+        phase: room.phase,
+        questionIndex: 0,
+        totalQuestions: 0,
+        turnIndex: 0,
+        activePlayerId: null,
+        isYourTurn: false,
+        canSubmitAnswer: false,
+        statusMessage: null,
+        scoresHidden: false,
+        jointScore: null,
+        players: [],
+        question: null,
+        correctIndex: null,
+        answerFeedback: null,
+        revealEndsAt: null,
+        winnerIds: [],
+        you: { id: viewerId, name: "", score: 0, answer: null },
+        results: null,
+        scorecard: null,
+        millionaireView: null,
+        holdemView: null,
+        catchphraseView: null,
+        blockbustersView: null,
+        error: "You are not in this room",
+      };
+    }
+    return toBlockbustersClientState(room, viewerId);
+  }
+
+  if (isCatchphraseRoom(room)) {
+    const you = room.players.find((p) => p.id === viewerId);
+    if (!you || !room.catchphrase) {
+      return {
+        code: room.code,
+        hostId: room.hostId,
+        gameMode: room.gameMode,
+        quizCategoryId: room.quizCategoryId,
+        quizCategoryTitle: categoryTitle(room.quizCategoryId),
+        quizDifficulty: room.quizDifficulty,
+        quizDifficultyTitle: difficultyTitle(room.quizDifficulty),
+        phase: room.phase,
+        questionIndex: 0,
+        totalQuestions: 0,
+        turnIndex: 0,
+        activePlayerId: null,
+        isYourTurn: false,
+        canSubmitAnswer: false,
+        statusMessage: null,
+        scoresHidden: false,
+        jointScore: null,
+        players: [],
+        question: null,
+        correctIndex: null,
+        answerFeedback: null,
+        revealEndsAt: null,
+        winnerIds: [],
+        you: { id: viewerId, name: "", score: 0, answer: null },
+        results: null,
+        scorecard: null,
+        millionaireView: null,
+        holdemView: null,
+        catchphraseView: null,
+        blockbustersView: null,
+        error: "You are not in this room",
+      };
+    }
+    return toCatchphraseClientState(room, viewerId);
+  }
+
   if (isHoldemRoom(room)) {
     const you = room.players.find((p) => p.id === viewerId);
     if (!you || !room.holdem) {
@@ -586,6 +718,8 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
         scorecard: null,
         millionaireView: null,
         holdemView: null,
+        catchphraseView: null,
+        blockbustersView: null,
         error: "You are not in this room",
       };
     }
@@ -600,6 +734,8 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
         error: "You are not in this room",
         millionaireView: null,
         holdemView: null,
+        catchphraseView: null,
+        blockbustersView: null,
       };
     }
     return toMillionaireClientState(room, viewerId);
@@ -636,6 +772,8 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
       scorecard: null,
       millionaireView: null,
       holdemView: null,
+      catchphraseView: null,
+      blockbustersView: null,
       error: "You are not in this room",
     };
   }
@@ -768,6 +906,8 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
     scorecard,
     millionaireView: null,
     holdemView: null,
+    catchphraseView: null,
+    blockbustersView: null,
   };
 }
 

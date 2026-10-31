@@ -5,6 +5,8 @@ import {
   GAME_MODE_PARALLEL_MILLIONAIRE,
   GAME_MODE_SHARED_MILLIONAIRE,
   GAME_MODE_TAKE_TURNS,
+  GAME_MODE_CATCHPHRASE,
+  GAME_MODE_BLOCKBUSTERS,
   GAME_MODE_TEXAS_HOLDEM,
 } from "@/lib/funquiz/constants";
 import { isQuizCategoryId } from "@/lib/funquiz/categories";
@@ -31,35 +33,52 @@ export async function POST(request: Request, { params }: Params) {
     const gameModeRaw = body.gameMode?.trim();
     const quizCategoryRaw = body.quizCategory?.trim();
     const quizDifficultyRaw = body.quizDifficulty?.trim();
-    if (!code || !playerId || !gameModeRaw || !quizCategoryRaw || !quizDifficultyRaw) {
-      return NextResponse.json(
-        { error: "playerId, gameMode, quizCategory and quizDifficulty required" },
-        { status: 400 },
-      );
-    }
-    if (!isQuizCategoryId(quizCategoryRaw)) {
-      return NextResponse.json({ error: "Invalid quizCategory" }, { status: 400 });
-    }
-    if (!isQuizDifficulty(quizDifficultyRaw)) {
-      return NextResponse.json({ error: "Invalid quizDifficulty" }, { status: 400 });
+    if (!code || !playerId || !gameModeRaw) {
+      return NextResponse.json({ error: "playerId and gameMode required" }, { status: 400 });
     }
     if (
       gameModeRaw !== GAME_MODE_TAKE_TURNS &&
       gameModeRaw !== GAME_MODE_PLAY_TOGETHER &&
       gameModeRaw !== GAME_MODE_SHARED_MILLIONAIRE &&
       gameModeRaw !== GAME_MODE_PARALLEL_MILLIONAIRE &&
-      gameModeRaw !== GAME_MODE_TEXAS_HOLDEM
+      gameModeRaw !== GAME_MODE_TEXAS_HOLDEM &&
+      gameModeRaw !== GAME_MODE_CATCHPHRASE &&
+      gameModeRaw !== GAME_MODE_BLOCKBUSTERS
     ) {
       return NextResponse.json({ error: "Invalid gameMode" }, { status: 400 });
     }
     const gameMode = gameModeRaw as GameMode;
+    const standalone =
+      gameMode === GAME_MODE_TEXAS_HOLDEM || gameMode === GAME_MODE_CATCHPHRASE;
+    if (!standalone) {
+      if (!quizCategoryRaw || !quizDifficultyRaw) {
+        return NextResponse.json(
+          { error: "quizCategory and quizDifficulty required for this game mode" },
+          { status: 400 },
+        );
+      }
+      if (!isQuizCategoryId(quizCategoryRaw)) {
+        return NextResponse.json({ error: "Invalid quizCategory" }, { status: 400 });
+      }
+      if (!isQuizDifficulty(quizDifficultyRaw)) {
+        return NextResponse.json({ error: "Invalid quizDifficulty" }, { status: 400 });
+      }
+    }
+    const quizCategoryFinal =
+      quizCategoryRaw && isQuizCategoryId(quizCategoryRaw)
+        ? quizCategoryRaw
+        : ("general_knowledge" as const);
+    const quizDifficultyFinal =
+      quizDifficultyRaw && isQuizDifficulty(quizDifficultyRaw)
+        ? quizDifficultyRaw
+        : ("intermediate" as const);
 
     const exists = await loadRoom(code);
     if (!exists) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
     const room = await mutateRoomPersisted(code, (room) =>
-      resetRoomForNewGame(room, playerId, gameMode, quizCategoryRaw, quizDifficultyRaw),
+      resetRoomForNewGame(room, playerId, gameMode, quizCategoryFinal, quizDifficultyFinal),
     );
     return NextResponse.json({ state: toClientState(room, playerId) });
   } catch (err) {
