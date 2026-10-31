@@ -5,7 +5,11 @@ import { QUIZ_DIFFICULTY_INTERMEDIATE } from "./difficulties";
 import type { PlayedBankIdsByTopic } from "./question-history";
 import { emptyPlayedBankIdsByTopic } from "./question-history";
 import type { AnswerLogEntry, GameMode, QuizPhase, QuizPlayer, QuizRoom } from "./types";
+import { parseCatchphraseState } from "./db-mapper-catchphrase";
+import { parseBlockbustersState } from "./db-mapper-blockbusters";
 import { parseHoldemState } from "./db-mapper-holdem";
+import { createInitialCatchphraseState } from "./catchphrase/types";
+import { createInitialBlockbustersState } from "./blockbusters/types";
 import { createInitialHoldemState } from "./holdem/types";
 import type { MillionairePlayerRun, MillionaireState } from "./millionaire/types";
 import {
@@ -17,6 +21,8 @@ import {
   GAME_MODE_PLAY_TOGETHER,
   GAME_MODE_SHARED_MILLIONAIRE,
   GAME_MODE_TAKE_TURNS,
+  GAME_MODE_CATCHPHRASE,
+  GAME_MODE_BLOCKBUSTERS,
   GAME_MODE_TEXAS_HOLDEM,
   QUESTIONS_PER_GAME,
 } from "./constants";
@@ -45,6 +51,8 @@ export type FunquizRoomRow = {
   answer_log?: unknown;
   millionaire_state?: unknown;
   holdem_state?: unknown;
+  catchphrase_state?: unknown;
+  blockbusters_state?: unknown;
   played_bank_ids_by_topic?: unknown;
 };
 
@@ -279,6 +287,8 @@ export function roomToDbRows(room: QuizRoom): {
       answer_log: room.answerLog,
       millionaire_state: room.millionaire ?? null,
       holdem_state: room.holdem ?? null,
+      catchphrase_state: room.catchphrase ?? null,
+      blockbusters_state: room.blockbusters ?? null,
       played_bank_ids_by_topic: room.playedBankIdsByTopic,
     },
     players: playerRows,
@@ -300,7 +310,9 @@ export function dbRowsToRoom(roomRow: FunquizRoomRow, playerRows: FunquizPlayerR
       roomRow.game_mode === GAME_MODE_PARALLEL_MILLIONAIRE ||
       roomRow.game_mode === GAME_MODE_TAKE_TURNS ||
       roomRow.game_mode === GAME_MODE_PLAY_TOGETHER ||
-      roomRow.game_mode === GAME_MODE_TEXAS_HOLDEM
+      roomRow.game_mode === GAME_MODE_TEXAS_HOLDEM ||
+      roomRow.game_mode === GAME_MODE_CATCHPHRASE ||
+      roomRow.game_mode === GAME_MODE_BLOCKBUSTERS
         ? roomRow.game_mode
         : GAME_MODE_PLAY_TOGETHER,
     quizCategoryId:
@@ -333,6 +345,14 @@ export function dbRowsToRoom(roomRow: FunquizRoomRow, playerRows: FunquizPlayerR
     holdem:
       parseHoldemState(roomRow.holdem_state) ??
       (roomRow.game_mode === GAME_MODE_TEXAS_HOLDEM ? createInitialHoldemState() : undefined),
+    catchphrase:
+      parseCatchphraseState(roomRow.catchphrase_state) ??
+      (roomRow.game_mode === GAME_MODE_CATCHPHRASE ? createInitialCatchphraseState() : undefined),
+    blockbusters:
+      parseBlockbustersState(roomRow.blockbusters_state) ??
+      (roomRow.game_mode === GAME_MODE_BLOCKBUSTERS
+        ? createInitialBlockbustersState()
+        : undefined),
     playedBankIdsByTopic: parsePlayedBankIdsByTopic(roomRow.played_bank_ids_by_topic),
     createdAt: new Date(roomRow.created_at).getTime(),
     updatedAt: new Date(roomRow.updated_at).getTime(),

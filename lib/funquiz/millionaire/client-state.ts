@@ -263,6 +263,8 @@ function toParallelMillionaireClientState(room: QuizRoom, viewerId: string): Cli
       ...coreView,
     },
     holdemView: null,
+    catchphraseView: null,
+    blockbustersView: null,
   };
 }
 
@@ -358,12 +360,20 @@ export function toMillionaireClientState(room: QuizRoom, viewerId: string): Clie
       opponentWatch: null,
     },
     holdemView: null,
+    catchphraseView: null,
+    blockbustersView: null,
   };
 }
 
 export function wrapMillionaireIfNeeded(room: QuizRoom, viewerId: string, base: ClientRoomState): ClientRoomState {
   if (!isMillionaireRoom(room)) {
-    return { ...base, millionaireView: null, holdemView: null };
+    return {
+      ...base,
+      millionaireView: null,
+      holdemView: null,
+      catchphraseView: null,
+      blockbustersView: null,
+    };
   }
   return toMillionaireClientState(room, viewerId);
 }

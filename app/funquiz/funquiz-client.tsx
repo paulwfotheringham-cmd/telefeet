@@ -6,6 +6,8 @@ import { QUIZ_CATEGORIES, QUIZ_CATEGORY_GENERAL_KNOWLEDGE } from "@/lib/funquiz/
 import type { QuizCategoryId } from "@/lib/funquiz/categories";
 import { QUIZ_DIFFICULTIES, QUIZ_DIFFICULTY_INTERMEDIATE } from "@/lib/funquiz/difficulties";
 import type { QuizDifficulty } from "@/lib/funquiz/difficulties";
+import { BlockbustersStage } from "@/components/funquiz/blockbusters-stage";
+import { CatchphraseStage } from "@/components/funquiz/catchphrase-stage";
 import { HoldemStage } from "@/components/funquiz/holdem-stage";
 import { MillionaireStage } from "@/components/funquiz/millionaire-stage";
 import { FunQuizScorecardGraph } from "@/components/funquiz/scorecard-graph";
@@ -13,6 +15,8 @@ import {
   GAME_MODE_PLAY_TOGETHER,
   GAME_MODE_PARALLEL_MILLIONAIRE,
   GAME_MODE_SHARED_MILLIONAIRE,
+  GAME_MODE_CATCHPHRASE,
+  GAME_MODE_BLOCKBUSTERS,
   GAME_MODE_TAKE_TURNS,
   GAME_MODE_TEXAS_HOLDEM,
 } from "@/lib/funquiz/constants";
@@ -43,11 +47,25 @@ function gameModeLabel(mode: GameMode): string {
   if (mode === GAME_MODE_SHARED_MILLIONAIRE) return "Shared Millionaire";
   if (mode === GAME_MODE_PARALLEL_MILLIONAIRE) return "Dual Millionaire";
   if (mode === GAME_MODE_TEXAS_HOLDEM) return "Texas Hold'em";
+  if (mode === GAME_MODE_CATCHPHRASE) return "Catchphrase";
+  if (mode === GAME_MODE_BLOCKBUSTERS) return "Blockbusters";
   return "Play together";
 }
 
 function isHoldemGameMode(mode: GameMode | null): boolean {
   return mode === GAME_MODE_TEXAS_HOLDEM;
+}
+
+function isCatchphraseGameMode(mode: GameMode | null): boolean {
+  return mode === GAME_MODE_CATCHPHRASE;
+}
+
+function isBlockbustersGameMode(mode: GameMode | null): boolean {
+  return mode === GAME_MODE_BLOCKBUSTERS;
+}
+
+function isStandaloneGameMode(mode: GameMode | null): boolean {
+  return isHoldemGameMode(mode) || isCatchphraseGameMode(mode);
 }
 
 function isMillionaireGameMode(mode: GameMode | null): boolean {
@@ -202,12 +220,12 @@ export function FunQuizClient() {
       setError("Select a game mode before creating a room.");
       return;
     }
-    const isHoldem = selectedMode === GAME_MODE_TEXAS_HOLDEM;
-    if (!isHoldem && !selectedDifficulty) {
+    const isStandalone = isStandaloneGameMode(selectedMode);
+    if (!isStandalone && !selectedDifficulty) {
       setError("Select a difficulty before creating a room.");
       return;
     }
-    if (!isHoldem && !selectedCategory) {
+    if (!isStandalone && !selectedCategory) {
       setError("Choose a quiz category before creating a room.");
       return;
     }
@@ -223,8 +241,8 @@ export function FunQuizClient() {
           playerId: activePlayerId,
           playerName: name.trim(),
           gameMode: selectedMode,
-          quizDifficulty: isHoldem ? QUIZ_DIFFICULTY_INTERMEDIATE : selectedDifficulty,
-          quizCategory: isHoldem ? QUIZ_CATEGORY_GENERAL_KNOWLEDGE : selectedCategory,
+          quizDifficulty: isStandalone ? QUIZ_DIFFICULTY_INTERMEDIATE : selectedDifficulty,
+          quizCategory: isStandalone ? QUIZ_CATEGORY_GENERAL_KNOWLEDGE : selectedCategory,
         }),
       });
       const state = await parseState(res);
@@ -528,9 +546,45 @@ export function FunQuizClient() {
                 from the same room code as your friend.
               </p>
             </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedMode(GAME_MODE_CATCHPHRASE);
+                setGame3Expanded(false);
+              }}
+              className={`mt-3 w-full rounded-2xl border p-4 text-left transition ${
+                selectedMode === GAME_MODE_CATCHPHRASE
+                  ? "border-[#ffcc00] bg-[#0047ab]/40 ring-1 ring-[#ffcc00]/50"
+                  : "border-white/10 bg-black/30 hover:border-[#ffcc00]/40"
+              }`}
+            >
+              <p className="text-sm font-semibold text-[#ffcc00]">Game 5 — Catchphrase</p>
+              <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                UK-style picture clues behind a square grid. Two players buzz in and guess the
+                hidden phrase — +2 points per correct answer, 8 rounds.
+              </p>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedMode(GAME_MODE_BLOCKBUSTERS);
+                setGame3Expanded(false);
+              }}
+              className={`mt-3 w-full rounded-2xl border p-4 text-left transition ${
+                selectedMode === GAME_MODE_BLOCKBUSTERS
+                  ? "border-sky-300 bg-[#003399]/50 ring-1 ring-sky-300/50"
+                  : "border-white/10 bg-black/30 hover:border-sky-400/40"
+              }`}
+            >
+              <p className="text-sm font-semibold text-sky-200">Game 6 — Blockbusters</p>
+              <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                Hex grid trivia from your chosen quiz. Gold links left to right, Blue links top to
+                bottom — steal wrong answers, with classic quiz-show sounds.
+              </p>
+            </button>
           </div>
 
-          {selectedMode && !isHoldemGameMode(selectedMode) ? (
+          {selectedMode && !isStandaloneGameMode(selectedMode) ? (
             <>
               <p className="mt-6 text-sm font-medium text-slate-200">Difficulty</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -556,7 +610,7 @@ export function FunQuizClient() {
             </>
           ) : null}
 
-          {selectedMode && !isHoldemGameMode(selectedMode) && selectedDifficulty ? (
+          {selectedMode && !isStandaloneGameMode(selectedMode) && selectedDifficulty ? (
             <>
               <p className="mt-6 text-sm font-medium text-slate-200">Choose your quiz</p>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -584,7 +638,7 @@ export function FunQuizClient() {
             disabled={
               busy ||
               !selectedMode ||
-              (isHoldemGameMode(selectedMode)
+              (isStandaloneGameMode(selectedMode)
                 ? false
                 : !selectedDifficulty || !selectedCategory)
             }
@@ -656,16 +710,18 @@ export function FunQuizClient() {
       : bothIn;
   const isMillionaire = isMillionaireGameMode(gameMode);
   const isHoldem = isHoldemGameMode(gameMode);
+  const isCatchphrase = isCatchphraseGameMode(gameMode);
+  const isBlockbusters = isBlockbustersGameMode(gameMode);
 
   return (
     <div
-      className={`mx-auto flex min-h-[100dvh] flex-col px-4 py-6 pb-10 ${isMillionaire || isHoldem ? "max-w-5xl" : "max-w-2xl"}`}
+      className={`mx-auto flex min-h-[100dvh] flex-col px-4 py-6 pb-10 ${isMillionaire || isHoldem || isCatchphrase || isBlockbusters ? "max-w-5xl" : "max-w-2xl"}`}
     >
       <header className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-violet-300">
             Room {roomState.code}
-            {isHoldem ? null : (
+            {isHoldem || isCatchphrase || isBlockbusters ? null : (
               <>
                 {" "}
                 · {roomState.quizDifficultyTitle} · {roomState.quizCategoryTitle}
@@ -683,6 +739,28 @@ export function FunQuizClient() {
           Leave
         </button>
       </header>
+
+      {isCatchphrase && phase !== "lobby" ? (
+        <CatchphraseStage
+          roomState={roomState}
+          playerId={playerId}
+          busy={busy}
+          setBusy={setBusy}
+          onRefreshState={setRoomState}
+          onError={setError}
+        />
+      ) : null}
+
+      {isBlockbusters && phase !== "lobby" ? (
+        <BlockbustersStage
+          roomState={roomState}
+          playerId={playerId}
+          busy={busy}
+          setBusy={setBusy}
+          onRefreshState={setRoomState}
+          onError={setError}
+        />
+      ) : null}
 
       {isHoldem && phase !== "lobby" ? (
         <HoldemStage
@@ -710,7 +788,7 @@ export function FunQuizClient() {
         />
       ) : null}
 
-      {!isMillionaire && !isHoldem && gameMode === GAME_MODE_PLAY_TOGETHER ? (
+      {!isMillionaire && !isHoldem && !isCatchphrase && !isBlockbusters && gameMode === GAME_MODE_PLAY_TOGETHER ? (
         <div className="mt-4 rounded-2xl border border-violet-400/50 bg-violet-950/40 px-5 py-4">
           <p className="text-sm font-semibold text-violet-200">Team score</p>
           <p className="mt-1 text-3xl font-bold tabular-nums text-white">
@@ -721,7 +799,7 @@ export function FunQuizClient() {
             {you.name} & {opponent?.name ?? "Partner"} · play together
           </p>
         </div>
-      ) : !isMillionaire ? (
+      ) : !isMillionaire && !isCatchphrase && !isBlockbusters ? (
         <div className="mt-4 grid grid-cols-2 gap-3">
           {[you, opponent].filter(Boolean).map((p) => (
             <div
@@ -751,14 +829,39 @@ export function FunQuizClient() {
       {phase === "lobby" ? (
         <section className="mt-8 flex flex-1 flex-col rounded-3xl border border-white/10 bg-slate-900/70 p-6">
           <h2 className="text-lg font-semibold text-white">Waiting room</h2>
-          <p className="mt-2 text-sm text-slate-300">
-            Difficulty:{" "}
-            <strong className="text-violet-200">{roomState.quizDifficultyTitle}</strong>
-          </p>
-          <p className="mt-1 text-sm text-slate-300">
-            Quiz:{" "}
-            <strong className="text-violet-200">{roomState.quizCategoryTitle}</strong>
-          </p>
+          {isHoldem || isCatchphrase ? (
+            <p className="mt-2 text-sm text-slate-300">
+              {isCatchphrase
+                ? "Picture clues reveal square by square — buzz in and guess the hidden phrase (+2 per correct answer)."
+                : "Heads-up poker with rotating dealer and blinds."}
+            </p>
+          ) : isBlockbusters ? (
+            <>
+              <p className="mt-2 text-sm text-slate-300">
+                Pick a hex, answer from your quiz, and link your side of the board. Wrong answers
+                can be stolen!
+              </p>
+              <p className="mt-2 text-sm text-slate-300">
+                Difficulty:{" "}
+                <strong className="text-violet-200">{roomState.quizDifficultyTitle}</strong>
+              </p>
+              <p className="mt-1 text-sm text-slate-300">
+                Quiz:{" "}
+                <strong className="text-violet-200">{roomState.quizCategoryTitle}</strong>
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="mt-2 text-sm text-slate-300">
+                Difficulty:{" "}
+                <strong className="text-violet-200">{roomState.quizDifficultyTitle}</strong>
+              </p>
+              <p className="mt-1 text-sm text-slate-300">
+                Quiz:{" "}
+                <strong className="text-violet-200">{roomState.quizCategoryTitle}</strong>
+              </p>
+            </>
+          )}
           <p className="mt-1 text-sm text-slate-300">
             Mode: <strong className="text-violet-200">{gameModeLabel(gameMode)}</strong>
           </p>
@@ -803,7 +906,7 @@ export function FunQuizClient() {
         </section>
       ) : null}
 
-      {!isMillionaire && phase === "question" && !question && roomState.statusMessage ? (
+      {!isMillionaire && !isCatchphrase && !isBlockbusters && phase === "question" && !question && roomState.statusMessage ? (
         <section className="mt-8 flex flex-1 flex-col items-center justify-center rounded-3xl border border-white/10 bg-slate-900/70 p-8 text-center">
           <p className="text-lg text-slate-200">{roomState.statusMessage}</p>
           {you.answer !== null ? (
@@ -812,7 +915,7 @@ export function FunQuizClient() {
         </section>
       ) : null}
 
-      {!isMillionaire && phase === "question" && question ? (
+      {!isMillionaire && !isCatchphrase && !isBlockbusters && phase === "question" && question ? (
         <section className="mt-6 flex flex-1 flex-col">
           <div className="mb-3 flex items-center justify-between text-xs text-slate-400">
             <span>{question.category}</span>
@@ -881,7 +984,7 @@ export function FunQuizClient() {
         </section>
       ) : null}
 
-      {!isMillionaire && phase === "reveal" && roomState.answerFeedback ? (
+      {!isMillionaire && !isCatchphrase && !isBlockbusters && phase === "reveal" && roomState.answerFeedback ? (
         <section className="mt-6 flex flex-1 flex-col rounded-3xl border border-amber-400/30 bg-amber-950/20 p-6">
           <h2 className="text-lg font-semibold text-amber-100">Answer reveal</h2>
           {question?.flagImageUrl ? (
@@ -958,7 +1061,7 @@ export function FunQuizClient() {
         </section>
       ) : null}
 
-      {!isMillionaire && phase === "finished" && roomState.results ? (
+      {!isMillionaire && !isCatchphrase && !isBlockbusters && phase === "finished" && roomState.results ? (
         <section className="mt-6 flex flex-1 flex-col rounded-3xl border border-violet-400/30 bg-slate-950/80 p-6">
           <h2 className="text-2xl font-bold text-white">Results</h2>
           <p className="mt-1 text-sm text-slate-400">
