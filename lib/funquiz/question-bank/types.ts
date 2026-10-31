@@ -27,4 +27,6 @@ export type QuizQuestionBankItem = {
   /** ISO 3166-1 alpha-2 for world flag image (/api/funquiz/flag/{iso2}). */
   flagIso2?: string;
   difficulty: QuizDifficulty;
+  /** Hand-authored hard content (supplements); preferred for hard-mode game selection. */
+  curatedHard?: boolean;
 };

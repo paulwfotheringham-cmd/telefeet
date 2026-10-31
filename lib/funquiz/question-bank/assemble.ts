@@ -57,6 +57,7 @@ function flagTierDifficulty(index: number): QuizDifficulty {
 function capitalToQuestion(
   def: (typeof CAPITAL_QUESTION_DEFS)[0],
   difficulty: QuizDifficulty,
+  curatedHard = false,
 ): Omit<QuizQuestionBankItem, "id"> {
   const raw = [def.capital, ...def.wrongCapitals] as [string, string, string, string];
   const prompt = `What is the capital of ${def.country}?`;
@@ -73,12 +74,14 @@ function capitalToQuestion(
     correctIndex,
     generalKnowledgeSubjects: ["geography", "culture"],
     difficulty,
+    ...(curatedHard ? { curatedHard: true as const } : {}),
   };
 }
 
 function flagToQuestion(
   def: (typeof WORLD_FLAG_DEFS)[0],
   difficulty: QuizDifficulty,
+  curatedHard = false,
 ): Omit<QuizQuestionBankItem, "id"> {
   const raw = [def.correctCountry, ...def.distractors] as [string, string, string, string];
   const { options, correctIndex } = shuffleMcqOptions(
@@ -94,12 +97,14 @@ function flagToQuestion(
     correctIndex,
     flagIso2: def.iso2,
     difficulty,
+    ...(curatedHard ? { curatedHard: true as const } : {}),
   };
 }
 
 function outlineToQuestion(
   def: (typeof OUTLINE_COUNTRY_DEFS)[0],
   difficulty: QuizDifficulty,
+  curatedHard = false,
 ): Omit<QuizQuestionBankItem, "id"> {
   const raw = [def.correctCountry, ...def.distractors] as [string, string, string, string];
   const { options, correctIndex } = shuffleMcqOptions(
@@ -115,6 +120,7 @@ function outlineToQuestion(
     correctIndex,
     outlineAssetId: def.assetKey,
     difficulty,
+    ...(curatedHard ? { curatedHard: true as const } : {}),
   };
 }
 
@@ -124,6 +130,7 @@ function mcq(
   def: { prompt: string; options: [string, string, string, string]; correctIndex: number },
   difficulty: QuizDifficulty,
   gk?: QuizQuestionBankItem["generalKnowledgeSubjects"],
+  curatedHard = false,
 ): Omit<QuizQuestionBankItem, "id"> {
   return {
     categoryId,
@@ -133,6 +140,7 @@ function mcq(
     correctIndex: def.correctIndex,
     generalKnowledgeSubjects: gk,
     difficulty,
+    ...(curatedHard ? { curatedHard: true as const } : {}),
   };
 }
 
@@ -149,26 +157,24 @@ export function buildQuestionBank(): QuizQuestionBankItem[] {
       };
     }),
     ...CAPITAL_QUESTION_DEFS.map((d) => capitalToQuestion(d, capitalDifficultyForCountry(d.country))),
-    ...CAPITAL_HARD_SUPPLEMENT.map((d) =>
-      capitalToQuestion(d, QUIZ_DIFFICULTY_HARD),
-    ),
+    ...CAPITAL_HARD_SUPPLEMENT.map((d) => capitalToQuestion(d, QUIZ_DIFFICULTY_HARD, true)),
     ...GEOGRAPHY_QUESTION_DEFS.map((d) =>
       mcq(QUIZ_CATEGORY_GEOGRAPHY, "Geography", d, QUIZ_DIFFICULTY_INTERMEDIATE, ["geography"]),
     ),
     ...GEOGRAPHY_HARD_SUPPLEMENT.map((d) =>
-      mcq(QUIZ_CATEGORY_GEOGRAPHY, "Geography", d, QUIZ_DIFFICULTY_HARD, ["geography"]),
+      mcq(QUIZ_CATEGORY_GEOGRAPHY, "Geography", d, QUIZ_DIFFICULTY_HARD, ["geography"], true),
     ),
     ...SPACE_QUESTION_DEFS.map((d) =>
       mcq(QUIZ_CATEGORY_SPACE, "Space", d, QUIZ_DIFFICULTY_INTERMEDIATE, ["space"]),
     ),
     ...SPACE_HARD_SUPPLEMENT.map((d) =>
-      mcq(QUIZ_CATEGORY_SPACE, "Space", d, QUIZ_DIFFICULTY_HARD, ["space"]),
+      mcq(QUIZ_CATEGORY_SPACE, "Space", d, QUIZ_DIFFICULTY_HARD, ["space"], true),
     ),
     ...HISTORY_QUESTION_DEFS.map((d) =>
       mcq(QUIZ_CATEGORY_HISTORY, "History", d, QUIZ_DIFFICULTY_INTERMEDIATE, ["history"]),
     ),
     ...HISTORY_HARD_SUPPLEMENT.map((d) =>
-      mcq(QUIZ_CATEGORY_HISTORY, "History", d, QUIZ_DIFFICULTY_HARD, ["history"]),
+      mcq(QUIZ_CATEGORY_HISTORY, "History", d, QUIZ_DIFFICULTY_HARD, ["history"], true),
     ),
     ...MOVIES_POP_CULTURE_QUESTION_DEFS.map((d) =>
       mcq(QUIZ_CATEGORY_MOVIES_POP_CULTURE, "Movies & Pop Culture", d, QUIZ_DIFFICULTY_INTERMEDIATE, [
@@ -176,9 +182,14 @@ export function buildQuestionBank(): QuizQuestionBankItem[] {
       ]),
     ),
     ...MOVIES_POP_CULTURE_HARD_SUPPLEMENT.map((d) =>
-      mcq(QUIZ_CATEGORY_MOVIES_POP_CULTURE, "Movies & Pop Culture", d, QUIZ_DIFFICULTY_HARD, [
-        "culture",
-      ]),
+      mcq(
+        QUIZ_CATEGORY_MOVIES_POP_CULTURE,
+        "Movies & Pop Culture",
+        d,
+        QUIZ_DIFFICULTY_HARD,
+        ["culture"],
+        true,
+      ),
     ),
     ...MILITARY_BATTLES_DEFS.map((d) =>
       mcq(QUIZ_CATEGORY_MILITARY_BATTLES, "Military Battles", d, QUIZ_DIFFICULTY_INTERMEDIATE, [
@@ -186,7 +197,14 @@ export function buildQuestionBank(): QuizQuestionBankItem[] {
       ]),
     ),
     ...MILITARY_BATTLES_HARD_SUPPLEMENT.map((d) =>
-      mcq(QUIZ_CATEGORY_MILITARY_BATTLES, "Military Battles", d, QUIZ_DIFFICULTY_HARD, ["military"]),
+      mcq(
+        QUIZ_CATEGORY_MILITARY_BATTLES,
+        "Military Battles",
+        d,
+        QUIZ_DIFFICULTY_HARD,
+        ["military"],
+        true,
+      ),
     ),
     ...GENERAL_MILITARY_DEFS.map((d) =>
       mcq(QUIZ_CATEGORY_GENERAL_MILITARY, "General Military", d, QUIZ_DIFFICULTY_INTERMEDIATE, [
@@ -199,9 +217,14 @@ export function buildQuestionBank(): QuizQuestionBankItem[] {
       ]),
     ),
     ...GENERAL_MILITARY_HARD_SUPPLEMENT.map((d) =>
-      mcq(QUIZ_CATEGORY_GENERAL_MILITARY, "General Military", d, QUIZ_DIFFICULTY_HARD, [
-        "military",
-      ]),
+      mcq(
+        QUIZ_CATEGORY_GENERAL_MILITARY,
+        "General Military",
+        d,
+        QUIZ_DIFFICULTY_HARD,
+        ["military"],
+        true,
+      ),
     ),
     ...GK_EXTRA_DEFS.map((d) =>
       mcq(
@@ -216,12 +239,14 @@ export function buildQuestionBank(): QuizQuestionBankItem[] {
       outlineToQuestion(d, outlineDifficultyForCountry(d.correctCountry)),
     ),
     ...OUTLINE_COUNTRY_DEFS_EXTRA.map((d) =>
-      outlineToQuestion(d, d.difficulty),
+      outlineToQuestion(d, d.difficulty, d.difficulty === QUIZ_DIFFICULTY_HARD),
     ),
     ...WORLD_FLAG_DEFS.map((d, i) =>
       flagToQuestion(d, flagTierDifficulty(i)),
     ),
-    ...WORLD_FLAG_DEFS_EXTRA.map((d) => flagToQuestion(d, d.difficulty)),
+    ...WORLD_FLAG_DEFS_EXTRA.map((d) =>
+      flagToQuestion(d, d.difficulty, d.difficulty === QUIZ_DIFFICULTY_HARD),
+    ),
     ...EXPANDED_MCQ_DEFS.map((d) => {
       const { options, correctIndex } = shuffleMcqOptions(
         d.options,

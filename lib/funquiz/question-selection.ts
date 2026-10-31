@@ -2,10 +2,13 @@ import {
   QUIZ_CATEGORY_GENERAL_KNOWLEDGE,
   type QuizCategoryId,
 } from "./categories";
-import type { QuizDifficulty } from "./difficulties";
+import { QUIZ_DIFFICULTY_HARD, type QuizDifficulty } from "./difficulties";
 import { QUESTIONS_PER_GAME } from "./constants";
-import { QUIZ_QUESTIONS } from "./question-bank";
+import { getQuestionByBankId, QUIZ_QUESTIONS } from "./question-bank";
 import type { GeneralKnowledgeSubject } from "./question-bank/types";
+import { isTooEasyForHardQuestion } from "./question-bank/difficulty-quality";
+import { normalizeQuizPrompt, questionDedupeKey } from "./question-prompt-key";
+import { randomUnit, shuffleInPlace } from "./random";
 
 export class InsufficientQuestionsError extends Error {
   constructor(
@@ -18,14 +21,6 @@ export class InsufficientQuestionsError extends Error {
     );
     this.name = "InsufficientQuestionsError";
   }
-}
-
-function shuffleInPlace<T>(arr: T[]): T[] {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
 }
 
 function eligibleForCategoryAndDifficulty(
@@ -45,6 +40,77 @@ function eligibleForCategoryAndDifficulty(
   ).map((q) => q.id);
 }
 
+function playedDedupeKeys(excludeBankIds: number[]): Set<string> {
+  const keys = new Set<string>();
+  for (const id of excludeBankIds) {
+    keys.add(questionDedupeKey(getQuestionByBankId(id)));
+  }
+  return keys;
+}
+
+function refineHardPool(categoryId: QuizCategoryId, pool: number[]): number[] {
+  const strict = pool.filter((id) => !isTooEasyForHardQuestion(getQuestionByBankId(id)));
+  const curated = strict.filter((id) => getQuestionByBankId(id).curatedHard);
+  if (curated.length >= QUESTIONS_PER_GAME) {
+    return curated;
+  }
+  const curatedSet = new Set(curated);
+  const filler = strict.filter((id) => !curatedSet.has(id));
+  return [...curated, ...filler];
+}
+
+function filterPoolForSession(
+  pool: number[],
+  excludeBankIds: number[],
+  excludeKeys: Set<string>,
+): number[] {
+  const excludeIds = new Set(excludeBankIds);
+  return pool.filter((id) => {
+    const q = getQuestionByBankId(id);
+    const key = questionDedupeKey(q);
+    if (excludeIds.has(id)) return false;
+    if (excludeKeys.has(key)) return false;
+    return true;
+  });
+}
+
+function pickUniquePromptIds(
+  pool: number[],
+  count: number,
+  random: () => number,
+): number[] {
+  const shuffled = shuffleInPlace([...pool], random);
+  const picked: number[] = [];
+  const seenKeys = new Set<string>();
+  for (const id of shuffled) {
+    if (picked.length >= count) break;
+    const key = questionDedupeKey(getQuestionByBankId(id));
+    if (seenKeys.has(key)) continue;
+    seenKeys.add(key);
+    picked.push(id);
+  }
+  return picked;
+}
+
+function resolvePoolWithHistory(
+  basePool: number[],
+  excludeBankIds: number[],
+  random: () => number,
+): number[] {
+  const playedKeys = playedDedupeKeys(excludeBankIds);
+
+  let candidates = filterPoolForSession(basePool, excludeBankIds, playedKeys);
+  if (candidates.length < QUESTIONS_PER_GAME) {
+    candidates = filterPoolForSession(basePool, [], playedKeys);
+  }
+  if (candidates.length < QUESTIONS_PER_GAME && excludeBankIds.length === 0) {
+    candidates = [...basePool];
+  }
+
+  const picked = pickUniquePromptIds(candidates, QUESTIONS_PER_GAME, random);
+  return picked;
+}
+
 const GK_SUBJECTS: GeneralKnowledgeSubject[] = [
   "science",
   "space",
@@ -55,55 +121,89 @@ const GK_SUBJECTS: GeneralKnowledgeSubject[] = [
   "technology",
 ];
 
-function selectBalancedGeneralKnowledge(pool: number[]): number[] {
+function selectBalancedGeneralKnowledge(
+  pool: number[],
+  random: () => number,
+): number[] {
   const bySubject = new Map<GeneralKnowledgeSubject, number[]>();
   for (const id of pool) {
-    const q = QUIZ_QUESTIONS.find((x) => x.id === id)!;
+    const q = getQuestionByBankId(id);
     for (const subject of q.generalKnowledgeSubjects ?? []) {
       if (!bySubject.has(subject)) bySubject.set(subject, []);
       bySubject.get(subject)!.push(id);
     }
   }
-  for (const list of bySubject.values()) shuffleInPlace(list);
+  for (const list of bySubject.values()) shuffleInPlace(list, random);
 
   const picked = new Set<number>();
+  const seenKeys = new Set<string>();
   let guard = 0;
-  while (picked.size < QUESTIONS_PER_GAME && guard < QUESTIONS_PER_GAME * 20) {
+  while (picked.size < QUESTIONS_PER_GAME && guard < QUESTIONS_PER_GAME * 30) {
     guard++;
     for (const subject of GK_SUBJECTS) {
       if (picked.size >= QUESTIONS_PER_GAME) break;
       const list = bySubject.get(subject);
       if (!list?.length) continue;
-      const next = list.shift();
-      if (next !== undefined && !picked.has(next)) picked.add(next);
+      while (list.length > 0) {
+        const next = list.shift()!;
+        const key = questionDedupeKey(getQuestionByBankId(next));
+        if (seenKeys.has(key)) continue;
+        if (!picked.has(next)) {
+          picked.add(next);
+          seenKeys.add(key);
+        }
+        break;
+      }
     }
   }
   if (picked.size < QUESTIONS_PER_GAME) {
-    const rest = shuffleInPlace(pool.filter((id) => !picked.has(id)));
+    const rest = shuffleInPlace(
+      pool.filter((id) => !picked.has(id)),
+      random,
+    );
     for (const id of rest) {
       if (picked.size >= QUESTIONS_PER_GAME) break;
+      const key = questionDedupeKey(getQuestionByBankId(id));
+      if (seenKeys.has(key)) continue;
       picked.add(id);
+      seenKeys.add(key);
     }
   }
-  return shuffleInPlace([...picked]).slice(0, QUESTIONS_PER_GAME);
+  return shuffleInPlace([...picked], random).slice(0, QUESTIONS_PER_GAME);
 }
 
 export function selectQuestionIdsForCategory(
   categoryId: QuizCategoryId,
   difficulty: QuizDifficulty,
   excludeBankIds: number[] = [],
+  random: () => number = randomUnit,
 ): number[] {
-  const exclude = new Set(excludeBankIds);
-  const pool = eligibleForCategoryAndDifficulty(categoryId, difficulty).filter(
-    (id) => !exclude.has(id),
-  );
-  if (pool.length < QUESTIONS_PER_GAME) {
-    throw new InsufficientQuestionsError(categoryId, difficulty, pool.length);
+  let basePool = eligibleForCategoryAndDifficulty(categoryId, difficulty);
+  if (difficulty === QUIZ_DIFFICULTY_HARD) {
+    basePool = refineHardPool(categoryId, basePool);
   }
+
+  const picked = resolvePoolWithHistory(basePool, excludeBankIds, random);
+
+  if (picked.length < QUESTIONS_PER_GAME) {
+    throw new InsufficientQuestionsError(categoryId, difficulty, picked.length);
+  }
+
   if (categoryId === QUIZ_CATEGORY_GENERAL_KNOWLEDGE) {
-    return selectBalancedGeneralKnowledge(pool);
+    const gkPool = filterPoolForSession(basePool, excludeBankIds, playedDedupeKeys(excludeBankIds));
+    const gkCandidates =
+      gkPool.length >= QUESTIONS_PER_GAME
+        ? gkPool
+        : basePool.length >= QUESTIONS_PER_GAME
+          ? basePool
+          : gkPool;
+    if (gkCandidates.length < QUESTIONS_PER_GAME) {
+      throw new InsufficientQuestionsError(categoryId, difficulty, gkCandidates.length);
+    }
+    return selectBalancedGeneralKnowledge(gkCandidates, random);
   }
-  return shuffleInPlace([...pool]).slice(0, QUESTIONS_PER_GAME);
+
+  return shuffleInPlace(picked, random);
 }
 
 export function categoryDifficultyCapacity(
