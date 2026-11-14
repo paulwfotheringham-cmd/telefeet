@@ -115,7 +115,12 @@ export function startParallelMillionaireGame(room: QuizRoom): QuizRoom {
   const usedAcross = new Set<number>(excludeBase);
   const runs: Record<string, MillionairePlayerRun> = {};
   for (const p of room.players) {
-    const order = selectMillionaireQuestionIds(room.quizCategoryId, [...usedAcross]);
+    const order = selectMillionaireQuestionIds(
+      room.quizCategoryId,
+      [...usedAcross],
+      Math.random,
+      room.quizDifficulty,
+    );
     for (const id of order) usedAcross.add(id);
     runs[p.id] = createInitialMillionairePlayerRun(order);
   }

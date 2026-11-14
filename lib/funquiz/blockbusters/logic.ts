@@ -1,6 +1,7 @@
 import { GAME_MODE_BLOCKBUSTERS, MAX_PLAYERS } from "../constants";
 import { gradeAnswer, normalizeChoiceIndex } from "../answer-validation";
-import { selectQuestionIdsForCategory } from "../question-selection";
+import { playedIdsForTopic } from "../question-history";
+import { InsufficientQuestionsError, selectQuestionIdsForCategory } from "../question-selection";
 import { getQuestionByBankId } from "../questions";
 import type { QuizRoom } from "../types";
 import {
@@ -78,6 +79,26 @@ function buildBoard(questionIds: number[]): BlockbustersState["cells"] {
   }));
 }
 
+function questionIdsForBoard(room: QuizRoom): number[] {
+  const exclude = playedIdsForTopic(room, room.quizCategoryId, room.quizDifficulty);
+  try {
+    return selectQuestionIdsForCategory(
+      room.quizCategoryId,
+      room.quizDifficulty,
+      exclude,
+      BLOCKBUSTERS_HEX_COUNT,
+    );
+  } catch (err) {
+    if (!(err instanceof InsufficientQuestionsError)) throw err;
+    return selectQuestionIdsForCategory(
+      room.quizCategoryId,
+      room.quizDifficulty,
+      [],
+      BLOCKBUSTERS_HEX_COUNT,
+    );
+  }
+}
+
 export function initBlockbustersOnCreate(room: QuizRoom): QuizRoom {
   return { ...room, blockbusters: createInitialBlockbustersState() };
 }
@@ -87,16 +108,7 @@ export function startBlockbustersGame(room: QuizRoom): QuizRoom {
     throw new Error("Waiting for a second player");
   }
   const [horizontalId, verticalId] = playerIds(room);
-  const played = room.playedBankIdsByTopic;
-  const exclude = Object.values(played).flat();
-  const pool = selectQuestionIdsForCategory(
-    room.quizCategoryId,
-    room.quizDifficulty,
-    exclude,
-  ).slice(0, BLOCKBUSTERS_HEX_COUNT);
-  if (pool.length < BLOCKBUSTERS_HEX_COUNT) {
-    throw new Error("Not enough questions in this quiz for Blockbusters");
-  }
+  const pool = questionIdsForBoard(room);
 
   const bb: BlockbustersState = {
     ...createInitialBlockbustersState(),

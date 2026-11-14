@@ -12,9 +12,10 @@ export class InsufficientQuestionsError extends Error {
     readonly categoryId: QuizCategoryId,
     readonly difficulty: QuizDifficulty,
     readonly available: number,
+    needed: number = QUESTIONS_PER_GAME,
   ) {
     super(
-      `Not enough questions for category "${categoryId}" at "${difficulty}" difficulty: need ${QUESTIONS_PER_GAME}, found ${available}.`,
+      `Not enough questions for category "${categoryId}" at "${difficulty}" difficulty: need ${needed}, found ${available}.`,
     );
     this.name = "InsufficientQuestionsError";
   }
@@ -55,7 +56,7 @@ const GK_SUBJECTS: GeneralKnowledgeSubject[] = [
   "technology",
 ];
 
-function selectBalancedGeneralKnowledge(pool: number[]): number[] {
+function selectBalancedGeneralKnowledge(pool: number[], needed: number): number[] {
   const bySubject = new Map<GeneralKnowledgeSubject, number[]>();
   for (const id of pool) {
     const q = QUIZ_QUESTIONS.find((x) => x.id === id)!;
@@ -68,42 +69,43 @@ function selectBalancedGeneralKnowledge(pool: number[]): number[] {
 
   const picked = new Set<number>();
   let guard = 0;
-  while (picked.size < QUESTIONS_PER_GAME && guard < QUESTIONS_PER_GAME * 20) {
+  while (picked.size < needed && guard < needed * 20) {
     guard++;
     for (const subject of GK_SUBJECTS) {
-      if (picked.size >= QUESTIONS_PER_GAME) break;
+      if (picked.size >= needed) break;
       const list = bySubject.get(subject);
       if (!list?.length) continue;
       const next = list.shift();
       if (next !== undefined && !picked.has(next)) picked.add(next);
     }
   }
-  if (picked.size < QUESTIONS_PER_GAME) {
+  if (picked.size < needed) {
     const rest = shuffleInPlace(pool.filter((id) => !picked.has(id)));
     for (const id of rest) {
-      if (picked.size >= QUESTIONS_PER_GAME) break;
+      if (picked.size >= needed) break;
       picked.add(id);
     }
   }
-  return shuffleInPlace([...picked]).slice(0, QUESTIONS_PER_GAME);
+  return shuffleInPlace([...picked]).slice(0, needed);
 }
 
 export function selectQuestionIdsForCategory(
   categoryId: QuizCategoryId,
   difficulty: QuizDifficulty,
   excludeBankIds: number[] = [],
+  needed: number = QUESTIONS_PER_GAME,
 ): number[] {
   const exclude = new Set(excludeBankIds);
   const pool = eligibleForCategoryAndDifficulty(categoryId, difficulty).filter(
     (id) => !exclude.has(id),
   );
-  if (pool.length < QUESTIONS_PER_GAME) {
-    throw new InsufficientQuestionsError(categoryId, difficulty, pool.length);
+  if (pool.length < needed) {
+    throw new InsufficientQuestionsError(categoryId, difficulty, pool.length, needed);
   }
   if (categoryId === QUIZ_CATEGORY_GENERAL_KNOWLEDGE) {
-    return selectBalancedGeneralKnowledge(pool);
+    return selectBalancedGeneralKnowledge(pool, needed);
   }
-  return shuffleInPlace([...pool]).slice(0, QUESTIONS_PER_GAME);
+  return shuffleInPlace([...pool]).slice(0, needed);
 }
 
 export function categoryDifficultyCapacity(

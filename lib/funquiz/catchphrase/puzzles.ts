@@ -118,7 +118,12 @@ export function normalizeCatchphraseGuess(raw: string): string {
 
 export function guessMatchesPuzzle(puzzle: CatchphrasePuzzle, rawGuess: string): boolean {
   const g = normalizeCatchphraseGuess(rawGuess);
-  if (!g) return false;
+  if (g.length < 3) return false;
   const candidates = [puzzle.answer, ...puzzle.aliases].map(normalizeCatchphraseGuess);
-  return candidates.some((c) => c === g || g.includes(c) || c.includes(g));
+  return candidates.some((c) => {
+    if (g === c) return true;
+    if (c.length >= 8 && g.includes(c)) return true;
+    if (c.includes(g) && g.length >= Math.ceil(c.length * 0.8)) return true;
+    return false;
+  });
 }

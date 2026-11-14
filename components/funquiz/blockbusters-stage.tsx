@@ -15,20 +15,19 @@ type Props = {
   onError: (msg: string) => void;
 };
 
-function hexStyle(cell: BlockbustersClientCell, playerId: string): string {
-  const owned = cell.ownerId;
+function hexStyle(cell: BlockbustersClientCell, horizontalPlayerId: string): string {
   const base =
     "relative flex h-[3.25rem] w-[3.75rem] items-center justify-center text-xl font-black transition md:h-[3.75rem] md:w-[4.25rem]";
-  if (owned === playerId) {
-    return `${base} bg-gradient-to-br from-emerald-400 to-teal-600 text-white shadow-[0_0_12px_rgba(52,211,153,0.5)]`;
+  if (cell.ownerId && cell.ownerId === horizontalPlayerId) {
+    return `${base} bg-gradient-to-br from-[#ffcc00] to-[#c2410c] text-[#1a1204] shadow-[0_0_12px_rgba(255,204,0,0.55)]`;
   }
-  if (owned) {
-    return `${base} bg-gradient-to-br from-sky-500 to-blue-800 text-white shadow-[0_0_10px_rgba(56,189,248,0.35)]`;
+  if (cell.ownerId) {
+    return `${base} bg-gradient-to-br from-sky-400 to-blue-800 text-white shadow-[0_0_10px_rgba(56,189,248,0.45)]`;
   }
   if (cell.selectable) {
-    return `${base} cursor-pointer bg-gradient-to-br from-[#ffcc00] to-[#e6a800] text-[#1a2744] hover:brightness-110 hover:scale-105`;
+    return `${base} cursor-pointer bg-gradient-to-br from-[#ffe566] to-[#ffcc00] text-[#1a2744] ring-2 ring-white hover:brightness-110 hover:scale-105`;
   }
-  return `${base} bg-gradient-to-br from-slate-600 to-slate-800 text-slate-200`;
+  return `${base} bg-gradient-to-br from-[#ffcc00] to-[#e6a800] text-[#1a2744]`;
 }
 
 export function BlockbustersStage({
@@ -76,6 +75,22 @@ export function BlockbustersStage({
   }
 
   const q = roomState.question;
+  const picker = roomState.players.find((p) => p.id === bv.pickPlayerId);
+  const answerer = roomState.players.find((p) => p.id === bv.answerPlayerId);
+  const banner =
+    roomState.phase === "finished"
+      ? bv.statusMessage
+      : bv.step === "pick"
+        ? bv.canPick
+          ? "Your turn — pick a hex to play for."
+          : `${picker?.name ?? "Your opponent"} is choosing a hex.`
+        : bv.step === "steal"
+          ? bv.canAnswer
+            ? "Steal! Pick the right answer to take the hex."
+            : `${answerer?.name ?? "Your opponent"} can steal this hex.`
+          : bv.canAnswer
+            ? "Answer to claim this hex."
+            : `${answerer?.name ?? "Your opponent"} is answering.`;
 
   return (
     <div className="mt-4 overflow-hidden rounded-3xl border-4 border-[#ffcc00] bg-gradient-to-b from-[#003399] via-[#0047ab] to-[#001a4d] p-4 shadow-[0_0_40px_rgba(0,100,255,0.35)] md:p-6">
@@ -108,11 +123,16 @@ export function BlockbustersStage({
             p.id === bv.horizontalPlayerId
               ? "Gold · left → right"
               : "Blue · top ↓ bottom";
+          const acting =
+            (bv.step === "pick" && p.id === bv.pickPlayerId) ||
+            ((bv.step === "answer" || bv.step === "steal") && p.id === bv.answerPlayerId);
           return (
             <div
               key={p.id}
               className={`rounded-xl border px-3 py-2 ${
-                p.id === playerId ? "border-[#ffcc00] bg-black/30" : "border-white/15 bg-black/20"
+                acting
+                  ? "border-[#ffcc00] bg-black/40 ring-1 ring-[#ffcc00]/70"
+                  : "border-white/15 bg-black/20"
               }`}
             >
               <p className="truncate text-xs font-semibold text-white">
@@ -126,38 +146,38 @@ export function BlockbustersStage({
         })}
       </div>
 
-      {bv.statusMessage ? (
+      {banner ? (
         <p className="mt-4 rounded-xl border border-[#ffcc00]/40 bg-black/30 px-4 py-3 text-center text-sm font-medium text-white">
-          {bv.statusMessage}
+          {banner}
         </p>
       ) : null}
 
-      <div className="relative mx-auto mt-6 max-w-xl px-2">
-        <span className="absolute -left-1 top-1/2 -translate-y-1/2 -rotate-90 text-[10px] font-bold tracking-widest text-[#ffcc00]">
+      <div className="relative mx-auto mt-6 max-w-xl px-8">
+        <span className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 -rotate-90 text-[10px] font-bold tracking-widest text-[#ffcc00]">
           GOLD
         </span>
-        <span className="absolute -right-1 top-1/2 -translate-y-1/2 rotate-90 text-[10px] font-bold tracking-widest text-sky-300">
+        <span className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 rotate-90 text-[10px] font-bold tracking-widest text-[#ffcc00]">
           GOLD
         </span>
-        <span className="absolute left-1/2 -top-1 -translate-x-1/2 text-[10px] font-bold tracking-widest text-sky-300">
+        <span className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 text-[10px] font-bold tracking-widest text-sky-300">
           BLUE
         </span>
-        <span className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-4 text-[10px] font-bold tracking-widest text-sky-300">
+        <span className="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 text-[10px] font-bold tracking-widest text-sky-300">
           BLUE
         </span>
 
-        <div className="flex flex-col items-center gap-1 py-4">
+        <div className="flex flex-col items-center py-4">
           {rows.map((rowCells, rowIdx) => (
             <div
               key={rowIdx}
-              className={`flex gap-1 ${rowCells[0]?.wide ? "" : "ml-8 md:ml-10"}`}
+              className={`flex gap-1 ${rowIdx > 0 ? "-mt-[0.81rem] md:-mt-[0.94rem]" : ""} ${rowCells[0]?.wide ? "" : "ml-8 md:ml-9"}`}
             >
               {rowCells.map((cell) => (
                 <button
                   key={cell.id}
                   type="button"
                   disabled={busy || !cell.selectable}
-                  className={`${hexStyle(cell, playerId)} clip-hex`}
+                  className={`${hexStyle(cell, bv.horizontalPlayerId)} disabled:opacity-100`}
                   style={{
                     clipPath:
                       "polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)",

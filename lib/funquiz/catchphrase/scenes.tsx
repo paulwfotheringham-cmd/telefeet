@@ -1,193 +1,191 @@
-/** Visual “Mr Chips” style picture clues for catchphrase rounds. */
+import type { ReactNode } from "react";
+
+/** High-contrast picture clues. Blue cover tiles sit on top of these, so the art stays light. */
+function Frame({ bg, children }: { bg: string; children: ReactNode }) {
+  return (
+    <svg viewBox="0 0 400 300" className="h-full w-full" role="img" aria-hidden>
+      <rect width="400" height="300" fill={bg} />
+      {children}
+    </svg>
+  );
+}
+
 export function CatchphraseScene({ sceneKey }: { sceneKey: string }) {
   switch (sceneKey) {
     case "piece_of_cake":
       return (
-        <svg viewBox="0 0 400 300" className="h-full w-full" role="img" aria-hidden>
-          <rect fill="#1e3a8a" width="400" height="300" />
-          <path fill="#fbbf24" d="M80 200 L200 80 L320 200 Z" />
-          <rect fill="#fcd34d" x="120" y="120" width="160" height="90" rx="8" />
-          <text x="200" y="175" textAnchor="middle" fill="#78350f" fontSize="28" fontWeight="bold">
-            CAKE
-          </text>
-          <rect fill="#ef4444" x="175" y="95" width="50" height="35" rx="4" />
-        </svg>
+        <Frame bg="#fff7ed">
+          <path fill="#f59e0b" d="M70 210 L200 70 L330 210 Z" />
+          <rect fill="#fde68a" x="110" y="130" width="180" height="90" rx="10" />
+          <rect fill="#ef4444" x="175" y="95" width="50" height="40" rx="6" />
+          <circle fill="#f472b6" cx="150" cy="175" r="10" />
+          <circle fill="#60a5fa" cx="200" cy="185" r="10" />
+          <circle fill="#34d399" cx="250" cy="175" r="10" />
+        </Frame>
       );
     case "break_a_leg":
       return (
-        <svg viewBox="0 0 400 300" className="h-full w-full" role="img" aria-hidden>
-          <rect fill="#0f172a" width="400" height="300" />
-          <path stroke="#f8fafc" strokeWidth="14" fill="none" d="M120 220 Q200 40 280 220" />
-          <path stroke="#ef4444" strokeWidth="6" d="M190 120 L210 140 M200 100 L220 115" />
-          <text x="200" y="260" textAnchor="middle" fill="#94a3b8" fontSize="22">
-            CRACK!
-          </text>
-        </svg>
+        <Frame bg="#f8fafc">
+          <path stroke="#0f172a" strokeWidth="22" strokeLinecap="round" fill="none" d="M90 230 L150 120 L210 230" />
+          <path stroke="#ef4444" strokeWidth="8" strokeLinecap="round" d="M140 150 L175 125" />
+          <path stroke="#ef4444" strokeWidth="8" strokeLinecap="round" d="M155 168 L190 145" />
+          <circle fill="#fecaca" cx="280" cy="160" r="36" />
+          <path stroke="#0f172a" strokeWidth="6" fill="none" d="M262 160 H298 M280 142 V178" />
+        </Frame>
       );
     case "spill_the_beans":
       return (
-        <svg viewBox="0 0 400 300" className="h-full w-full" role="img" aria-hidden>
-          <rect fill="#14532d" width="400" height="300" />
-          <ellipse fill="#854d0e" cx="200" cy="200" rx="90" ry="35" />
-          <ellipse fill="#a16207" cx="200" cy="175" rx="70" ry="50" />
-          {[0, 1, 2, 3, 4, 5].map((i) => (
-            <ellipse
-              key={i}
-              fill="#78350f"
-              cx={160 + i * 18}
-              cy={140 + (i % 2) * 25}
-              rx="10"
-              ry="14"
-            />
+        <Frame bg="#ecfdf5">
+          <path fill="#b45309" d="M150 70 H250 L270 150 H130 Z" />
+          <ellipse fill="#92400e" cx="200" cy="70" rx="50" ry="14" />
+          <path fill="#fbbf24" d="M230 120 L310 210 L250 230 Z" />
+          {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+            <ellipse key={i} fill="#78350f" cx={250 + (i % 4) * 28} cy={200 + Math.floor(i / 4) * 28} rx="12" ry="16" />
           ))}
-        </svg>
+        </Frame>
       );
     case "under_the_weather":
       return (
-        <svg viewBox="0 0 400 300" className="h-full w-full" role="img" aria-hidden>
-          <rect fill="#334155" width="400" height="300" />
-          <ellipse fill="#64748b" cx="200" cy="80" rx="120" ry="45" />
-          <path fill="#94a3b8" d="M80 80 Q200 160 320 80 L320 120 Q200 200 80 120 Z" />
-          <circle fill="#fde68a" cx="200" cy="210" r="35" />
-          <path stroke="#0ea5e9" strokeWidth="4" d="M185 200 L195 215 L215 190" fill="none" />
-        </svg>
+        <Frame bg="#e0f2fe">
+          <ellipse fill="#64748b" cx="200" cy="70" rx="130" ry="42" />
+          <ellipse fill="#94a3b8" cx="150" cy="78" rx="70" ry="32" />
+          <ellipse fill="#cbd5e1" cx="250" cy="78" rx="70" ry="32" />
+          <circle fill="#fde68a" cx="200" cy="200" r="42" />
+          <path stroke="#0284c7" strokeWidth="6" strokeLinecap="round" d="M170 130 L185 175 M200 120 L200 180 M230 130 L215 175" />
+        </Frame>
       );
     case "raining_cats_dogs":
       return (
-        <svg viewBox="0 0 400 300" className="h-full w-full" role="img" aria-hidden>
-          <rect fill="#1e40af" width="400" height="300" />
-          {[...Array(12)].map((_, i) => (
-            <line
-              key={`r${i}`}
-              x1={30 + i * 32}
-              y1={20}
-              x2={20 + i * 32}
-              y2={120}
-              stroke="#93c5fd"
-              strokeWidth="3"
-            />
+        <Frame bg="#dbeafe">
+          {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+            <line key={i} x1={40 + i * 46} y1={20} x2={28 + i * 46} y2={110} stroke="#1d4ed8" strokeWidth="5" strokeLinecap="round" />
           ))}
-          <text x="100" y="200" fontSize="48">
-            🐱
-          </text>
-          <text x="240" y="220" fontSize="48">
-            🐶
-          </text>
-        </svg>
+          <ellipse fill="#f59e0b" cx="120" cy="200" rx="46" ry="28" />
+          <polygon fill="#f59e0b" points="80,185 95,155 115,185" />
+          <polygon fill="#f59e0b" points="125,185 145,155 165,185" />
+          <circle fill="#0f172a" cx="105" cy="198" r="4" />
+          <circle fill="#0f172a" cx="140" cy="198" r="4" />
+          <ellipse fill="#78716c" cx="280" cy="205" rx="50" ry="30" />
+          <circle fill="#78716c" cx="325" cy="185" r="22" />
+          <ellipse fill="#44403c" cx="318" cy="170" rx="10" ry="16" />
+          <circle fill="#0f172a" cx="332" cy="182" r="3" />
+        </Frame>
       );
     case "once_blue_moon":
       return (
-        <svg viewBox="0 0 400 300" className="h-full w-full" role="img" aria-hidden>
-          <rect fill="#020617" width="400" height="300" />
-          <circle fill="#2563eb" cx="200" cy="130" r="70" />
-          <circle fill="#020617" cx="230" cy="110" r="60" />
-          <text x="200" y="260" textAnchor="middle" fill="#e2e8f0" fontSize="20">
-            1 × ?
+        <Frame bg="#e0f2fe">
+          <circle fill="#2563eb" cx="145" cy="145" r="80" />
+          <circle fill="#e0f2fe" cx="185" cy="120" r="64" />
+          <text x="290" y="190" fill="#1e3a8a" fontSize="84" fontWeight="700" fontFamily="sans-serif">
+            1
           </text>
-        </svg>
+        </Frame>
       );
     case "cost_arm_leg":
       return (
-        <svg viewBox="0 0 400 300" className="h-full w-full" role="img" aria-hidden>
-          <rect fill="#4c1d95" width="400" height="300" />
-          <text x="200" y="100" textAnchor="middle" fill="#fde047" fontSize="56">
-            £££
+        <Frame bg="#f5f3ff">
+          <rect fill="#fde047" x="40" y="40" width="150" height="90" rx="12" />
+          <text x="115" y="100" textAnchor="middle" fill="#713f12" fontSize="48" fontWeight="700" fontFamily="sans-serif">
+            ££
           </text>
-          <path stroke="#fca5a5" strokeWidth="16" strokeLinecap="round" d="M120 200 L160 140" />
-          <path stroke="#fca5a5" strokeWidth="16" strokeLinecap="round" d="M280 200 L240 150" />
-        </svg>
+          <path stroke="#fb7185" strokeWidth="22" strokeLinecap="round" fill="none" d="M230 80 L300 40" />
+          <circle fill="#fecdd3" cx="308" cy="34" r="16" />
+          <path stroke="#fb7185" strokeWidth="22" strokeLinecap="round" fill="none" d="M240 160 L320 230" />
+          <ellipse fill="#fecdd3" cx="330" cy="242" rx="22" ry="14" />
+        </Frame>
       );
     case "let_cat_out":
       return (
-        <svg viewBox="0 0 400 300" className="h-full w-full" role="img" aria-hidden>
-          <rect fill="#713f12" width="400" height="300" />
-          <rect fill="#a16207" x="100" y="100" width="200" height="140" rx="12" />
-          <text x="200" y="190" textAnchor="middle" fontSize="64">
-            🐱
-          </text>
-          <path fill="none" stroke="#fef3c7" strokeWidth="4" d="M200 100 L200 60" />
-        </svg>
+        <Frame bg="#fffbeb">
+          <path fill="#d97706" d="M90 110 H250 L280 250 H70 Z" />
+          <path fill="#fbbf24" d="M90 110 L170 60 L250 110 Z" />
+          <ellipse fill="#f59e0b" cx="210" cy="175" rx="48" ry="32" />
+          <polygon fill="#f59e0b" points="170,160 185,130 205,160" />
+          <polygon fill="#f59e0b" points="210,160 230,130 250,160" />
+          <circle fill="#0f172a" cx="200" cy="172" r="4" />
+          <circle fill="#0f172a" cx="224" cy="172" r="4" />
+        </Frame>
       );
     case "hit_nail":
       return (
-        <svg viewBox="0 0 400 300" className="h-full w-full" role="img" aria-hidden>
-          <rect fill="#292524" width="400" height="300" />
-          <rect fill="#78716c" x="80" y="180" width="240" height="40" />
-          <rect fill="#a8a29e" x="185" y="120" width="30" height="70" />
-          <path fill="#fbbf24" d="M150 90 L250 90 L230 120 L170 120 Z" />
-        </svg>
+        <Frame bg="#fafaf9">
+          <rect fill="#a8a29e" x="40" y="200" width="280" height="36" rx="4" />
+          <rect fill="#78716c" x="190" y="120" width="22" height="90" />
+          <path fill="#fbbf24" d="M120 70 L250 50 L240 110 L130 120 Z" />
+          <rect fill="#92400e" x="210" y="70" width="70" height="18" rx="4" />
+        </Frame>
       );
     case "cold_feet":
       return (
-        <svg viewBox="0 0 400 300" className="h-full w-full" role="img" aria-hidden>
-          <rect fill="#0c4a6e" width="400" height="300" />
-          <ellipse fill="#bae6fd" cx="160" cy="200" rx="45" ry="25" />
-          <ellipse fill="#bae6fd" cx="240" cy="200" rx="45" ry="25" />
-          <text x="200" y="120" textAnchor="middle" fontSize="40">
-            🥶
-          </text>
-        </svg>
+        <Frame bg="#e0f2fe">
+          <path fill="#bae6fd" d="M40 40 H200 V180 H40 Z" />
+          <path fill="#7dd3fc" d="M70 50 L90 140 L50 140 Z" />
+          <path fill="#7dd3fc" d="M130 40 L155 150 L110 150 Z" />
+          <ellipse fill="#0ea5e9" cx="140" cy="230" rx="55" ry="24" />
+          <ellipse fill="#0284c7" cx="270" cy="230" rx="55" ry="24" />
+        </Frame>
       );
     case "burn_midnight_oil":
       return (
-        <svg viewBox="0 0 400 300" className="h-full w-full" role="img" aria-hidden>
-          <rect fill="#172554" width="400" height="300" />
-          <circle fill="#fef08a" cx="320" cy="60" r="25" />
-          <rect fill="#fcd34d" x="180" y="140" width="40" height="80" />
-          <ellipse fill="#f97316" cx="200" cy="130" rx="18" ry="28" />
-        </svg>
+        <Frame bg="#fff7ed">
+          <rect fill="#1e1b4b" x="240" y="24" width="130" height="100" rx="8" />
+          <circle fill="#fef08a" cx="305" cy="70" r="24" />
+          <rect fill="#fcd34d" x="120" y="150" width="40" height="100" rx="6" />
+          <ellipse fill="#fb923c" cx="140" cy="132" rx="24" ry="34" />
+          <ellipse fill="#fef9c3" cx="140" cy="124" rx="10" ry="16" />
+        </Frame>
       );
     case "elephant_room":
       return (
-        <svg viewBox="0 0 400 300" className="h-full w-full" role="img" aria-hidden>
-          <rect fill="#fef3c7" width="400" height="300" />
-          <rect fill="#e7e5e4" x="40" y="40" width="320" height="220" rx="8" />
-          <text x="200" y="175" textAnchor="middle" fontSize="72">
-            🐘
-          </text>
-        </svg>
+        <Frame bg="#fef3c7">
+          <rect fill="#e7e5e4" x="30" y="30" width="340" height="240" rx="8" />
+          <rect fill="#d6d3d1" x="50" y="50" width="80" height="60" />
+          <ellipse fill="#a8a29e" cx="230" cy="170" rx="90" ry="60" />
+          <circle fill="#a8a29e" cx="300" cy="130" r="36" />
+          <path fill="#a8a29e" d="M310 150 Q360 180 320 220" stroke="#78716c" strokeWidth="10" fillOpacity="1" />
+          <rect fill="#78716c" x="200" y="210" width="16" height="40" />
+          <rect fill="#78716c" x="250" y="210" width="16" height="40" />
+        </Frame>
       );
     case "when_pigs_fly":
       return (
-        <svg viewBox="0 0 400 300" className="h-full w-full" role="img" aria-hidden>
-          <rect fill="#7dd3fc" width="400" height="300" />
-          <text x="200" y="160" textAnchor="middle" fontSize="80">
-            🐷
-          </text>
-          <path stroke="#fff" strokeWidth="3" fill="none" d="M120 200 Q200 80 280 200" strokeDasharray="8 6" />
-        </svg>
+        <Frame bg="#e0f2fe">
+          <ellipse fill="#fbcfe8" cx="200" cy="170" rx="80" ry="50" />
+          <circle fill="#f9a8d4" cx="270" cy="145" r="32" />
+          <ellipse fill="#fce7f3" cx="285" cy="155" rx="16" ry="12" />
+          <circle fill="#0f172a" cx="280" cy="138" r="4" />
+          <path fill="#ffffff" d="M140 150 Q80 80 160 120 Q120 90 190 145 Z" />
+          <path fill="#ffffff" d="M180 130 Q150 40 240 110 Z" />
+        </Frame>
       );
     case "barking_wrong_tree":
       return (
-        <svg viewBox="0 0 400 300" className="h-full w-full" role="img" aria-hidden>
-          <rect fill="#365314" width="400" height="300" />
-          <rect fill="#854d0e" x="260" y="100" width="40" height="160" />
-          <circle fill="#166534" cx="280" cy="80" r="55" />
-          <text x="120" y="200" fontSize="56">
-            🐕
-          </text>
-          <text x="120" y="240" fill="#fef08a" fontSize="18">
-            WOOF!
-          </text>
-        </svg>
+        <Frame bg="#ecfccb">
+          <rect fill="#854d0e" x="250" y="90" width="46" height="180" />
+          <circle fill="#166534" cx="273" cy="70" r="62" />
+          <ellipse fill="#a16207" cx="120" cy="210" rx="55" ry="32" />
+          <circle fill="#a16207" cx="165" cy="185" r="24" />
+          <ellipse fill="#78350f" cx="155" cy="168" rx="12" ry="18" />
+          <circle fill="#0f172a" cx="174" cy="182" r="4" />
+          <path stroke="#0f172a" strokeWidth="4" fill="none" d="M185 190 Q230 170 245 150" />
+        </Frame>
       );
     case "kick_bucket":
       return (
-        <svg viewBox="0 0 400 300" className="h-full w-full" role="img" aria-hidden>
-          <rect fill="#57534e" width="400" height="300" />
-          <path fill="#a8a29e" d="M150 120 L250 120 L270 220 L130 220 Z" />
-          <ellipse fill="#78716c" cx="200" cy="120" rx="55" ry="12" />
-          <path stroke="#f8fafc" strokeWidth="8" strokeLinecap="round" d="M280 180 L320 140" />
-        </svg>
+        <Frame bg="#f5f5f4">
+          <path fill="#a8a29e" d="M150 90 L270 90 L295 230 L125 230 Z" />
+          <ellipse fill="#78716c" cx="210" cy="90" rx="62" ry="16" />
+          <path stroke="#0f172a" strokeWidth="16" strokeLinecap="round" fill="none" d="M70 200 L140 150" />
+          <ellipse fill="#fecdd3" cx="150" cy="142" rx="22" ry="14" />
+        </Frame>
       );
     default:
       return (
-        <svg viewBox="0 0 400 300" className="h-full w-full" role="img" aria-hidden>
-          <rect fill="#312e81" width="400" height="300" />
-          <text x="200" y="160" textAnchor="middle" fill="#e0e7ff" fontSize="24">
+        <Frame bg="#fff7ed">
+          <text x="200" y="165" textAnchor="middle" fill="#9a3412" fontSize="64" fontFamily="sans-serif">
             ?
           </text>
-        </svg>
+        </Frame>
       );
   }
 }

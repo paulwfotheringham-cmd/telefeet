@@ -68,7 +68,12 @@ export function startMillionaireGame(room: QuizRoom): QuizRoom {
     room.quizDifficulty,
     GAME_MODE_SHARED_MILLIONAIRE,
   );
-  const questionOrder = selectMillionaireQuestionIds(room.quizCategoryId, exclude);
+  const questionOrder = selectMillionaireQuestionIds(
+    room.quizCategoryId,
+    exclude,
+    Math.random,
+    room.quizDifficulty,
+  );
   const millionaire = resetLocksForQuestion(
     room.players,
     createInitialMillionaireState(),

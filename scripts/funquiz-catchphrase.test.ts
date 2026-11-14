@@ -13,8 +13,8 @@ import {
   catchphraseApplyAction,
   catchphraseTickRoom,
 } from "../lib/funquiz/catchphrase/logic";
-import { CATCHPHRASE_ANSWER_REVEAL_MS, CATCHPHRASE_TILE_REVEAL_MS } from "../lib/funquiz/catchphrase/types";
-import { getCatchphrasePuzzle } from "../lib/funquiz/catchphrase/puzzles";
+import { CATCHPHRASE_ANSWER_REVEAL_MS, CATCHPHRASE_BOARD_CLEAR_MS, CATCHPHRASE_TILE_REVEAL_MS } from "../lib/funquiz/catchphrase/types";
+import { getCatchphrasePuzzle, guessMatchesPuzzle } from "../lib/funquiz/catchphrase/puzzles";
 
 let room = createRoom(
   "host",
@@ -59,5 +59,16 @@ room = catchphraseApplyAction(room, "guest", "buzz");
 room = catchphraseApplyAction(room, "guest", "guess", "definitely wrong phrase xyz");
 assert.equal(room.catchphrase!.buzzPlayerId, null);
 assert.equal(room.players.find((p) => p.id === "guest")!.score, 0);
+
+assert.equal(guessMatchesPuzzle(puzzle, "a"), false);
+assert.equal(guessMatchesPuzzle(puzzle, puzzle.answer), true);
+
+room = {
+  ...room,
+  catchphrase: { ...room.catchphrase!, hiddenTiles: [], lastTileRevealAt: 1_000 },
+};
+room = catchphraseTickRoom(room, 1_000 + CATCHPHRASE_BOARD_CLEAR_MS + 50);
+assert.equal(room.phase, "reveal");
+assert.equal(room.catchphrase!.lastAnswer, getCatchphrasePuzzle(room.catchphrase!.puzzleOrder[room.catchphrase!.roundIndex]!).answer);
 
 console.log("funquiz-catchphrase.test.ts OK");
