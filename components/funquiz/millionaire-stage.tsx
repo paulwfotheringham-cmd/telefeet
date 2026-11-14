@@ -298,6 +298,15 @@ export function MillionaireStage({
                   );
                 })}
               </ul>
+              {phase === "question" && roomState.you.answer === null && mv.canSelectAnswer ? (
+                <p className="mt-3 text-xs text-slate-400">
+                  {mv.playStyle === "parallel"
+                    ? "Tap an answer, then lock it in. This ladder is yours alone."
+                    : roomState.players.length > 1
+                      ? "Tap an answer, then lock it in. Both players must lock the same choice."
+                      : "Tap an answer, then lock it in."}
+                </p>
+              ) : null}
 
               <div className="mt-4 flex flex-wrap gap-2">
                 <button
@@ -311,11 +320,17 @@ export function MillionaireStage({
                       choiceIndex: roomState.you.answer as number,
                     })
                   }
-                  className="rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 px-4 py-2 text-sm font-semibold text-black disabled:opacity-50"
+                  className={`rounded-xl px-4 py-2 text-sm font-semibold ${
+                    roomState.you.answer === null || !mv.canLockAnswer
+                      ? "border border-white/15 bg-white/5 text-slate-500"
+                      : "bg-gradient-to-r from-amber-500 to-yellow-400 text-black"
+                  }`}
                 >
                   Lock in answer
                 </button>
-                {mv.canWalkAway && (mv.playStyle === "parallel" || isHost) ? (
+                {mv.canWalkAway &&
+                mv.securedPrize > 0 &&
+                (mv.playStyle === "parallel" || isHost) ? (
                   <button
                     type="button"
                     disabled={busy}

@@ -7,6 +7,7 @@ import {
 } from "./puzzles";
 import {
   CATCHPHRASE_ANSWER_REVEAL_MS,
+  CATCHPHRASE_BOARD_CLEAR_MS,
   CATCHPHRASE_ROUNDS,
   CATCHPHRASE_TILE_REVEAL_MS,
   createInitialCatchphraseState,
@@ -94,12 +95,23 @@ export function startCatchphraseGame(room: QuizRoom): QuizRoom {
   return startRound(withState);
 }
 
-function revealRandomTile(state: CatchphraseState): CatchphraseState {
-  if (state.hiddenTiles.length === 0) return state;
-  const idx = Math.floor(Math.random() * state.hiddenTiles.length);
-  const tile = state.hiddenTiles[idx]!;
-  const hiddenTiles = state.hiddenTiles.filter((_, i) => i !== idx);
-  return { ...state, hiddenTiles, lastTileRevealAt: Date.now() };
+/** Drop every tile that is due, keeping the reveal clock on `now` so a slow poll catches up. */
+function revealDueTiles(state: CatchphraseState, now: number): CatchphraseState {
+  let hidden = state.hiddenTiles;
+  let last = state.lastTileRevealAt;
+  let dropped = 0;
+  while (
+    hidden.length > 0 &&
+    now - last >= CATCHPHRASE_TILE_REVEAL_MS &&
+    dropped < 5
+  ) {
+    const idx = Math.floor(Math.random() * hidden.length);
+    hidden = hidden.filter((_, i) => i !== idx);
+    last += CATCHPHRASE_TILE_REVEAL_MS;
+    dropped++;
+  }
+  if (dropped === 0) return state;
+  return { ...state, hiddenTiles: hidden, lastTileRevealAt: Math.min(last, now) };
 }
 
 export function catchphraseTickRoom(room: QuizRoom, now = Date.now()): QuizRoom {
@@ -118,7 +130,15 @@ export function catchphraseTickRoom(room: QuizRoom, now = Date.now()): QuizRoom 
 
   const cp = room.catchphrase;
   if (cp.hiddenTiles.length === 0) {
-    return room;
+    if (now - cp.lastTileRevealAt < CATCHPHRASE_BOARD_CLEAR_MS) return room;
+    const puzzleId = currentPuzzleId(room);
+    if (!puzzleId) return room;
+    const puzzle = getCatchphrasePuzzle(puzzleId);
+    return finishReveal(
+      room,
+      puzzle.answer,
+      `Time's up — the catchphrase was "${puzzle.answer}".`,
+    );
   }
   if (now - cp.lastTileRevealAt < CATCHPHRASE_TILE_REVEAL_MS) {
     return room;
@@ -126,7 +146,7 @@ export function catchphraseTickRoom(room: QuizRoom, now = Date.now()): QuizRoom 
 
   return {
     ...room,
-    catchphrase: revealRandomTile(cp),
+    catchphrase: revealDueTiles(cp, now),
     updatedAt: now,
   };
 }

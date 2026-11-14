@@ -91,12 +91,12 @@ export function CatchphraseStage({
         </p>
       ) : null}
 
-      <div className="relative mx-auto mt-6 aspect-[4/3] max-w-lg overflow-hidden rounded-2xl border-4 border-white/20 shadow-inner">
+      <div className="relative mx-auto mt-6 aspect-[4/3] max-w-lg overflow-hidden rounded-2xl border-4 border-white bg-[#fff7ed] shadow-inner">
         <div className="absolute inset-0">
           <CatchphraseScene sceneKey={cv.sceneKey} />
         </div>
         <div
-          className="absolute inset-0 grid gap-0.5 p-0.5"
+          className="absolute inset-0 grid gap-1.5 bg-transparent p-1.5"
           style={{
             gridTemplateColumns: `repeat(${cv.gridCols}, minmax(0, 1fr))`,
             gridTemplateRows: `repeat(${cv.gridRows}, minmax(0, 1fr))`,
@@ -105,10 +105,10 @@ export function CatchphraseStage({
           {Array.from({ length: totalTiles }, (_, i) => (
             <div
               key={i}
-              className={`rounded-sm transition-all duration-300 ${
+              className={`rounded-sm transition-opacity duration-300 ${
                 hidden.has(i)
-                  ? "bg-gradient-to-br from-[#0047ab] to-[#002266] shadow-[inset_0_0_8px_rgba(0,0,0,0.5)]"
-                  : "bg-transparent pointer-events-none"
+                  ? "bg-[#0047ab] shadow-[inset_0_0_0_2px_rgba(0,0,0,0.25)]"
+                  : "bg-transparent"
               }`}
             />
           ))}

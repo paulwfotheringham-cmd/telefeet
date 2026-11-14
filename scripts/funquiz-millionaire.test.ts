@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
-import { QUIZ_CATEGORY_SPACE } from "../lib/funquiz/categories";
-import { QUIZ_DIFFICULTY_INTERMEDIATE } from "../lib/funquiz/difficulties";
+import { QUIZ_CATEGORY_GENERAL_KNOWLEDGE, QUIZ_CATEGORY_SPACE } from "../lib/funquiz/categories";
+import { QUIZ_DIFFICULTY_HARD, QUIZ_DIFFICULTY_INTERMEDIATE } from "../lib/funquiz/difficulties";
+import { isTooEasyForHardQuestion } from "../lib/funquiz/question-bank/difficulty-quality";
 import { GAME_MODE_SHARED_MILLIONAIRE } from "../lib/funquiz/constants";
 import {
   addPlayer,
@@ -43,6 +44,21 @@ function runQuestionSelectionUnique() {
   const ids = selectMillionaireQuestionIds(QUIZ_CATEGORY_SPACE, seededRandom(42));
   assert.equal(ids.length, MILLIONAIRE_QUESTION_COUNT);
   assert.equal(new Set(ids).size, MILLIONAIRE_QUESTION_COUNT);
+  for (const id of ids) {
+    assert.equal(isTooEasyForHardQuestion(getQuestionByBankId(id)), false);
+  }
+  const hard = selectMillionaireQuestionIds(
+    QUIZ_CATEGORY_SPACE,
+    seededRandom(7),
+    Math.random,
+    QUIZ_DIFFICULTY_HARD,
+  );
+  assert.equal(hard.length, MILLIONAIRE_QUESTION_COUNT);
+  for (const id of hard) {
+    assert.equal(getQuestionByBankId(id).difficulty, QUIZ_DIFFICULTY_HARD);
+  }
+  const gk = selectMillionaireQuestionIds(QUIZ_CATEGORY_GENERAL_KNOWLEDGE, seededRandom(3));
+  assert.equal(new Set(gk).size, MILLIONAIRE_QUESTION_COUNT);
 }
 
 function runSoloCorrectAdvance() {

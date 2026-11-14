@@ -16,7 +16,8 @@ export type CatchphraseState = {
 export const CATCHPHRASE_GRID_COLS = 8;
 export const CATCHPHRASE_GRID_ROWS = 6;
 export const CATCHPHRASE_ROUNDS = 8;
-export const CATCHPHRASE_TILE_REVEAL_MS = 420;
+export const CATCHPHRASE_TILE_REVEAL_MS = 350;
+export const CATCHPHRASE_BOARD_CLEAR_MS = 7_000;
 export const CATCHPHRASE_ANSWER_REVEAL_MS = 4_000;
 
 export function createInitialCatchphraseState(): CatchphraseState {
