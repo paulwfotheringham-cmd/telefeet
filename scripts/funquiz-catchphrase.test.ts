@@ -30,6 +30,7 @@ room = startGame(room, "host");
 assert.equal(room.phase, "question");
 assert.ok(room.catchphrase!.puzzleOrder.length === 8);
 assert.equal(room.catchphrase!.hiddenTiles.length, 8 * 6);
+assert.equal(tickRoom(room, room.catchphrase!.lastTileRevealAt + 1), room);
 
 const hostView = toClientState(room, "host");
 assert.ok(hostView.catchphraseView);
