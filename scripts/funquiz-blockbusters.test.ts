@@ -29,6 +29,7 @@ room = startGame(room, "host");
 assert.ok(room.blockbusters);
 assert.equal(room.blockbusters!.cells.length, 18);
 assert.equal(room.blockbusters!.step, "pick");
+assert.equal(tickRoom(room, Date.now()), room);
 
 const hostView = toClientState(room, "host");
 assert.ok(hostView.blockbustersView?.canPick);
