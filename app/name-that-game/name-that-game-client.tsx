@@ -51,7 +51,7 @@ export function NameThatGameClient() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [errorScope, setErrorScope] = useState<"create" | "join" | null>(null);
-  const [shotFailed, setShotFailed] = useState(false);
+  const [shotAttempt, setShotAttempt] = useState(0);
 
   useEffect(() => {
     const id = getOrCreatePlayerId();
@@ -122,7 +122,7 @@ export function NameThatGameClient() {
   const code = roomState?.code ?? "";
 
   useEffect(() => {
-    setShotFailed(false);
+    setShotAttempt(0);
   }, [roomState?.code, roomState?.turnIndex]);
 
   const poll = useCallback(async () => {
@@ -690,20 +690,21 @@ export function NameThatGameClient() {
               {roomState.question.year} · {roomState.question.platform}
             </p>
             <h2 className="mt-2 text-lg font-semibold text-white">Which game is this?</h2>
-            {shotFailed ? (
+            {shotAttempt >= 3 || !playerId ? (
               <p className="mt-4 text-sm text-slate-300">
-                The screenshot didn&apos;t load. It&apos;s a {roomState.question.year} {roomState.question.platform} game — take a guess.
+                {playerId
+                  ? `The screenshot didn't load. It's a ${roomState.question.year} ${roomState.question.platform} game — take a guess.`
+                  : "Loading the screenshot…"}
               </p>
             ) : (
               // The shot is proxied per turn, so next/image would need the upstream file URL.
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                key={`${roomState.code}-${roomState.turnIndex}`}
-                src={`/api/name-that-game/room/${roomState.code}/shot?playerId=${encodeURIComponent(playerId)}&turn=${roomState.turnIndex}`}
+                key={`${roomState.code}-${roomState.turnIndex}-${shotAttempt}`}
+                src={`/api/name-that-game/room/${roomState.code}/shot?playerId=${encodeURIComponent(playerId)}&turn=${roomState.turnIndex}&r=${shotAttempt}`}
                 alt="Screenshot from the game"
                 className="mx-auto mt-4 max-h-80 w-full rounded-2xl bg-black object-contain"
-                onLoad={() => setShotFailed(false)}
-                onError={() => setShotFailed(true)}
+                onError={() => setShotAttempt((current) => (current === shotAttempt ? current + 1 : current))}
               />
             )}
           </div>
