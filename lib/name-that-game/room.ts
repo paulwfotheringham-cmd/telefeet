@@ -1,11 +1,13 @@
-import { plannedGameLength, questionsForEra, selectGameQuestions } from "./game";
+import { plannedGameLength, questionsForLevel, selectGameQuestions, visiblePlatform } from "./game";
 import {
   GAME_MODE_PLAY_TOGETHER,
   GAME_MODE_TAKE_TURNS,
   gameEraTitle,
+  gameLevelTitle,
   gameModeTitle,
   type PresentedGame,
   type GameEra,
+  type GameLevel,
   type GamePlayMode,
 } from "./types";
 
@@ -35,6 +37,7 @@ export type GameRoom = {
   code: string;
   hostId: string;
   era: GameEra;
+  level?: GameLevel;
   mode?: GamePlayMode;
   jointScore?: number;
   phase: GamePhase;
@@ -66,6 +69,8 @@ export type GameClientState = {
   hostId: string;
   era: GameEra;
   eraTitle: string;
+  level: GameLevel;
+  levelTitle: string;
   mode: GamePlayMode;
   modeTitle: string;
   jointScore: number | null;
@@ -80,7 +85,7 @@ export type GameClientState = {
   revision: number;
   players: Array<{ id: string; name: string; score: number }>;
   you: { id: string; name: string; score: number };
-  question: { options: string[] } | null;
+  question: { options: string[]; platform?: string } | null;
   feedback: {
     correct: boolean;
     choiceIndex: number;
@@ -127,8 +132,12 @@ export function roomMode(room: Pick<GameRoom, "mode">): GamePlayMode {
   return room.mode === GAME_MODE_PLAY_TOGETHER ? GAME_MODE_PLAY_TOGETHER : GAME_MODE_TAKE_TURNS;
 }
 
-export function matchLength(room: Pick<GameRoom, "mode" | "era">): number {
-  return plannedGameLength(room.era, roomMode(room));
+export function roomLevel(room: Pick<GameRoom, "level">): GameLevel {
+  return room.level === "medium" ? "medium" : "hard";
+}
+
+export function matchLength(room: Pick<GameRoom, "mode" | "era" | "level">): number {
+  return plannedGameLength(room.era, roomMode(room), roomLevel(room));
 }
 
 export function createGameRoom(
@@ -137,12 +146,14 @@ export function createGameRoom(
   code: string,
   era: GameEra,
   mode: GamePlayMode = GAME_MODE_TAKE_TURNS,
+  level: GameLevel = "hard",
   now = Date.now(),
 ): GameRoom {
   return {
     code,
     hostId: playerId,
     era,
+    level,
     mode,
     jointScore: 0,
     phase: "lobby",
@@ -192,11 +203,12 @@ export function playerForTurn(room: GameRoom, turnIndex: number): string {
 
 export function dealMatchQuestions(
   era: GameEra,
+  level: GameLevel,
   seenIds: readonly string[],
   rng: () => number = Math.random,
   count: number,
 ): { questions: PresentedGame[]; seenIds: string[] } {
-  const all = questionsForEra(era);
+  const all = questionsForLevel(era, level);
   const fresh = all.filter((question) => !seenIds.includes(question.id));
   const recycling = fresh.length < count;
   const pool = recycling ? all : fresh;
@@ -223,7 +235,7 @@ export function startGameGame(
   if (room.players.length < MAX_PLAYERS) {
     throw new Error("Waiting for a second player");
   }
-  const dealt = dealMatchQuestions(room.era, room.seenIds, rng, matchLength(room));
+  const dealt = dealMatchQuestions(room.era, roomLevel(room), room.seenIds, rng, matchLength(room));
   return touch(
     room,
     {
@@ -392,6 +404,8 @@ export function toGameClientState(room: GameRoom, viewerId: string): GameClientS
       hostId: room.hostId,
       era: room.era,
       eraTitle: gameEraTitle(room.era),
+      level: roomLevel(room),
+      levelTitle: gameLevelTitle(roomLevel(room)),
       mode,
       modeTitle: gameModeTitle(mode),
       jointScore: null,
@@ -419,6 +433,7 @@ export function toGameClientState(room: GameRoom, viewerId: string): GameClientS
     room.phase === "question" || room.phase === "reveal"
       ? room.questions[Math.min(room.turnIndex, room.questions.length - 1)]
       : undefined;
+  const platformHint = current ? visiblePlatform(roomLevel(room), current) : null;
   const revealAnswer =
     room.phase === "reveal"
       ? room.answers.find((answer) => answer.turnIndex === room.turnIndex)
@@ -448,6 +463,8 @@ export function toGameClientState(room: GameRoom, viewerId: string): GameClientS
     hostId: room.hostId,
     era: room.era,
     eraTitle: gameEraTitle(room.era),
+    level: roomLevel(room),
+    levelTitle: gameLevelTitle(roomLevel(room)),
     mode,
     modeTitle: gameModeTitle(mode),
     jointScore: together ? room.jointScore ?? 0 : null,
@@ -466,7 +483,12 @@ export function toGameClientState(room: GameRoom, viewerId: string): GameClientS
       score: player.score,
     })),
     you: { id: you.id, name: you.name, score: you.score },
-    question: current ? { options: [...current.options] } : null,
+    question: current
+      ? {
+          options: [...current.options],
+          ...(platformHint ? { platform: platformHint } : {}),
+        }
+      : null,
     feedback:
       current && revealAnswer
         ? {

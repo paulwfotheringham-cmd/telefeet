@@ -2,10 +2,49 @@ import { GAME_QUESTIONS } from "./question-bank";
 import {
   GAME_MODE_PLAY_TOGETHER,
   type GameEra,
+  type GameLevel,
   type GamePlayMode,
   type GameQuestion,
   type PresentedGame,
 } from "./types";
+
+export const MEDIUM_GAME_IDS: readonly string[] = [
+  "pac-man",
+  "donkey-kong",
+  "frogger",
+  "galaga",
+  "ms-pac-man",
+  "qbert",
+  "mario-bros",
+  "super-mario",
+  "excitebike",
+  "out-run",
+  "alex-kidd",
+  "contra",
+  "double-dragon",
+  "smb3",
+  "megaman2",
+  "ducktales",
+  "prince",
+  "space-harrier",
+  "ninja-gaiden",
+  "castlevania-3",
+  "f-zero",
+  "sf2",
+  "sonic",
+  "lemmings",
+  "mk",
+  "doom",
+  "worms",
+  "yoshi",
+  "duke",
+  "quake",
+  "red-alert",
+  "tekken3",
+  "gran-turismo",
+  "spyro",
+  "half-life",
+];
 
 export class InsufficientGameQuestionsError extends Error {
   constructor(
@@ -37,8 +76,35 @@ export function questionsForEra(
   return bank.filter((question) => question.decade === era);
 }
 
-export function plannedGameLength(era: GameEra, mode: GamePlayMode, bank = GAME_QUESTIONS): number {
-  const pool = questionsForEra(era, bank).length;
+export function questionsForLevel(
+  era: GameEra,
+  level: GameLevel,
+  bank: readonly GameQuestion[] = GAME_QUESTIONS,
+): GameQuestion[] {
+  const eraPool = questionsForEra(era, bank);
+  if (level === "hard") return eraPool;
+  const medium = new Set(MEDIUM_GAME_IDS);
+  return eraPool.filter((question) => medium.has(question.id));
+}
+
+export function visiblePlatform(
+  level: GameLevel,
+  question: PresentedGame,
+  bank: readonly GameQuestion[] = GAME_QUESTIONS,
+): string | null {
+  if (level !== "medium") return null;
+  const platforms = new Map(bank.map((entry) => [entry.title, entry.platform]));
+  const shared = question.platform;
+  if (!question.options.every((title) => platforms.get(title) === shared)) return null;
+  return shared;
+}
+
+export function plannedGameLength(
+  era: GameEra,
+  mode: GamePlayMode,
+  level: GameLevel = "hard",
+): number {
+  const pool = questionsForLevel(era, level).length;
   if (mode === GAME_MODE_PLAY_TOGETHER) return Math.min(10, pool);
   return Math.min(10, Math.floor(pool / 2)) * 2;
 }

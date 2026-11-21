@@ -26,6 +26,21 @@ export const GAME_ERAS = [
 export type GameEra = (typeof GAME_ERAS)[number]["id"];
 export type GameDecade = "80s" | "90s";
 
+export const GAME_LEVELS = [
+  {
+    id: "medium",
+    title: "Medium",
+    description: "Familiar games. The console is shown when every choice is on it.",
+  },
+  {
+    id: "hard",
+    title: "Hard",
+    description: "The full list, including obscure games. No console and no year.",
+  },
+] as const;
+
+export type GameLevel = (typeof GAME_LEVELS)[number]["id"];
+
 export type GameQuestion = {
   id: string;
   title: string;
@@ -50,6 +65,14 @@ export function isGamePlayMode(value: string): value is GamePlayMode {
 
 export function isGameEra(value: string): value is GameEra {
   return value === "80s" || value === "90s" || value === "both";
+}
+
+export function isGameLevel(value: string): value is GameLevel {
+  return value === "medium" || value === "hard";
+}
+
+export function gameLevelTitle(level: GameLevel): string {
+  return GAME_LEVELS.find((option) => option.id === level)?.title ?? "Hard";
 }
 
 export function gameModeTitle(mode: GamePlayMode): string {
