@@ -56,31 +56,70 @@ export function NameThatMovieClient() {
   const [roomState, setRoomState] = useState<MovieClientState | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorScope, setErrorScope] = useState<"create" | "join" | null>(null);
 
   useEffect(() => {
     const id = getOrCreatePlayerId();
     setPlayerId(id);
-    const saved = localStorage.getItem(PLAYER_NAME_KEY);
+    const saved = localStorage.getItem(PLAYER_NAME_KEY)?.trim() ?? "";
     if (saved) setName(saved);
     const params = new URLSearchParams(window.location.search);
     const join = params.get("join");
     const room = params.get("room");
-    if (join) setJoinCode(normalizeRoomCode(join));
-    if (room && id) {
-      const code = normalizeRoomCode(room);
-      if (isValidRoomCode(code)) {
-        void fetch(`/api/name-that-movie/room/${code}?playerId=${encodeURIComponent(id)}`, {
-          cache: "no-store",
-        })
-          .then(parseState)
-          .then((state) => {
-            if (!state) return;
-            setRoomState(state);
-            setScreen("game");
-          })
-          .catch(() => {});
+    const incoming = normalizeRoomCode(join || room || "");
+    if (!isValidRoomCode(incoming)) return;
+    setJoinCode(incoming);
+
+    async function joinFromLink(code: string) {
+      if (!saved) {
+        setErrorScope("join");
+        setError("Enter your name, then press Join room.");
+        requestAnimationFrame(() => {
+          document.getElementById("movie-name")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        });
+        return;
+      }
+      try {
+        const res = await fetch("/api/name-that-movie/room/join", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code, playerId: id, playerName: saved }),
+        });
+        const state = await parseState(res);
+        if (!state) return;
+        setRoomState(state);
+        const url = new URL(window.location.href);
+        url.searchParams.set("room", state.code);
+        url.searchParams.delete("join");
+        window.history.replaceState(null, "", `${url.pathname}?${url.searchParams.toString()}`);
+        setScreen("game");
+      } catch (err) {
+        setErrorScope("join");
+        setError(err instanceof Error ? err.message : "Could not join room");
+        requestAnimationFrame(() => {
+          document.getElementById("movie-join")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        });
       }
     }
+
+    if (!room) {
+      void joinFromLink(incoming);
+      return;
+    }
+    const code = normalizeRoomCode(room);
+    void fetch(`/api/name-that-movie/room/${code}?playerId=${encodeURIComponent(id)}`, {
+      cache: "no-store",
+    })
+      .then(parseState)
+      .then((state) => {
+        if (!state) return;
+        setRoomState(state);
+        setScreen("game");
+      })
+      .catch((err) => {
+        const message = err instanceof Error ? err.message : "";
+        if (message === "You are not in this room") void joinFromLink(code);
+      });
   }, []);
 
   const code = roomState?.code ?? "";
@@ -136,7 +175,8 @@ export function NameThatMovieClient() {
     window.history.replaceState(null, "", window.location.pathname);
   }
 
-  function showSetupError(elementId: string, message: string) {
+  function showSetupError(elementId: string, message: string, scope: "create" | "join" = "create") {
+    setErrorScope(scope);
     setError(message);
     requestAnimationFrame(() => {
       document.getElementById(elementId)?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -145,6 +185,7 @@ export function NameThatMovieClient() {
 
   async function createRoom() {
     setError(null);
+    setErrorScope(null);
     if (!name.trim()) {
       showSetupError("movie-name", "Enter your name first.");
       return;
@@ -179,6 +220,7 @@ export function NameThatMovieClient() {
         setScreen("game");
       }
     } catch (err) {
+      setErrorScope("create");
       setError(err instanceof Error ? err.message : "Could not create room");
     } finally {
       setBusy(false);
@@ -187,13 +229,14 @@ export function NameThatMovieClient() {
 
   async function joinRoom() {
     setError(null);
+    setErrorScope(null);
     if (!name.trim()) {
-      showSetupError("movie-name", "Enter your name first.");
+      showSetupError("movie-name", "Enter your name, then press Join room.", "join");
       return;
     }
     const normalized = normalizeRoomCode(joinCode);
     if (!isValidRoomCode(normalized)) {
-      setError("Room code must be 6 letters or numbers.");
+      showSetupError("movie-join", "Room code must be 6 letters or numbers.", "join");
       return;
     }
     const activePlayerId = playerId || getOrCreatePlayerId();
@@ -217,7 +260,11 @@ export function NameThatMovieClient() {
         setScreen("game");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not join room");
+      showSetupError(
+        "movie-join",
+        err instanceof Error ? err.message : "Could not join room",
+        "join",
+      );
     } finally {
       setBusy(false);
     }
@@ -304,7 +351,7 @@ export function NameThatMovieClient() {
 
           <label
             id="movie-name"
-            className={`mt-6 block rounded-2xl text-sm font-medium text-slate-200 ${error === "Enter your name first." ? "ring-2 ring-red-400" : ""}`}
+            className={`mt-6 block rounded-2xl text-sm font-medium text-slate-200 ${error === "Enter your name first." || error === "Enter your name, then press Join room." ? "ring-2 ring-red-400" : ""}`}
           >
             Your name
             <input
@@ -314,6 +361,7 @@ export function NameThatMovieClient() {
               onChange={(event) => {
                 setName(event.target.value);
                 setError(null);
+                setErrorScope(null);
               }}
               placeholder="Alex"
               autoComplete="nickname"
@@ -394,7 +442,7 @@ export function NameThatMovieClient() {
           >
             Create room
           </button>
-          {error ? (
+          {error && errorScope !== "join" ? (
             <p className="mt-4 text-center text-sm text-red-300" role="alert">
               {error}
             </p>
@@ -406,27 +454,37 @@ export function NameThatMovieClient() {
             <span className="h-px flex-1 bg-white/10" />
           </div>
 
-          <label className="block text-sm font-medium text-slate-200">
-            Room code
-            <input
-              className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-center font-mono text-lg tracking-[0.35em] text-white uppercase outline-none focus:ring-2 focus:ring-violet-400/60"
-              value={joinCode}
-              onChange={(event) => setJoinCode(normalizeRoomCode(event.target.value))}
-              placeholder="ABC123"
-              maxLength={12}
-              autoCapitalize="characters"
-              autoCorrect="off"
-              spellCheck={false}
-            />
-          </label>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => void joinRoom()}
-            className="mt-4 w-full rounded-xl border border-violet-400/50 bg-violet-950/50 py-3.5 text-sm font-semibold text-violet-100 transition hover:bg-violet-900/60 disabled:opacity-60"
+          <div
+            id="movie-join"
+            className={`rounded-2xl p-1 ${errorScope === "join" ? "ring-2 ring-red-400" : ""}`}
           >
-            Join room
-          </button>
+            <label className="block text-sm font-medium text-slate-200">
+              Room code
+              <input
+                className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-center font-mono text-lg tracking-[0.35em] text-white uppercase outline-none focus:ring-2 focus:ring-violet-400/60"
+                value={joinCode}
+                onChange={(event) => setJoinCode(normalizeRoomCode(event.target.value))}
+                placeholder="ABC123"
+                maxLength={12}
+                autoCapitalize="characters"
+                autoCorrect="off"
+                spellCheck={false}
+              />
+            </label>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void joinRoom()}
+              className="mt-4 w-full rounded-xl border border-violet-400/50 bg-violet-950/50 py-3.5 text-sm font-semibold text-violet-100 transition hover:bg-violet-900/60 disabled:opacity-60"
+            >
+              Join room
+            </button>
+            {errorScope === "join" && error ? (
+              <p className="mt-3 text-center text-sm text-red-300" role="alert">
+                {error}
+              </p>
+            ) : null}
+          </div>
 
           <p className="mt-6 text-center text-xs text-slate-500">
             <Link href="/funquiz" className="text-violet-300 hover:text-violet-200">
