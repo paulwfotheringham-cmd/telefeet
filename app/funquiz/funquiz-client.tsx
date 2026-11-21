@@ -589,8 +589,7 @@ export function FunQuizClient() {
             >
               <p className="text-sm font-semibold text-violet-200">Game 7 — Name That Movie!</p>
               <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                A famous line appears. Take turns naming the film. Ten questions each, four
-                choices, and a score at the end.
+                A famous line appears. Play together or take turns naming the film.
               </p>
             </Link>
           </div>

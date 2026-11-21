@@ -13,6 +13,7 @@ import {
   QUESTIONS_PER_PLAYER,
   REVEAL_MS,
 } from "../lib/name-that-movie/room";
+import { QUESTIONS_PER_GAME } from "../lib/name-that-movie/types";
 import { clearMovieRoomsForTests, loadMovieRoom, movieStoreMode, mutateMovieRoom, persistNewMovieRoom } from "../lib/name-that-movie/store";
 
 function mulberry32(seed: number): () => number {
@@ -28,7 +29,7 @@ function mulberry32(seed: number): () => number {
 
 function playMatch(seed: number) {
   const rng = mulberry32(seed);
-  let room = createMovieRoom("host", "Alex", "ABCDEF", "easy", 1_000);
+  let room = createMovieRoom("host", "Alex", "ABCDEF", "easy", "take_turns", 1_000);
   room = addMoviePlayer(room, "guest", "Sam");
   room = startMovieGame(room, "host", rng, 2_000);
   const scores = { host: 0, guest: 0 };
@@ -105,6 +106,38 @@ assert.equal(lobby.phase, "lobby");
 assert.equal(lobby.players.every((player) => player.score === 0), true);
 assert.equal(playerForTurn(lobby, 0), "host");
 assert.equal(playerForTurn(lobby, 1), "guest");
+
+function playTogether() {
+  const rng = mulberry32(21);
+  let room = createMovieRoom("host", "Alex", "ABCDEF", "easy", "play_together");
+  room = addMoviePlayer(room, "guest", "Sam");
+  room = startMovieGame(room, "host", rng, 2_000);
+  assert.equal(room.questions.length, QUESTIONS_PER_GAME);
+  assert.throws(() => submitMovieAnswer(room, "guest", 0), /room creator/);
+  const question = room.questions[0]!;
+  room = submitMovieAnswer(room, "host", question.correctIndex, 3_000);
+  assert.equal(room.jointScore, 1);
+  assert.equal(room.players.every((player) => player.score === 1), true);
+  const guest = toMovieClientState(room, "guest");
+  assert.equal(guest.canSubmitAnswer, false);
+  assert.equal(guest.jointScore, 1);
+  assert.equal(guest.totalTurns, QUESTIONS_PER_GAME);
+  room = tickMovieRoom(room, 3_000 + REVEAL_MS);
+  assert.equal(room.phase, "question");
+  assert.equal(room.activePlayerId, "host");
+  for (let turn = 1; turn < QUESTIONS_PER_GAME; turn++) {
+    const current = room.questions[turn]!;
+    room = submitMovieAnswer(room, "host", (current.correctIndex + 1) % 4, 4_000 + turn);
+    room = tickMovieRoom(room, 4_000 + turn + REVEAL_MS);
+  }
+  assert.equal(room.phase, "finished");
+  const finished = toMovieClientState(room, "guest");
+  assert.deepEqual(finished.winnerIds, []);
+  assert.equal(finished.results?.length, QUESTIONS_PER_GAME);
+  assert.equal(finished.jointScore, 1);
+}
+
+playTogether();
 
 async function testMemoryStore() {
   if (movieStoreMode() !== "memory") return;
