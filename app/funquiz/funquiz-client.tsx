@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { openRoomByCode } from "@/lib/room-directory";
 import { QUIZ_CATEGORIES, QUIZ_CATEGORY_GENERAL_KNOWLEDGE } from "@/lib/funquiz/categories";
 import type { QuizCategoryId } from "@/lib/funquiz/categories";
 import { QUIZ_DIFFICULTIES, QUIZ_DIFFICULTY_INTERMEDIATE } from "@/lib/funquiz/difficulties";
@@ -294,7 +295,9 @@ export function FunQuizClient() {
         setScreen("game");
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not join room");
+      const message = e instanceof Error ? e.message : "Could not join room";
+      if (await openRoomByCode(normalizedJoin, name, "/funquiz")) return;
+      setError(message);
     } finally {
       setBusy(false);
     }
