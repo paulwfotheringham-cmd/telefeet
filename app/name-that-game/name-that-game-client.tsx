@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { formatRoomCodeSpaced, isValidRoomCode, normalizeRoomCode } from "@/lib/funquiz/room-code";
 import type { GameClientState } from "@/lib/name-that-game/room";
 import { GAME_ERAS, GAME_PLAY_MODES, type GameEra, type GamePlayMode } from "@/lib/name-that-game/types";
+import { openRoomByCode } from "@/lib/room-directory";
 
 const PLAYER_ID_KEY = "name-that-game-player-id";
 const PLAYER_NAME_KEY = "name-that-game-player-name";
@@ -49,32 +50,73 @@ export function NameThatGameClient() {
   const [roomState, setRoomState] = useState<GameClientState | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorScope, setErrorScope] = useState<"create" | "join" | null>(null);
   const [shotFailed, setShotFailed] = useState(false);
 
   useEffect(() => {
     const id = getOrCreatePlayerId();
     setPlayerId(id);
-    const saved = localStorage.getItem(PLAYER_NAME_KEY);
+    const saved = localStorage.getItem(PLAYER_NAME_KEY)?.trim() ?? "";
     if (saved) setName(saved);
     const params = new URLSearchParams(window.location.search);
     const join = params.get("join");
     const room = params.get("room");
-    if (join) setJoinCode(normalizeRoomCode(join));
-    if (room && id) {
-      const code = normalizeRoomCode(room);
-      if (isValidRoomCode(code)) {
-        void fetch(`/api/name-that-game/room/${code}?playerId=${encodeURIComponent(id)}`, {
-          cache: "no-store",
-        })
-          .then(parseState)
-          .then((state) => {
-            if (!state) return;
-            setRoomState(state);
-            setScreen("game");
-          })
-          .catch(() => {});
+    const incoming = normalizeRoomCode(join || room || "");
+    if (!isValidRoomCode(incoming)) return;
+    setJoinCode(incoming);
+
+    async function joinFromLink(code: string) {
+      if (!saved) {
+        setErrorScope("join");
+        setError("Enter your name, then press Join room.");
+        requestAnimationFrame(() => {
+          document.getElementById("game-name")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        });
+        return;
+      }
+      try {
+        const res = await fetch("/api/name-that-game/room/join", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code, playerId: id, playerName: saved }),
+        });
+        const state = await parseState(res);
+        if (!state) return;
+        setRoomState(state);
+        const url = new URL(window.location.href);
+        url.searchParams.set("room", state.code);
+        url.searchParams.delete("join");
+        window.history.replaceState(null, "", `${url.pathname}?${url.searchParams.toString()}`);
+        setScreen("game");
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Could not join room";
+        if (await openRoomByCode(code, saved, "/name-that-game")) return;
+        setErrorScope("join");
+        setError(message);
+        requestAnimationFrame(() => {
+          document.getElementById("game-join")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        });
       }
     }
+
+    if (!room) {
+      void joinFromLink(incoming);
+      return;
+    }
+    const code = normalizeRoomCode(room);
+    void fetch(`/api/name-that-game/room/${code}?playerId=${encodeURIComponent(id)}`, {
+      cache: "no-store",
+    })
+      .then(parseState)
+      .then((state) => {
+        if (!state) return;
+        setRoomState(state);
+        setScreen("game");
+      })
+      .catch((err) => {
+        const message = err instanceof Error ? err.message : "";
+        if (message === "You are not in this room") void joinFromLink(code);
+      });
   }, []);
 
   const code = roomState?.code ?? "";
@@ -134,7 +176,8 @@ export function NameThatGameClient() {
     window.history.replaceState(null, "", window.location.pathname);
   }
 
-  function showSetupError(elementId: string, message: string) {
+  function showSetupError(elementId: string, message: string, scope: "create" | "join" = "create") {
+    setErrorScope(scope);
     setError(message);
     requestAnimationFrame(() => {
       document.getElementById(elementId)?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -185,13 +228,14 @@ export function NameThatGameClient() {
 
   async function joinRoom() {
     setError(null);
+    setErrorScope(null);
     if (!name.trim()) {
-      showSetupError("game-name", "Enter your name first.");
+      showSetupError("game-name", "Enter your name, then press Join room.", "join");
       return;
     }
     const normalized = normalizeRoomCode(joinCode);
     if (!isValidRoomCode(normalized)) {
-      setError("Room code must be 6 letters or numbers.");
+      showSetupError("game-join", "Room code must be 6 letters or numbers.", "join");
       return;
     }
     const activePlayerId = playerId || getOrCreatePlayerId();
@@ -215,7 +259,9 @@ export function NameThatGameClient() {
         setScreen("game");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not join room");
+      const message = err instanceof Error ? err.message : "Could not join room";
+      if (await openRoomByCode(normalized, name, "/name-that-game")) return;
+      showSetupError("game-join", message, "join");
     } finally {
       setBusy(false);
     }
@@ -300,7 +346,7 @@ export function NameThatGameClient() {
           </p>
           <label
             id="game-name"
-            className={`mt-6 block rounded-2xl text-sm font-medium text-slate-200 ${error === "Enter your name first." ? "ring-2 ring-red-400" : ""}`}
+            className={`mt-6 block rounded-2xl text-sm font-medium text-slate-200 ${error === "Enter your name first." || error === "Enter your name, then press Join room." ? "ring-2 ring-red-400" : ""}`}
           >
             Your name
             <input
@@ -387,7 +433,7 @@ export function NameThatGameClient() {
           >
             Create room
           </button>
-          {error ? (
+          {error && errorScope !== "join" ? (
             <p className="mt-4 text-center text-sm text-red-300" role="alert">
               {error}
             </p>
@@ -397,27 +443,34 @@ export function NameThatGameClient() {
             or join with code
             <span className="h-px flex-1 bg-white/10" />
           </div>
-          <label className="block text-sm font-medium text-slate-200">
-            Room code
-            <input
-              className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-center font-mono text-lg tracking-[0.35em] text-white uppercase outline-none focus:ring-2 focus:ring-violet-400/60"
-              value={joinCode}
-              onChange={(event) => setJoinCode(normalizeRoomCode(event.target.value))}
-              placeholder="ABC123"
-              maxLength={12}
-              autoCapitalize="characters"
-              autoCorrect="off"
-              spellCheck={false}
-            />
-          </label>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => void joinRoom()}
-            className="mt-4 w-full rounded-xl border border-violet-400/50 bg-violet-950/50 py-3.5 text-sm font-semibold text-violet-100 transition hover:bg-violet-900/60 disabled:opacity-60"
-          >
-            Join room
-          </button>
+          <div id="game-join" className={`rounded-2xl p-1 ${errorScope === "join" ? "ring-2 ring-red-400" : ""}`}>
+            <label className="block text-sm font-medium text-slate-200">
+              Room code
+              <input
+                className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-center font-mono text-lg tracking-[0.35em] text-white uppercase outline-none focus:ring-2 focus:ring-violet-400/60"
+                value={joinCode}
+                onChange={(event) => setJoinCode(normalizeRoomCode(event.target.value))}
+                placeholder="ABC123"
+                maxLength={12}
+                autoCapitalize="characters"
+                autoCorrect="off"
+                spellCheck={false}
+              />
+            </label>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void joinRoom()}
+              className="mt-4 w-full rounded-xl border border-violet-400/50 bg-violet-950/50 py-3.5 text-sm font-semibold text-violet-100 transition hover:bg-violet-900/60 disabled:opacity-60"
+            >
+              Join room
+            </button>
+            {errorScope === "join" && error ? (
+              <p className="mt-3 text-center text-sm text-red-300" role="alert">
+                {error}
+              </p>
+            ) : null}
+          </div>
           <p className="mt-6 text-center text-xs text-slate-500">
             <Link href="/funquiz" className="text-violet-300 hover:text-violet-200">
               Fun Quiz

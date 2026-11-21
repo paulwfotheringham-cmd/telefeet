@@ -11,6 +11,7 @@ import {
   type MovieDifficulty,
   type MoviePlayMode,
 } from "@/lib/name-that-movie/types";
+import { openRoomByCode } from "@/lib/room-directory";
 
 const PLAYER_ID_KEY = "name-that-movie-player-id";
 const PLAYER_NAME_KEY = "name-that-movie-player-name";
@@ -94,8 +95,10 @@ export function NameThatMovieClient() {
         window.history.replaceState(null, "", `${url.pathname}?${url.searchParams.toString()}`);
         setScreen("game");
       } catch (err) {
+        const message = err instanceof Error ? err.message : "Could not join room";
+        if (await openRoomByCode(code, saved, "/name-that-movie")) return;
         setErrorScope("join");
-        setError(err instanceof Error ? err.message : "Could not join room");
+        setError(message);
         requestAnimationFrame(() => {
           document.getElementById("movie-join")?.scrollIntoView({ behavior: "smooth", block: "center" });
         });
@@ -260,11 +263,9 @@ export function NameThatMovieClient() {
         setScreen("game");
       }
     } catch (err) {
-      showSetupError(
-        "movie-join",
-        err instanceof Error ? err.message : "Could not join room",
-        "join",
-      );
+      const message = err instanceof Error ? err.message : "Could not join room";
+      if (await openRoomByCode(normalized, name, "/name-that-movie")) return;
+      showSetupError("movie-join", message, "join");
     } finally {
       setBusy(false);
     }
