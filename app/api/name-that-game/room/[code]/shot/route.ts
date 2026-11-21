@@ -30,7 +30,10 @@ export async function GET(request: Request, { params }: Params) {
     const shot = await loadGameShot(question.id);
     if ("error" in shot) {
       console.error(`name-that-game shot ${question.id}: ${shot.error}`);
-      return NextResponse.json({ error: "Screenshot unavailable" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Screenshot unavailable" },
+        { status: 404, headers: { "X-Shot-Error": shot.error.replace(/[^\x20-\x7e]/g, " ").slice(0, 180) } },
+      );
     }
     return new NextResponse(Buffer.from(shot.bytes), {
       headers: {
