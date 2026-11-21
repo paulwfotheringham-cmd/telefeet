@@ -1,78 +1,278 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import {
-  isCorrectChoice,
-  selectGameQuestions,
-  tallyScore,
-} from "@/lib/name-that-movie/game";
+import { useCallback, useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { isValidRoomCode, normalizeRoomCode, formatRoomCodeSpaced } from "@/lib/funquiz/room-code";
 import {
   MOVIE_DIFFICULTY_OPTIONS,
-  QUESTIONS_PER_GAME,
-  difficultyTitle,
   type MovieDifficulty,
-  type PresentedQuestion,
 } from "@/lib/name-that-movie/types";
+import type { MovieClientState } from "@/lib/name-that-movie/room";
 
-type Phase = "menu" | "play" | "results";
+const PLAYER_ID_KEY = "name-that-movie-player-id";
+const PLAYER_NAME_KEY = "name-that-movie-player-name";
 
-type AnswerRecord = {
-  question: PresentedQuestion;
-  choiceIndex: number;
-  correct: boolean;
-};
+function getOrCreatePlayerId(): string {
+  let id = localStorage.getItem(PLAYER_ID_KEY);
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem(PLAYER_ID_KEY, id);
+  }
+  return id;
+}
 
 function optionLetter(index: number): string {
   return String.fromCharCode(65 + index);
 }
 
+async function parseState(res: Response): Promise<MovieClientState | null> {
+  const body = (await res.json()) as { state?: MovieClientState; error?: string };
+  if (!res.ok || !body.state) {
+    throw new Error(body.error || "Something went wrong");
+  }
+  if (body.state.error) {
+    throw new Error(body.state.error);
+  }
+  return body.state;
+}
+
+function keepNewerState(prev: MovieClientState | null, next: MovieClientState): MovieClientState {
+  if (prev && prev.code === next.code && next.revision < prev.revision) {
+    return prev;
+  }
+  return next;
+}
+
 export function NameThatMovieClient() {
-  const [phase, setPhase] = useState<Phase>("menu");
+  const [screen, setScreen] = useState<"home" | "game">("home");
+  const [playerId, setPlayerId] = useState("");
+  const [name, setName] = useState("");
   const [difficulty, setDifficulty] = useState<MovieDifficulty | null>(null);
-  const [questions, setQuestions] = useState<PresentedQuestion[]>([]);
-  const [index, setIndex] = useState(0);
-  const [choice, setChoice] = useState<number | null>(null);
-  const [answers, setAnswers] = useState<AnswerRecord[]>([]);
+  const [joinCode, setJoinCode] = useState("");
+  const [roomState, setRoomState] = useState<MovieClientState | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const question = questions[index];
-  const revealed = choice !== null && question !== undefined;
-  const score = tallyScore(answers.map((answer) => answer.correct));
-  const progressPct = questions.length
-    ? Math.round(((index + 1) / questions.length) * 100)
-    : 0;
+  useEffect(() => {
+    const id = getOrCreatePlayerId();
+    setPlayerId(id);
+    const saved = localStorage.getItem(PLAYER_NAME_KEY);
+    if (saved) setName(saved);
+    const params = new URLSearchParams(window.location.search);
+    const join = params.get("join");
+    const room = params.get("room");
+    if (join) setJoinCode(normalizeRoomCode(join));
+    if (room && id) {
+      const code = normalizeRoomCode(room);
+      if (isValidRoomCode(code)) {
+        void fetch(`/api/name-that-movie/room/${code}?playerId=${encodeURIComponent(id)}`, {
+          cache: "no-store",
+        })
+          .then(parseState)
+          .then((state) => {
+            if (!state) return;
+            setRoomState(state);
+            setScreen("game");
+          })
+          .catch(() => {});
+      }
+    }
+  }, []);
 
-  function startGame(nextDifficulty: MovieDifficulty) {
-    setDifficulty(nextDifficulty);
-    setQuestions(selectGameQuestions(nextDifficulty));
-    setIndex(0);
-    setChoice(null);
-    setAnswers([]);
-    setPhase("play");
-  }
+  const code = roomState?.code ?? "";
 
-  function choose(optionIndex: number) {
-    if (!question || choice !== null) return;
-    const correct = isCorrectChoice(question, optionIndex);
-    setChoice(optionIndex);
-    setAnswers((prev) => [...prev, { question, choiceIndex: optionIndex, correct }]);
-  }
+  const poll = useCallback(async () => {
+    if (!code || !playerId || screen !== "game") return;
+    try {
+      const res = await fetch(
+        `/api/name-that-movie/room/${encodeURIComponent(code)}?playerId=${encodeURIComponent(playerId)}`,
+        { cache: "no-store" },
+      );
+      const state = await parseState(res);
+      if (state) setRoomState((prev) => keepNewerState(prev, state));
+    } catch {
+      /* ignore transient poll errors */
+    }
+  }, [code, playerId, screen]);
 
-  function goNext() {
-    if (index + 1 >= questions.length) {
-      setPhase("results");
+  useEffect(() => {
+    if (screen !== "game" || !code) return;
+    void poll();
+    const pollMs = roomState?.phase === "lobby" || roomState?.phase === "finished" ? 2000 : 1000;
+    const id = setInterval(() => void poll(), pollMs);
+    return () => clearInterval(id);
+  }, [screen, code, poll, roomState?.phase]);
+
+  useEffect(() => {
+    if (screen !== "game" || !code) return;
+    try {
+      const supabase = createClient();
+      const channel = supabase
+        .channel(`name-that-movie:${code}`)
+        .on("broadcast", { event: "sync" }, () => {
+          void poll();
+        })
+        .subscribe();
+      return () => {
+        void supabase.removeChannel(channel);
+      };
+    } catch {
       return;
     }
-    setIndex((current) => current + 1);
-    setChoice(null);
+  }, [screen, code, poll]);
+
+  function rememberRoom(nextCode: string) {
+    const url = new URL(window.location.href);
+    url.searchParams.set("room", nextCode);
+    url.searchParams.delete("join");
+    window.history.replaceState(null, "", `${url.pathname}?${url.searchParams.toString()}`);
   }
 
-  function backToMenu() {
-    setPhase("menu");
-    setChoice(null);
+  function clearRoomQuery() {
+    window.history.replaceState(null, "", window.location.pathname);
   }
 
-  if (phase === "menu") {
+  async function createRoom() {
+    setError(null);
+    if (!name.trim()) {
+      setError("Enter your name first.");
+      return;
+    }
+    if (!difficulty) {
+      setError("Choose a difficulty.");
+      return;
+    }
+    const activePlayerId = playerId || getOrCreatePlayerId();
+    if (!playerId) setPlayerId(activePlayerId);
+    localStorage.setItem(PLAYER_NAME_KEY, name.trim());
+    setBusy(true);
+    try {
+      const res = await fetch("/api/name-that-movie/room", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          playerId: activePlayerId,
+          playerName: name.trim(),
+          difficulty,
+        }),
+      });
+      const state = await parseState(res);
+      if (state) {
+        setRoomState(state);
+        rememberRoom(state.code);
+        setScreen("game");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not create room");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function joinRoom() {
+    setError(null);
+    if (!name.trim()) {
+      setError("Enter your name first.");
+      return;
+    }
+    const normalized = normalizeRoomCode(joinCode);
+    if (!isValidRoomCode(normalized)) {
+      setError("Room code must be 6 letters or numbers.");
+      return;
+    }
+    const activePlayerId = playerId || getOrCreatePlayerId();
+    if (!playerId) setPlayerId(activePlayerId);
+    localStorage.setItem(PLAYER_NAME_KEY, name.trim());
+    setBusy(true);
+    try {
+      const res = await fetch("/api/name-that-movie/room/join", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: normalized,
+          playerId: activePlayerId,
+          playerName: name.trim(),
+        }),
+      });
+      const state = await parseState(res);
+      if (state) {
+        setRoomState(state);
+        rememberRoom(state.code);
+        setScreen("game");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not join room");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function startGame() {
+    if (!roomState) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/name-that-movie/room/${roomState.code}/start`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ playerId }),
+      });
+      const state = await parseState(res);
+      if (state) setRoomState(state);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not start");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function submitAnswer(choiceIndex: number) {
+    if (!roomState?.canSubmitAnswer) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/name-that-movie/room/${roomState.code}/answer`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ playerId, choiceIndex }),
+      });
+      const state = await parseState(res);
+      if (state) setRoomState(state);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not submit answer");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function playAgain() {
+    if (!roomState || roomState.hostId !== playerId) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/name-that-movie/room/${roomState.code}/new-game`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ playerId }),
+      });
+      const state = await parseState(res);
+      if (state) setRoomState(state);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not start a new game");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function leaveRoom() {
+    setScreen("home");
+    setRoomState(null);
+    setError(null);
+    clearRoomQuery();
+  }
+
+  if (screen === "home") {
     return (
       <div className="mx-auto flex min-h-[100dvh] max-w-lg flex-col justify-center px-4 py-10">
         <div className="rounded-3xl border border-violet-400/25 bg-gradient-to-b from-slate-900/95 to-indigo-950/90 p-6 shadow-2xl shadow-violet-900/40 sm:p-8">
@@ -83,9 +283,21 @@ export function NameThatMovieClient() {
             Name That Movie!
           </h1>
           <p className="mt-3 text-center text-sm leading-relaxed text-slate-300">
-            A famous line appears. Four film titles follow. One is correct.
-            Ten questions, one point each.
+            Two players, one room. Take turns naming the film behind a famous line. Ten questions
+            each, one point for every correct answer.
           </p>
+
+          <label className="mt-6 block text-sm font-medium text-slate-200">
+            Your name
+            <input
+              className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-violet-400/60"
+              value={name}
+              maxLength={24}
+              onChange={(event) => setName(event.target.value)}
+              placeholder="Alex"
+              autoComplete="nickname"
+            />
+          </label>
 
           <p className="mt-6 text-sm font-medium text-slate-200">Difficulty</p>
           <div className="mt-3 grid gap-3">
@@ -103,9 +315,7 @@ export function NameThatMovieClient() {
                   }`}
                 >
                   <p className="text-sm font-semibold text-violet-200">{option.title}</p>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-400">
-                    {option.description}
-                  </p>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-400">{option.description}</p>
                 </button>
               );
             })}
@@ -113,14 +323,46 @@ export function NameThatMovieClient() {
 
           <button
             type="button"
-            disabled={!difficulty}
-            onClick={() => {
-              if (difficulty) startGame(difficulty);
-            }}
+            disabled={busy || !difficulty || !name.trim()}
+            onClick={() => void createRoom()}
             className="mt-6 w-full rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 py-3.5 text-sm font-semibold text-white shadow-lg shadow-violet-700/30 transition hover:brightness-110 disabled:opacity-60"
           >
-            Start game
+            Create room
           </button>
+
+          <div className="my-6 flex items-center gap-3 text-xs text-slate-500">
+            <span className="h-px flex-1 bg-white/10" />
+            or join with code
+            <span className="h-px flex-1 bg-white/10" />
+          </div>
+
+          <label className="block text-sm font-medium text-slate-200">
+            Room code
+            <input
+              className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-center font-mono text-lg tracking-[0.35em] text-white uppercase outline-none focus:ring-2 focus:ring-violet-400/60"
+              value={joinCode}
+              onChange={(event) => setJoinCode(normalizeRoomCode(event.target.value))}
+              placeholder="ABC123"
+              maxLength={12}
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck={false}
+            />
+          </label>
+          <button
+            type="button"
+            disabled={busy || !name.trim()}
+            onClick={() => void joinRoom()}
+            className="mt-4 w-full rounded-xl border border-violet-400/50 bg-violet-950/50 py-3.5 text-sm font-semibold text-violet-100 transition hover:bg-violet-900/60 disabled:opacity-60"
+          >
+            Join room
+          </button>
+
+          {error ? (
+            <p className="mt-4 text-center text-sm text-red-300" role="alert">
+              {error}
+            </p>
+          ) : null}
 
           <p className="mt-6 text-center text-xs text-slate-500">
             <Link href="/funquiz" className="text-violet-300 hover:text-violet-200">
@@ -132,209 +374,260 @@ export function NameThatMovieClient() {
     );
   }
 
-  if (phase === "results") {
-    return (
-      <div className="mx-auto flex min-h-[100dvh] max-w-2xl flex-col px-4 py-6 pb-10">
-        <header className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-violet-300">
-              {difficulty ? difficultyTitle(difficulty) : "Quiz"} · {QUESTIONS_PER_GAME} questions
-            </p>
-            <h1 className="text-2xl font-bold text-white">Name That Movie!</h1>
-          </div>
-          <button
-            type="button"
-            onClick={backToMenu}
-            className="rounded-lg border border-white/15 px-3 py-1.5 text-xs text-slate-300 hover:bg-white/5"
-          >
-            Leave
-          </button>
-        </header>
-
-        <section className="mt-6 flex flex-1 flex-col rounded-3xl border border-violet-400/30 bg-slate-950/80 p-5 sm:p-6">
-          <h2 className="text-2xl font-bold text-white">Results</h2>
-          <p className="mt-2 text-violet-100">
-            Score: {score.score} / {score.total}
-          </p>
-          <p className="mt-1 text-3xl font-bold tabular-nums text-white">{score.percentage}%</p>
-          <p className="mt-1 text-sm text-slate-400">
-            {score.score} correct out of {score.total}.
-          </p>
-
-          <div className="mt-5 max-h-80 overflow-y-auto rounded-xl border border-white/10">
-            <table className="w-full text-left text-xs text-slate-200">
-              <thead className="sticky top-0 bg-slate-900 text-slate-400">
-                <tr>
-                  <th className="p-2">#</th>
-                  <th className="p-2">Your answer</th>
-                  <th className="p-2">Film</th>
-                </tr>
-              </thead>
-              <tbody>
-                {answers.map((answer, answerIndex) => (
-                  <tr key={answer.question.id} className="border-t border-white/5 align-top">
-                    <td className="p-2">{answerIndex + 1}</td>
-                    <td className="p-2">{answer.question.options[answer.choiceIndex]}</td>
-                    <td className={`p-2 ${answer.correct ? "text-emerald-300" : "text-red-300"}`}>
-                      {answer.question.film} {answer.correct ? "✓" : "✗"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              if (difficulty) startGame(difficulty);
-            }}
-            className="mt-6 w-full rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 py-3.5 text-sm font-semibold text-white shadow-lg shadow-violet-700/30 transition hover:brightness-110"
-          >
-            Play again
-          </button>
-          <button
-            type="button"
-            onClick={backToMenu}
-            className="mt-3 w-full rounded-xl border border-white/15 py-3 text-sm text-slate-300"
-          >
-            Change difficulty
-          </button>
-        </section>
-      </div>
-    );
-  }
-
-  if (!question) {
+  if (!roomState) {
     return (
       <div className="flex min-h-[100dvh] items-center justify-center text-slate-300">
-        Loading question…
+        Loading room…
       </div>
     );
   }
 
-  const lastQuestion = index + 1 >= questions.length;
+  const opponent = roomState.players.find((player) => player.id !== playerId);
+  const bothIn = roomState.players.length >= 2;
+  const isHost = roomState.hostId === playerId;
+  const progressPct =
+    roomState.phase === "finished"
+      ? 100
+      : Math.round(((roomState.turnIndex + 1) / roomState.totalTurns) * 100);
 
   return (
     <div className="mx-auto flex min-h-[100dvh] max-w-2xl flex-col px-4 py-6 pb-10">
       <header className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-violet-300">
-            {difficulty ? difficultyTitle(difficulty) : "Quiz"}
+            Room {roomState.code} · {roomState.difficultyTitle}
           </p>
           <h1 className="text-2xl font-bold text-white">Name That Movie!</h1>
         </div>
         <button
           type="button"
-          onClick={backToMenu}
+          onClick={leaveRoom}
           className="rounded-lg border border-white/15 px-3 py-1.5 text-xs text-slate-300 hover:bg-white/5"
         >
           Leave
         </button>
       </header>
 
-      <div className="mt-4 rounded-2xl border border-violet-400/50 bg-violet-950/40 px-5 py-4">
-        <p className="text-sm font-semibold text-violet-200">Score</p>
-        <p className="mt-1 text-3xl font-bold tabular-nums text-white">
-          {score.score}{" "}
-          <span className="text-lg font-medium text-violet-300/90">/ {questions.length}</span>
-        </p>
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        {[roomState.you, opponent].filter(Boolean).map((player) => (
+          <div
+            key={player!.id}
+            className={`rounded-2xl border px-4 py-3 ${
+              player!.id === playerId
+                ? "border-violet-400/50 bg-violet-950/40"
+                : "border-white/10 bg-slate-900/60"
+            }`}
+          >
+            <p className="truncate text-sm font-semibold text-white">
+              {player!.name}
+              {player!.id === playerId ? " (you)" : ""}
+            </p>
+            <p className="mt-1 text-2xl font-bold tabular-nums text-violet-200">
+              {player!.score}{" "}
+              <span className="text-base font-medium text-violet-300/80">
+                / {roomState.questionsPerPlayer}
+              </span>
+            </p>
+          </div>
+        ))}
       </div>
 
-      <section className="mt-6 flex flex-1 flex-col">
-        <div className="mb-3 flex items-center justify-between text-xs text-slate-400">
-          <span>Name the film</span>
-          <span>
-            Question {index + 1} / {questions.length}
-          </span>
-        </div>
-        <div
-          className="h-2 overflow-hidden rounded-full bg-white/10"
-          role="progressbar"
-          aria-valuenow={index + 1}
-          aria-valuemin={1}
-          aria-valuemax={questions.length}
-          aria-label={`Question ${index + 1} of ${questions.length}`}
-        >
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-400 transition-all"
-            style={{ width: `${progressPct}%` }}
-          />
-        </div>
-
-        <h2 className="mt-6 text-lg font-semibold leading-snug text-white sm:text-2xl">
-          <span className="text-violet-300" aria-hidden="true">
-            “
-          </span>
-          {question.quote}
-          <span className="text-violet-300" aria-hidden="true">
-            ”
-          </span>
-        </h2>
-
-        <div className="mt-6 flex flex-col gap-3">
-          {question.options.map((option, optionIndex) => {
-            const picked = choice === optionIndex;
-            const isAnswer = optionIndex === question.correctIndex;
-            let tone =
-              "border-white/10 bg-slate-900/80 text-slate-100 hover:border-violet-400/40 hover:bg-slate-800/80";
-            if (revealed && isAnswer) {
-              tone = "border-emerald-400 bg-emerald-900/50 text-white";
-            } else if (revealed && picked) {
-              tone = "border-red-400 bg-red-950/50 text-white";
-            } else if (revealed) {
-              tone = "border-white/10 bg-slate-900/50 text-slate-300 opacity-70";
-            } else if (picked) {
-              tone = "border-violet-400 bg-violet-900/50 text-white";
-            }
-            return (
-              <button
-                key={`${question.id}-${option}`}
-                type="button"
-                disabled={revealed}
-                onClick={() => choose(optionIndex)}
-                className={`rounded-2xl border px-4 py-4 text-left text-sm font-medium transition sm:text-base disabled:opacity-100 ${tone}`}
-              >
-                <span className="mr-2 font-mono text-violet-300">{optionLetter(optionIndex)}.</span>
-                {option}
-              </button>
-            );
-          })}
-        </div>
-
-        {choice !== null ? (
-          <div className="mt-6 rounded-3xl border border-amber-400/30 bg-amber-950/20 p-5" role="status">
-            <p
-              className={`rounded-xl px-4 py-3 text-sm font-semibold ${
-                isCorrectChoice(question, choice)
-                  ? "bg-emerald-900/50 text-emerald-100"
-                  : "bg-red-950/50 text-red-100"
-              }`}
-            >
-              {isCorrectChoice(question, choice) ? "Correct!" : "Incorrect"}
-            </p>
-            <p className="mt-3 rounded-xl border border-white/10 bg-slate-900/60 px-4 py-3 text-sm text-slate-200">
-              Your choice:{" "}
-              <strong>
-                {optionLetter(choice)}. {question.options[choice]}
-              </strong>
-            </p>
-            <p className="mt-3 rounded-xl bg-emerald-900/40 px-4 py-3 text-sm text-emerald-100">
-              Correct answer:{" "}
-              <strong>
-                {optionLetter(question.correctIndex)}. {question.film}
-              </strong>
-            </p>
+      {roomState.phase === "lobby" ? (
+        <section className="mt-8 flex flex-1 flex-col rounded-3xl border border-white/10 bg-slate-900/70 p-6">
+          <h2 className="text-lg font-semibold text-white">Waiting room</h2>
+          <p className="mt-2 text-sm text-slate-300">
+            Difficulty: <strong className="text-violet-200">{roomState.difficultyTitle}</strong>
+          </p>
+          <p className="mt-2 text-sm text-slate-300">
+            Share code{" "}
+            <span className="select-none font-mono text-lg tracking-[0.2em] text-violet-200">
+              {formatRoomCodeSpaced(roomState.code)}
+            </span>
             <button
               type="button"
-              onClick={goNext}
-              className="mt-5 w-full rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 py-3.5 text-sm font-semibold text-white shadow-lg shadow-violet-700/30 transition hover:brightness-110"
+              className="ml-2 rounded-lg border border-violet-400/40 px-2 py-0.5 text-xs text-violet-200"
+              onClick={() => {
+                const link = `${window.location.origin}/name-that-movie?join=${roomState.code}`;
+                void navigator.clipboard?.writeText(link);
+              }}
             >
-              {lastQuestion ? "See results" : "Next question"}
+              Copy link
             </button>
+          </p>
+          <ul className="mt-4 space-y-2 text-sm text-slate-200">
+            {roomState.players.map((player) => (
+              <li key={player.id} className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                {player.name}
+              </li>
+            ))}
+            {!bothIn ? <li className="text-slate-500">Waiting for player 2…</li> : null}
+          </ul>
+          {isHost ? (
+            <button
+              type="button"
+              disabled={busy || !bothIn}
+              onClick={() => void startGame()}
+              className="mt-auto rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 py-3.5 text-sm font-semibold text-white disabled:opacity-50"
+            >
+              Start game
+            </button>
+          ) : (
+            <p className="mt-auto text-center text-sm text-slate-400">Waiting for host to start…</p>
+          )}
+          {error ? (
+            <p className="mt-4 text-center text-sm text-red-300" role="alert">
+              {error}
+            </p>
+          ) : null}
+        </section>
+      ) : null}
+
+      {roomState.phase === "finished" ? (
+        <section className="mt-6 flex flex-1 flex-col rounded-3xl border border-violet-400/30 bg-slate-950/80 p-5 sm:p-6">
+          <h2 className="text-2xl font-bold text-white">Results</h2>
+          <p className="mt-2 text-lg text-violet-100">
+            {roomState.winnerIds.length === 2
+              ? "It's a tie."
+              : roomState.winnerIds.includes(playerId)
+                ? "You win."
+                : `${opponent?.name ?? "Your opponent"} wins.`}
+          </p>
+          <div className="mt-5 max-h-80 overflow-y-auto rounded-xl border border-white/10">
+            <table className="w-full text-left text-xs text-slate-200">
+              <thead className="sticky top-0 bg-slate-900 text-slate-400">
+                <tr>
+                  <th className="p-2">#</th>
+                  <th className="p-2">Player</th>
+                  <th className="p-2">Answer</th>
+                  <th className="p-2">Film</th>
+                </tr>
+              </thead>
+              <tbody>
+                {roomState.results?.map((row) => (
+                  <tr key={row.turnIndex} className="border-t border-white/5 align-top">
+                    <td className="p-2">{row.turnIndex + 1}</td>
+                    <td className="p-2">{row.playerName}</td>
+                    <td className="p-2">{row.chosenLabel}</td>
+                    <td className={`p-2 ${row.correct ? "text-emerald-300" : "text-red-300"}`}>
+                      {row.correctLabel} {row.correct ? "✓" : "✗"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        ) : null}
-      </section>
+          {isHost ? (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void playAgain()}
+              className="mt-6 w-full rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 py-3.5 text-sm font-semibold text-white shadow-lg shadow-violet-700/30 transition hover:brightness-110 disabled:opacity-60"
+            >
+              Play again
+            </button>
+          ) : (
+            <p className="mt-6 text-center text-sm text-slate-400">
+              Waiting for the host to start a new game…
+            </p>
+          )}
+        </section>
+      ) : null}
+
+      {roomState.phase !== "lobby" && roomState.phase !== "finished" && roomState.question ? (
+        <section className="mt-6 flex flex-1 flex-col">
+          <div className="mb-3 flex items-center justify-between text-xs text-slate-400">
+            <span>
+              {roomState.phase === "reveal"
+                ? "Answer revealed"
+                : roomState.isYourTurn
+                  ? "Your turn"
+                  : "Watch along"}
+            </span>
+            <span>
+              Turn {Math.min(roomState.turnIndex + 1, roomState.totalTurns)} / {roomState.totalTurns}
+            </span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-white/10">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-400 transition-all"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+          {roomState.statusMessage ? (
+            <p className="mt-4 text-center text-sm text-slate-300">{roomState.statusMessage}</p>
+          ) : null}
+          <h2 className="mt-6 text-lg font-semibold leading-snug text-white sm:text-2xl">
+            <span className="text-violet-300" aria-hidden="true">
+              “
+            </span>
+            {roomState.question.quote}
+            <span className="text-violet-300" aria-hidden="true">
+              ”
+            </span>
+          </h2>
+          <div className="mt-6 flex flex-col gap-3">
+            {roomState.question.options.map((option, optionIndex) => {
+              const feedback = roomState.feedback;
+              const revealed = roomState.phase === "reveal" && feedback !== null;
+              const picked = feedback?.choiceIndex === optionIndex;
+              const isAnswer = feedback?.correctIndex === optionIndex;
+              let tone =
+                "border-white/10 bg-slate-900/80 text-slate-100 hover:border-violet-400/40 hover:bg-slate-800/80";
+              if (revealed && isAnswer) {
+                tone = "border-emerald-400 bg-emerald-900/50 text-white";
+              } else if (revealed && picked) {
+                tone = "border-red-400 bg-red-950/50 text-white";
+              } else if (revealed) {
+                tone = "border-white/10 bg-slate-900/50 text-slate-300 opacity-70";
+              }
+              return (
+                <button
+                  key={`${roomState.turnIndex}-${option}`}
+                  type="button"
+                  disabled={!roomState.canSubmitAnswer || busy}
+                  onClick={() => void submitAnswer(optionIndex)}
+                  className={`rounded-2xl border px-4 py-4 text-left text-sm font-medium transition sm:text-base disabled:opacity-100 ${tone}`}
+                >
+                  <span className="mr-2 font-mono text-violet-300">{optionLetter(optionIndex)}.</span>
+                  {option}
+                </button>
+              );
+            })}
+          </div>
+          {roomState.feedback ? (
+            <div className="mt-6 rounded-3xl border border-amber-400/30 bg-amber-950/20 p-5" role="status">
+              <p
+                className={`rounded-xl px-4 py-3 text-sm font-semibold ${
+                  roomState.feedback.correct
+                    ? "bg-emerald-900/50 text-emerald-100"
+                    : "bg-red-950/50 text-red-100"
+                }`}
+              >
+                {roomState.feedback.correct ? "Correct!" : "Incorrect"}
+              </p>
+              <p className="mt-3 rounded-xl border border-white/10 bg-slate-900/60 px-4 py-3 text-sm text-slate-200">
+                {roomState.feedback.playerName} chose{" "}
+                <strong>
+                  {optionLetter(roomState.feedback.choiceIndex)}. {roomState.feedback.chosenLabel}
+                </strong>
+              </p>
+              <p className="mt-3 rounded-xl bg-emerald-900/40 px-4 py-3 text-sm text-emerald-100">
+                Correct answer:{" "}
+                <strong>
+                  {optionLetter(roomState.feedback.correctIndex)}. {roomState.feedback.correctLabel}
+                </strong>
+              </p>
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+
+      {error && roomState.phase !== "lobby" ? (
+        <p className="mt-4 text-center text-sm text-red-300" role="alert">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }
