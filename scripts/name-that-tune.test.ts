@@ -22,7 +22,12 @@ import {
   toShowClientState,
 } from "../lib/name-that-show/room";
 import { GAME_QUESTIONS } from "../lib/name-that-game/question-bank";
-import { plannedGameLength, questionsForEra as gamesForEra } from "../lib/name-that-game/game";
+import {
+  plannedGameLength,
+  presentQuestion,
+  questionsForEra as gamesForEra,
+  selectGameQuestions as selectComputerGames,
+} from "../lib/name-that-game/game";
 import {
   addGamePlayer,
   createGameRoom,
@@ -119,11 +124,50 @@ game = addGamePlayer(game, "guest", "Sam");
 game = startGameGame(game, "host", mulberry32(5), 2_000);
 assert.equal(game.questions.length, 20);
 const gameView = toGameClientState(game, "host");
-assert.equal(gameView.question?.platform, game.questions[0]!.platform);
+assert.equal("platform" in (gameView.question ?? {}), false);
+assert.equal("year" in (gameView.question ?? {}), false);
 assert.equal(JSON.stringify(gameView).includes(game.questions[0]!.id), false);
 assert.equal(gameView.question?.options.includes(game.questions[0]!.title), true);
 game = submitGameAnswer(game, "host", game.questions[0]!.correctIndex, 3_000);
-assert.equal(toGameClientState(game, "guest").feedback?.correctLabel, game.questions[0]!.title);
+const gameFeedback = toGameClientState(game, "guest").feedback;
+assert.equal(gameFeedback?.correctLabel, game.questions[0]!.title);
+assert.equal(gameFeedback?.year, game.questions[0]!.year);
+assert.equal(gameFeedback?.platform, game.questions[0]!.platform);
+
+const byTitle = new Map(GAME_QUESTIONS.map((question) => [question.title, question]));
+const duck = GAME_QUESTIONS.find((question) => question.id === "ducktales");
+assert.ok(duck);
+const duckRound = presentQuestion(duck, mulberry32(7), gamesForEra("80s"));
+assert.equal(duckRound.options.length, 4);
+for (const option of duckRound.options) {
+  if (option === duck.title) continue;
+  assert.equal(byTitle.get(option)?.platform, "NES", option);
+}
+const alex = GAME_QUESTIONS.find((question) => question.id === "alex-kidd");
+assert.ok(alex);
+const alexRound = presentQuestion(alex, mulberry32(8), GAME_QUESTIONS);
+for (const option of alexRound.options) {
+  if (option === alex.title) continue;
+  assert.equal(byTitle.get(option)?.decade, "80s", option);
+}
+
+for (const seed of [1, 2, 3, 4, 5]) {
+  for (const era of ["80s", "90s", "both"] as const) {
+    const dealt = selectComputerGames(era, era === "90s" ? 20 : 10, mulberry32(seed));
+    const ids = dealt.map((question) => question.id);
+    const titles = dealt.map((question) => question.title);
+    assert.equal(new Set(ids).size, dealt.length, `${era} ids`);
+    assert.equal(new Set(titles).size, dealt.length, `${era} titles`);
+    const optionSets = new Set<string>();
+    for (const question of dealt) {
+      assert.equal(question.options.length, 4, question.id);
+      assert.equal(new Set(question.options).size, 4, question.id);
+      assert.equal(question.options.filter((option) => option === question.title).length, 1, question.id);
+      optionSets.add([...question.options].sort().join("\n"));
+    }
+    assert.equal(optionSets.size, dealt.length, `${era} choices`);
+  }
+}
 assert.throws(() => submitGameAnswer(
   startGameGame(
     addGamePlayer(createGameRoom("host", "Alex", "ABCDEF", "80s", "play_together"), "guest", "Sam"),

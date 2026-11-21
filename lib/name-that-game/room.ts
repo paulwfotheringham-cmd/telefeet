@@ -80,7 +80,7 @@ export type GameClientState = {
   revision: number;
   players: Array<{ id: string; name: string; score: number }>;
   you: { id: string; name: string; score: number };
-  question: { year: number; platform: string; options: string[] } | null;
+  question: { options: string[] } | null;
   feedback: {
     correct: boolean;
     choiceIndex: number;
@@ -88,6 +88,8 @@ export type GameClientState = {
     chosenLabel: string;
     correctLabel: string;
     songTitle: string;
+    year: number;
+    platform: string;
     playerName: string;
   } | null;
   revealEndsAt: number | null;
@@ -464,7 +466,7 @@ export function toGameClientState(room: GameRoom, viewerId: string): GameClientS
       score: player.score,
     })),
     you: { id: you.id, name: you.name, score: you.score },
-    question: current ? { year: current.year, platform: current.platform, options: [...current.options] } : null,
+    question: current ? { options: [...current.options] } : null,
     feedback:
       current && revealAnswer
         ? {
@@ -474,6 +476,8 @@ export function toGameClientState(room: GameRoom, viewerId: string): GameClientS
             chosenLabel: current.options[revealAnswer.choiceIndex] ?? "",
             correctLabel: current.title,
             songTitle: current.title,
+            year: current.year,
+            platform: current.platform,
             playerName:
               room.players.find((player) => player.id === revealAnswer.playerId)?.name ?? "Player",
           }
