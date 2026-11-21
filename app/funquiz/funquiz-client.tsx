@@ -592,6 +592,36 @@ export function FunQuizClient() {
                 A famous line appears. Play together or take turns naming the film.
               </p>
             </Link>
+            <Link
+              href="/name-that-tune"
+              className="mt-3 block rounded-2xl border border-white/10 bg-black/30 p-4 text-left transition hover:border-fuchsia-400/40"
+            >
+              <p className="text-sm font-semibold text-fuchsia-200">Game 8 — Name That Tune!</p>
+              <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                Hear the first few bars of an 80s or 90s hit. Play together or take turns naming
+                the artist.
+              </p>
+            </Link>
+            <Link
+              href="/name-that-show"
+              className="mt-3 block rounded-2xl border border-white/10 bg-black/30 p-4 text-left transition hover:border-amber-300/40"
+            >
+              <p className="text-sm font-semibold text-amber-200">Game 9 — Name That Show!</p>
+              <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                UK gameshow themes from the 80s and 90s, Blockbusters included. Play together or
+                take turns.
+              </p>
+            </Link>
+            <Link
+              href="/name-that-game"
+              className="mt-3 block rounded-2xl border border-white/10 bg-black/30 p-4 text-left transition hover:border-emerald-400/40"
+            >
+              <p className="text-sm font-semibold text-emerald-200">Game 10 — Name That Game!</p>
+              <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                One screenshot from an 80s or 90s computer game. Play together or take turns naming
+                it.
+              </p>
+            </Link>
           </div>
 
           {selectedMode && !isStandaloneGameMode(selectedMode) ? (
