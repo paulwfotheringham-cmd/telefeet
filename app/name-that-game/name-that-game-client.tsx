@@ -342,7 +342,7 @@ export function NameThatGameClient() {
             Name That Game!
           </h1>
           <p className="mt-3 text-center text-sm leading-relaxed text-slate-300">
-            Two players, one room. A single screenshot from an 80s or 90s computer game appears. Name the game. Play together or take turns.
+            Two players, one room. A single screenshot appears, with no year or console to narrow it down. Name the game. Play together or take turns.
           </p>
           <label
             id="game-name"
@@ -686,15 +686,10 @@ export function NameThatGameClient() {
             <p className="mt-4 text-center text-sm text-slate-300">{roomState.statusMessage}</p>
           ) : null}
           <div className="mt-6 rounded-3xl border border-white/10 bg-slate-900/70 p-5 text-center">
-            <p className="text-xs font-semibold uppercase tracking-widest text-violet-300">
-              {roomState.question.year} · {roomState.question.platform}
-            </p>
-            <h2 className="mt-2 text-lg font-semibold text-white">Which game is this?</h2>
+            <h2 className="text-lg font-semibold text-white">Which game is this?</h2>
             {shotAttempt >= 3 || !playerId ? (
               <p className="mt-4 text-sm text-slate-300">
-                {playerId
-                  ? `The screenshot didn't load. It's a ${roomState.question.year} ${roomState.question.platform} game — take a guess.`
-                  : "Loading the screenshot…"}
+                {playerId ? "The screenshot didn't load. Take a guess from the four titles." : "Loading the screenshot…"}
               </p>
             ) : (
               // The shot is proxied per turn, so next/image would need the upstream file URL.
@@ -747,6 +742,9 @@ export function NameThatGameClient() {
               </p>
               <p className="mt-3 rounded-xl bg-emerald-900/40 px-4 py-3 text-sm text-emerald-100">
                 Game: <strong>{roomState.feedback.correctLabel}</strong>
+                <span className="mt-1 block text-emerald-200/80">
+                  {roomState.feedback.year} · {roomState.feedback.platform}
+                </span>
               </p>
             </div>
           ) : null}
