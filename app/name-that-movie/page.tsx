@@ -4,7 +4,7 @@ import { NameThatMovieClient } from "./name-that-movie-client";
 export const metadata: Metadata = {
   title: "Name That Movie! | TeleFeet",
   description:
-    "Two-player movie quote quiz. Create a room, share the code, and take turns naming the film.",
+    "Two-player movie quote quiz. Play together or take turns naming the film.",
 };
 
 export default function NameThatMoviePage() {

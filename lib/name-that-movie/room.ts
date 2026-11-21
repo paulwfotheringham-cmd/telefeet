@@ -1,10 +1,17 @@
 import { questionsForDifficulty, selectGameQuestions } from "./game";
 import {
+  MOVIE_MODE_PLAY_TOGETHER,
+  MOVIE_MODE_TAKE_TURNS,
   QUESTIONS_PER_GAME,
   difficultyTitle,
+  movieModeTitle,
   type MovieDifficulty,
+  type MoviePlayMode,
   type PresentedQuestion,
 } from "./types";
+
+export { isMoviePlayMode, movieModeTitle } from "./types";
+export type { MoviePlayMode } from "./types";
 
 export const MAX_PLAYERS = 2;
 export const QUESTIONS_PER_PLAYER = QUESTIONS_PER_GAME;
@@ -34,6 +41,8 @@ export type MovieRoom = {
   code: string;
   hostId: string;
   difficulty: MovieDifficulty;
+  mode?: MoviePlayMode;
+  jointScore?: number;
   phase: MoviePhase;
   turnIndex: number;
   activePlayerId: string | null;
@@ -63,6 +72,9 @@ export type MovieClientState = {
   hostId: string;
   difficulty: MovieDifficulty;
   difficultyTitle: string;
+  mode: MoviePlayMode;
+  modeTitle: string;
+  jointScore: number | null;
   phase: MoviePhase;
   turnIndex: number;
   totalTurns: number;
@@ -114,17 +126,28 @@ function touch(room: MovieRoom, patch: Partial<MovieRoom>, now: number): MovieRo
   };
 }
 
+export function roomMode(room: Pick<MovieRoom, "mode">): MoviePlayMode {
+  return room.mode === MOVIE_MODE_PLAY_TOGETHER ? MOVIE_MODE_PLAY_TOGETHER : MOVIE_MODE_TAKE_TURNS;
+}
+
+export function matchLength(room: Pick<MovieRoom, "mode">): number {
+  return roomMode(room) === MOVIE_MODE_PLAY_TOGETHER ? QUESTIONS_PER_GAME : TURNS_PER_MATCH;
+}
+
 export function createMovieRoom(
   playerId: string,
   playerName: string,
   code: string,
   difficulty: MovieDifficulty,
+  mode: MoviePlayMode = MOVIE_MODE_TAKE_TURNS,
   now = Date.now(),
 ): MovieRoom {
   return {
     code,
     hostId: playerId,
     difficulty,
+    mode,
+    jointScore: 0,
     phase: "lobby",
     turnIndex: 0,
     activePlayerId: null,
@@ -177,12 +200,13 @@ export function dealMatchQuestions(
   difficulty: MovieDifficulty,
   seenIds: readonly string[],
   rng: () => number = Math.random,
+  count: number = TURNS_PER_MATCH,
 ): { questions: PresentedQuestion[]; seenIds: string[] } {
   const all = questionsForDifficulty(difficulty);
   const fresh = all.filter((question) => !seenIds.includes(question.id));
-  const recycling = fresh.length < TURNS_PER_MATCH;
+  const recycling = fresh.length < count;
   const pool = recycling ? all : fresh;
-  const questions = selectGameQuestions(difficulty, TURNS_PER_MATCH, rng, pool);
+  const questions = selectGameQuestions(difficulty, count, rng, pool);
   const dealtIds = questions.map((question) => question.id);
   return {
     questions,
@@ -205,7 +229,7 @@ export function startMovieGame(
   if (room.players.length < MAX_PLAYERS) {
     throw new Error("Waiting for a second player");
   }
-  const dealt = dealMatchQuestions(room.difficulty, room.seenIds, rng);
+  const dealt = dealMatchQuestions(room.difficulty, room.seenIds, rng, matchLength(room));
   return touch(
     room,
     {
@@ -216,6 +240,7 @@ export function startMovieGame(
       answers: [],
       seenIds: dealt.seenIds,
       revealStartedAt: null,
+      jointScore: 0,
       players: room.players.map((player) => ({ ...player, score: 0 })),
     },
     now,
@@ -231,7 +256,11 @@ export function submitMovieAnswer(
   if (room.phase !== "question") {
     throw new Error("Not accepting answers right now");
   }
-  if (playerId !== room.activePlayerId) {
+  const together = roomMode(room) === MOVIE_MODE_PLAY_TOGETHER;
+  if (together && playerId !== room.hostId) {
+    throw new Error("Only the room creator can submit answers in Play together");
+  }
+  if (!together && playerId !== room.activePlayerId) {
     throw new Error("It is not your turn");
   }
   if (room.answers.some((answer) => answer.turnIndex === room.turnIndex)) {
@@ -246,11 +275,13 @@ export function submitMovieAnswer(
     throw new Error("Choose one of the four films");
   }
   const correct = choiceIndex === question.correctIndex;
+  const jointScore = (room.jointScore ?? 0) + (together && correct ? 1 : 0);
   return touch(
     room,
     {
       phase: "reveal",
       revealStartedAt: now,
+      jointScore: together ? jointScore : room.jointScore ?? 0,
       answers: [
         ...room.answers,
         {
@@ -261,9 +292,11 @@ export function submitMovieAnswer(
           correct,
         },
       ],
-      players: room.players.map((player) =>
-        player.id === playerId && correct ? { ...player, score: player.score + 1 } : player,
-      ),
+      players: room.players.map((player) => {
+        if (together) return { ...player, score: jointScore };
+        if (player.id === playerId && correct) return { ...player, score: player.score + 1 };
+        return player;
+      }),
     },
     now,
   );
@@ -271,7 +304,7 @@ export function submitMovieAnswer(
 
 function advanceFromReveal(room: MovieRoom, now: number): MovieRoom {
   const nextTurn = room.turnIndex + 1;
-  if (nextTurn >= TURNS_PER_MATCH) {
+  if (nextTurn >= matchLength(room)) {
     return touch(
       room,
       {
@@ -288,7 +321,8 @@ function advanceFromReveal(room: MovieRoom, now: number): MovieRoom {
     {
       phase: "question",
       turnIndex: nextTurn,
-      activePlayerId: playerForTurn(room, nextTurn),
+      activePlayerId:
+        roomMode(room) === MOVIE_MODE_PLAY_TOGETHER ? room.hostId : playerForTurn(room, nextTurn),
       revealStartedAt: null,
     },
     now,
@@ -319,6 +353,7 @@ export function resetMovieRoomToLobby(room: MovieRoom, playerId: string, now = D
       activePlayerId: null,
       questions: [],
       answers: [],
+      jointScore: 0,
       revealStartedAt: null,
       players: room.players.map((player) => ({ ...player, score: 0 })),
     },
@@ -357,9 +392,12 @@ export function toMovieClientState(room: MovieRoom, viewerId: string): MovieClie
       hostId: room.hostId,
       difficulty: room.difficulty,
       difficultyTitle: difficultyTitle(room.difficulty),
+      mode: roomMode(room),
+      modeTitle: movieModeTitle(roomMode(room)),
+      jointScore: null,
       phase: room.phase,
       turnIndex: room.turnIndex,
-      totalTurns: TURNS_PER_MATCH,
+      totalTurns: matchLength(room),
       questionsPerPlayer: QUESTIONS_PER_PLAYER,
       activePlayerId: room.activePlayerId,
       isYourTurn: false,
@@ -385,13 +423,18 @@ export function toMovieClientState(room: MovieRoom, viewerId: string): MovieClie
     room.phase === "reveal"
       ? room.answers.find((answer) => answer.turnIndex === room.turnIndex)
       : undefined;
+  const together = roomMode(room) === MOVIE_MODE_PLAY_TOGETHER;
   const active = room.players.find((player) => player.id === room.activePlayerId);
-  const isYourTurn = room.phase === "question" && viewerId === room.activePlayerId;
+  const isYourTurn =
+    room.phase === "question" &&
+    (together ? viewerId === room.hostId : viewerId === room.activePlayerId);
   let statusMessage: string | null = null;
-  if (room.phase === "question" && !isYourTurn && active) {
+  if (together && room.phase === "question" && viewerId !== room.hostId) {
+    statusMessage = "Discuss with your partner — only the room creator can submit.";
+  } else if (room.phase === "question" && !isYourTurn && active) {
     statusMessage = `It's ${active.name}'s turn — watch along!`;
   }
-  if (room.phase === "reveal" && revealAnswer) {
+  if (room.phase === "reveal" && revealAnswer && !together) {
     const answerer = room.players.find((player) => player.id === revealAnswer.playerId);
     if (answerer && answerer.id !== viewerId) {
       statusMessage = revealAnswer.correct
@@ -405,9 +448,12 @@ export function toMovieClientState(room: MovieRoom, viewerId: string): MovieClie
     hostId: room.hostId,
     difficulty: room.difficulty,
     difficultyTitle: difficultyTitle(room.difficulty),
+    mode: roomMode(room),
+    modeTitle: movieModeTitle(roomMode(room)),
+    jointScore: together ? room.jointScore ?? 0 : null,
     phase: room.phase,
     turnIndex: room.turnIndex,
-    totalTurns: TURNS_PER_MATCH,
+    totalTurns: matchLength(room),
     questionsPerPlayer: QUESTIONS_PER_PLAYER,
     activePlayerId: room.activePlayerId,
     isYourTurn,
@@ -439,7 +485,8 @@ export function toMovieClientState(room: MovieRoom, viewerId: string): MovieClie
       room.phase === "reveal" && room.revealStartedAt !== null
         ? room.revealStartedAt + REVEAL_MS
         : null,
-    winnerIds: room.phase === "finished" ? winnerIds(room.players) : [],
+    winnerIds:
+      room.phase === "finished" && !together ? winnerIds(room.players) : [],
     results: room.phase === "finished" ? buildResults(room) : null,
   };
 }

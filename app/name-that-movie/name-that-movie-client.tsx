@@ -4,11 +4,13 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { isValidRoomCode, normalizeRoomCode, formatRoomCodeSpaced } from "@/lib/funquiz/room-code";
+import type { MovieClientState } from "@/lib/name-that-movie/room";
 import {
   MOVIE_DIFFICULTY_OPTIONS,
+  MOVIE_PLAY_MODES,
   type MovieDifficulty,
+  type MoviePlayMode,
 } from "@/lib/name-that-movie/types";
-import type { MovieClientState } from "@/lib/name-that-movie/room";
 
 const PLAYER_ID_KEY = "name-that-movie-player-id";
 const PLAYER_NAME_KEY = "name-that-movie-player-name";
@@ -49,6 +51,7 @@ export function NameThatMovieClient() {
   const [playerId, setPlayerId] = useState("");
   const [name, setName] = useState("");
   const [difficulty, setDifficulty] = useState<MovieDifficulty | null>(null);
+  const [mode, setMode] = useState<MoviePlayMode | null>(null);
   const [joinCode, setJoinCode] = useState("");
   const [roomState, setRoomState] = useState<MovieClientState | null>(null);
   const [busy, setBusy] = useState(false);
@@ -139,6 +142,10 @@ export function NameThatMovieClient() {
       setError("Enter your name first.");
       return;
     }
+    if (!mode) {
+      setError("Choose take turns or play together.");
+      return;
+    }
     if (!difficulty) {
       setError("Choose a difficulty.");
       return;
@@ -155,6 +162,7 @@ export function NameThatMovieClient() {
           playerId: activePlayerId,
           playerName: name.trim(),
           difficulty,
+          mode,
         }),
       });
       const state = await parseState(res);
@@ -283,8 +291,8 @@ export function NameThatMovieClient() {
             Name That Movie!
           </h1>
           <p className="mt-3 text-center text-sm leading-relaxed text-slate-300">
-            Two players, one room. Take turns naming the film behind a famous line. Ten questions
-            each, one point for every correct answer.
+            Two players, one room. Play together on the same lines, or take turns and compare
+            scores.
           </p>
 
           <label className="mt-6 block text-sm font-medium text-slate-200">
@@ -298,6 +306,28 @@ export function NameThatMovieClient() {
               autoComplete="nickname"
             />
           </label>
+
+          <p className="mt-6 text-sm font-medium text-slate-200">How to play</p>
+          <div className="mt-3 grid gap-3">
+            {MOVIE_PLAY_MODES.map((option) => {
+              const selected = mode === option.id;
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => setMode(option.id)}
+                  className={`rounded-2xl border p-4 text-left transition ${
+                    selected
+                      ? "border-violet-400 bg-violet-950/50 ring-1 ring-violet-400/40"
+                      : "border-white/10 bg-black/30 hover:border-violet-400/40"
+                  }`}
+                >
+                  <p className="text-sm font-semibold text-violet-200">{option.title}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-400">{option.description}</p>
+                </button>
+              );
+            })}
+          </div>
 
           <p className="mt-6 text-sm font-medium text-slate-200">Difficulty</p>
           <div className="mt-3 grid gap-3">
@@ -323,7 +353,7 @@ export function NameThatMovieClient() {
 
           <button
             type="button"
-            disabled={busy || !difficulty || !name.trim()}
+            disabled={busy || !mode || !difficulty || !name.trim()}
             onClick={() => void createRoom()}
             className="mt-6 w-full rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 py-3.5 text-sm font-semibold text-white shadow-lg shadow-violet-700/30 transition hover:brightness-110 disabled:opacity-60"
           >
@@ -395,7 +425,7 @@ export function NameThatMovieClient() {
       <header className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-violet-300">
-            Room {roomState.code} · {roomState.difficultyTitle}
+            Room {roomState.code} · {roomState.modeTitle} · {roomState.difficultyTitle}
           </p>
           <h1 className="text-2xl font-bold text-white">Name That Movie!</h1>
         </div>
@@ -408,6 +438,18 @@ export function NameThatMovieClient() {
         </button>
       </header>
 
+      {roomState.jointScore !== null ? (
+        <div className="mt-4 rounded-2xl border border-violet-400/50 bg-violet-950/40 px-5 py-4">
+          <p className="text-sm font-semibold text-violet-200">Team score</p>
+          <p className="mt-1 text-3xl font-bold tabular-nums text-white">
+            {roomState.jointScore}{" "}
+            <span className="text-lg font-medium text-violet-300/90">/ {roomState.totalTurns}</span>
+          </p>
+          <p className="mt-2 text-xs text-slate-400">
+            {roomState.you.name} & {opponent?.name ?? "Partner"} · play together
+          </p>
+        </div>
+      ) : (
       <div className="mt-4 grid grid-cols-2 gap-3">
         {[roomState.you, opponent].filter(Boolean).map((player) => (
           <div
@@ -431,11 +473,15 @@ export function NameThatMovieClient() {
           </div>
         ))}
       </div>
+      )}
 
       {roomState.phase === "lobby" ? (
         <section className="mt-8 flex flex-1 flex-col rounded-3xl border border-white/10 bg-slate-900/70 p-6">
           <h2 className="text-lg font-semibold text-white">Waiting room</h2>
           <p className="mt-2 text-sm text-slate-300">
+            Mode: <strong className="text-violet-200">{roomState.modeTitle}</strong>
+          </p>
+          <p className="mt-1 text-sm text-slate-300">
             Difficulty: <strong className="text-violet-200">{roomState.difficultyTitle}</strong>
           </p>
           <p className="mt-2 text-sm text-slate-300">
@@ -487,11 +533,17 @@ export function NameThatMovieClient() {
         <section className="mt-6 flex flex-1 flex-col rounded-3xl border border-violet-400/30 bg-slate-950/80 p-5 sm:p-6">
           <h2 className="text-2xl font-bold text-white">Results</h2>
           <p className="mt-2 text-lg text-violet-100">
-            {roomState.winnerIds.length === 2
-              ? "It's a tie."
-              : roomState.winnerIds.includes(playerId)
-                ? "You win."
-                : `${opponent?.name ?? "Your opponent"} wins.`}
+            {roomState.jointScore !== null
+              ? `Team score: ${roomState.jointScore} / ${roomState.totalTurns} (${
+                  roomState.totalTurns === 0
+                    ? 0
+                    : Math.round((roomState.jointScore / roomState.totalTurns) * 100)
+                }%)`
+              : roomState.winnerIds.length === 2
+                ? "It's a tie."
+                : roomState.winnerIds.includes(playerId)
+                  ? "You win."
+                  : `${opponent?.name ?? "Your opponent"} wins.`}
           </p>
           <div className="mt-5 max-h-80 overflow-y-auto rounded-xl border border-white/10">
             <table className="w-full text-left text-xs text-slate-200">
@@ -540,12 +592,17 @@ export function NameThatMovieClient() {
             <span>
               {roomState.phase === "reveal"
                 ? "Answer revealed"
-                : roomState.isYourTurn
-                  ? "Your turn"
-                  : "Watch along"}
+                : roomState.jointScore !== null
+                  ? roomState.isYourTurn
+                    ? "Submit for the team"
+                    : "Discuss"
+                  : roomState.isYourTurn
+                    ? "Your turn"
+                    : "Watch along"}
             </span>
             <span>
-              Turn {Math.min(roomState.turnIndex + 1, roomState.totalTurns)} / {roomState.totalTurns}
+              {roomState.jointScore !== null ? "Question" : "Turn"}{" "}
+              {Math.min(roomState.turnIndex + 1, roomState.totalTurns)} / {roomState.totalTurns}
             </span>
           </div>
           <div className="h-2 overflow-hidden rounded-full bg-white/10">

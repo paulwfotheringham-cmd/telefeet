@@ -6,7 +6,7 @@ import {
   toMovieClientState,
 } from "@/lib/name-that-movie/room";
 import { loadMovieRoom, persistNewMovieRoom } from "@/lib/name-that-movie/store";
-import { isMovieDifficulty } from "@/lib/name-that-movie/types";
+import { isMovieDifficulty, isMoviePlayMode } from "@/lib/name-that-movie/types";
 
 export const dynamic = "force-dynamic";
 
@@ -16,15 +16,20 @@ export async function POST(request: Request) {
       playerId?: string;
       playerName?: string;
       difficulty?: string;
+      mode?: string;
     };
     const playerId = body.playerId?.trim();
     const playerName = body.playerName?.trim();
     const difficulty = body.difficulty?.trim() ?? "";
+    const mode = body.mode?.trim() ?? "";
     if (!playerId || !playerName) {
       return NextResponse.json({ error: "playerId and playerName required" }, { status: 400 });
     }
     if (!isMovieDifficulty(difficulty)) {
       return NextResponse.json({ error: "difficulty required" }, { status: 400 });
+    }
+    if (!isMoviePlayMode(mode)) {
+      return NextResponse.json({ error: "mode required" }, { status: 400 });
     }
 
     let code = generateMovieRoomCode();
@@ -34,7 +39,9 @@ export async function POST(request: Request) {
       code = generateMovieRoomCode();
     }
 
-    const room = await persistNewMovieRoom(createMovieRoom(playerId, playerName, code, difficulty));
+    const room = await persistNewMovieRoom(
+      createMovieRoom(playerId, playerName, code, difficulty, mode),
+    );
     return NextResponse.json({ state: toMovieClientState(room, playerId) });
   } catch (err) {
     return handleMovieStoreError(err);

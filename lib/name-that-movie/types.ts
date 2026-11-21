@@ -50,6 +50,34 @@ export type MovieCategory = (typeof MOVIE_CATEGORIES)[number];
 
 export const QUESTIONS_PER_GAME = 10;
 
+export const MOVIE_MODE_TAKE_TURNS = "take_turns" as const;
+export const MOVIE_MODE_PLAY_TOGETHER = "play_together" as const;
+
+export const MOVIE_PLAY_MODES = [
+  {
+    id: MOVIE_MODE_TAKE_TURNS,
+    title: "Take turns",
+    description:
+      "Answer 10 different questions each. Take turns naming the film, then compare scores.",
+  },
+  {
+    id: MOVIE_MODE_PLAY_TOGETHER,
+    title: "Play together",
+    description:
+      "Answer 10 shared questions. Discuss each line, and the room creator submits the team's answer.",
+  },
+] as const;
+
+export type MoviePlayMode = (typeof MOVIE_PLAY_MODES)[number]["id"];
+
+export function isMoviePlayMode(value: string): value is MoviePlayMode {
+  return value === MOVIE_MODE_TAKE_TURNS || value === MOVIE_MODE_PLAY_TOGETHER;
+}
+
+export function movieModeTitle(mode: MoviePlayMode): string {
+  return MOVIE_PLAY_MODES.find((option) => option.id === mode)?.title ?? "Take turns";
+}
+
 export type MovieQuestion = {
   id: string;
   quote: string;
