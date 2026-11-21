@@ -136,18 +136,25 @@ export function NameThatMovieClient() {
     window.history.replaceState(null, "", window.location.pathname);
   }
 
+  function showSetupError(elementId: string, message: string) {
+    setError(message);
+    requestAnimationFrame(() => {
+      document.getElementById(elementId)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }
+
   async function createRoom() {
     setError(null);
     if (!name.trim()) {
-      setError("Enter your name first.");
+      showSetupError("movie-name", "Enter your name first.");
       return;
     }
     if (!mode) {
-      setError("Choose take turns or play together.");
+      showSetupError("movie-mode", "Choose take turns or play together.");
       return;
     }
     if (!difficulty) {
-      setError("Choose a difficulty.");
+      showSetupError("movie-difficulty", "Choose a difficulty.");
       return;
     }
     const activePlayerId = playerId || getOrCreatePlayerId();
@@ -181,7 +188,7 @@ export function NameThatMovieClient() {
   async function joinRoom() {
     setError(null);
     if (!name.trim()) {
-      setError("Enter your name first.");
+      showSetupError("movie-name", "Enter your name first.");
       return;
     }
     const normalized = normalizeRoomCode(joinCode);
@@ -295,70 +302,103 @@ export function NameThatMovieClient() {
             scores.
           </p>
 
-          <label className="mt-6 block text-sm font-medium text-slate-200">
+          <label
+            id="movie-name"
+            className={`mt-6 block rounded-2xl text-sm font-medium text-slate-200 ${error === "Enter your name first." ? "ring-2 ring-red-400" : ""}`}
+          >
             Your name
             <input
               className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-violet-400/60"
               value={name}
               maxLength={24}
-              onChange={(event) => setName(event.target.value)}
+              onChange={(event) => {
+                setName(event.target.value);
+                setError(null);
+              }}
               placeholder="Alex"
               autoComplete="nickname"
             />
           </label>
 
-          <p className="mt-6 text-sm font-medium text-slate-200">How to play</p>
-          <div className="mt-3 grid gap-3">
-            {MOVIE_PLAY_MODES.map((option) => {
-              const selected = mode === option.id;
-              return (
-                <button
-                  key={option.id}
-                  type="button"
-                  onClick={() => setMode(option.id)}
-                  className={`rounded-2xl border p-4 text-left transition ${
-                    selected
-                      ? "border-violet-400 bg-violet-950/50 ring-1 ring-violet-400/40"
-                      : "border-white/10 bg-black/30 hover:border-violet-400/40"
-                  }`}
-                >
-                  <p className="text-sm font-semibold text-violet-200">{option.title}</p>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-400">{option.description}</p>
-                </button>
-              );
-            })}
+          <div
+            id="movie-mode"
+            className={`mt-6 rounded-2xl p-1 ${error === "Choose take turns or play together." ? "ring-2 ring-red-400" : ""}`}
+          >
+            <p className="text-sm font-medium text-slate-200">How to play</p>
+            <div className="mt-3 grid gap-3">
+              {MOVIE_PLAY_MODES.map((option) => {
+                const selected = mode === option.id;
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => {
+                      setMode(option.id);
+                      setError(null);
+                    }}
+                    className={`rounded-2xl border p-4 text-left transition ${
+                      selected
+                        ? "border-violet-400 bg-violet-950/50 ring-1 ring-violet-400/40"
+                        : "border-white/10 bg-black/30 hover:border-violet-400/40"
+                    }`}
+                  >
+                    <p className="text-sm font-semibold text-violet-200">{option.title}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-400">{option.description}</p>
+                  </button>
+                );
+              })}
+            </div>
+            {error === "Choose take turns or play together." ? (
+              <p className="mt-3 text-center text-sm text-red-300">{error}</p>
+            ) : null}
           </div>
 
-          <p className="mt-6 text-sm font-medium text-slate-200">Difficulty</p>
-          <div className="mt-3 grid gap-3">
-            {MOVIE_DIFFICULTY_OPTIONS.map((option) => {
-              const selected = difficulty === option.id;
-              return (
-                <button
-                  key={option.id}
-                  type="button"
-                  onClick={() => setDifficulty(option.id)}
-                  className={`rounded-2xl border p-4 text-left transition ${
-                    selected
-                      ? "border-violet-400 bg-violet-950/50 ring-1 ring-violet-400/40"
-                      : "border-white/10 bg-black/30 hover:border-violet-400/40"
-                  }`}
-                >
-                  <p className="text-sm font-semibold text-violet-200">{option.title}</p>
-                  <p className="mt-1 text-xs leading-relaxed text-slate-400">{option.description}</p>
-                </button>
-              );
-            })}
+          <div
+            id="movie-difficulty"
+            className={`mt-6 rounded-2xl p-1 ${error === "Choose a difficulty." ? "ring-2 ring-red-400" : ""}`}
+          >
+            <p className="text-sm font-medium text-slate-200">Difficulty</p>
+            <div className="mt-3 grid gap-3">
+              {MOVIE_DIFFICULTY_OPTIONS.map((option) => {
+                const selected = difficulty === option.id;
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => {
+                      setDifficulty(option.id);
+                      setError(null);
+                    }}
+                    className={`rounded-2xl border p-4 text-left transition ${
+                      selected
+                        ? "border-violet-400 bg-violet-950/50 ring-1 ring-violet-400/40"
+                        : "border-white/10 bg-black/30 hover:border-violet-400/40"
+                    }`}
+                  >
+                    <p className="text-sm font-semibold text-violet-200">{option.title}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-400">{option.description}</p>
+                  </button>
+                );
+              })}
+            </div>
+            {error === "Choose a difficulty." ? (
+              <p className="mt-3 text-center text-sm text-red-300">{error}</p>
+            ) : null}
           </div>
 
           <button
             type="button"
-            disabled={busy || !mode || !difficulty || !name.trim()}
+            disabled={busy}
             onClick={() => void createRoom()}
             className="mt-6 w-full rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 py-3.5 text-sm font-semibold text-white shadow-lg shadow-violet-700/30 transition hover:brightness-110 disabled:opacity-60"
           >
             Create room
           </button>
+          {error ? (
+            <p className="mt-4 text-center text-sm text-red-300" role="alert">
+              {error}
+            </p>
+          ) : null}
 
           <div className="my-6 flex items-center gap-3 text-xs text-slate-500">
             <span className="h-px flex-1 bg-white/10" />
@@ -381,18 +421,12 @@ export function NameThatMovieClient() {
           </label>
           <button
             type="button"
-            disabled={busy || !name.trim()}
+            disabled={busy}
             onClick={() => void joinRoom()}
             className="mt-4 w-full rounded-xl border border-violet-400/50 bg-violet-950/50 py-3.5 text-sm font-semibold text-violet-100 transition hover:bg-violet-900/60 disabled:opacity-60"
           >
             Join room
           </button>
-
-          {error ? (
-            <p className="mt-4 text-center text-sm text-red-300" role="alert">
-              {error}
-            </p>
-          ) : null}
 
           <p className="mt-6 text-center text-xs text-slate-500">
             <Link href="/funquiz" className="text-violet-300 hover:text-violet-200">
