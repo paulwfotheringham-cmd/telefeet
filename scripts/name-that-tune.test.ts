@@ -23,10 +23,13 @@ import {
 } from "../lib/name-that-show/room";
 import { GAME_QUESTIONS } from "../lib/name-that-game/question-bank";
 import {
+  MEDIUM_GAME_IDS,
   plannedGameLength,
   presentQuestion,
   questionsForEra as gamesForEra,
+  questionsForLevel,
   selectGameQuestions as selectComputerGames,
+  visiblePlatform,
 } from "../lib/name-that-game/game";
 import {
   addGamePlayer,
@@ -119,11 +122,12 @@ assert.ok(gamesForEra("90s").length >= 20);
 assert.equal(plannedGameLength("90s", "take_turns"), 20);
 assert.equal(plannedGameLength("90s", "play_together"), 10);
 
-let game = createGameRoom("host", "Alex", "ABCDEF", "90s", "take_turns", 1_000);
+let game = createGameRoom("host", "Alex", "ABCDEF", "90s", "take_turns", "hard", 1_000);
 game = addGamePlayer(game, "guest", "Sam");
 game = startGameGame(game, "host", mulberry32(5), 2_000);
 assert.equal(game.questions.length, 20);
 const gameView = toGameClientState(game, "host");
+assert.equal(gameView.level, "hard");
 assert.equal("platform" in (gameView.question ?? {}), false);
 assert.equal("year" in (gameView.question ?? {}), false);
 assert.equal(JSON.stringify(gameView).includes(game.questions[0]!.id), false);
@@ -168,9 +172,36 @@ for (const seed of [1, 2, 3, 4, 5]) {
     assert.equal(optionSets.size, dealt.length, `${era} choices`);
   }
 }
+
+const mediumIds = new Set(MEDIUM_GAME_IDS);
+for (const id of MEDIUM_GAME_IDS) {
+  assert.ok(GAME_QUESTIONS.some((question) => question.id === id), id);
+}
+assert.equal(plannedGameLength("80s", "take_turns", "medium"), 20);
+assert.equal(plannedGameLength("90s", "play_together", "medium"), 10);
+assert.ok(plannedGameLength("90s", "take_turns", "medium") < 20);
+for (const question of selectComputerGames("both", 10, mulberry32(11), questionsForLevel("both", "medium"))) {
+  assert.equal(mediumIds.has(question.id), true, question.id);
+  assert.equal(new Set(question.options).size, 4, question.id);
+}
+const duckPool = questionsForLevel("80s", "medium");
+const mediumDuck = presentQuestion(duck, mulberry32(12), duckPool);
+assert.equal(visiblePlatform("medium", mediumDuck), "NES");
+assert.equal(visiblePlatform("hard", mediumDuck), null);
+const alexMedium = presentQuestion(alex, mulberry32(13), duckPool);
+assert.equal(visiblePlatform("medium", alexMedium), null);
+
+let mediumRoom = createGameRoom("host", "Alex", "ABCDEF", "90s", "play_together", "medium", 1_000);
+mediumRoom = addGamePlayer(mediumRoom, "guest", "Sam");
+mediumRoom = startGameGame(mediumRoom, "host", mulberry32(14), 2_000);
+assert.equal(mediumRoom.questions.length, 10);
+assert.equal(toGameClientState(mediumRoom, "host").levelTitle, "Medium");
+const mediumTitles = new Set(mediumRoom.questions.map((question) => question.id));
+assert.equal(mediumTitles.size, 10);
+for (const id of mediumTitles) assert.equal(mediumIds.has(id), true, id);
 assert.throws(() => submitGameAnswer(
   startGameGame(
-    addGamePlayer(createGameRoom("host", "Alex", "ABCDEF", "80s", "play_together"), "guest", "Sam"),
+    addGamePlayer(createGameRoom("host", "Alex", "ABCDEF", "80s", "play_together", "hard"), "guest", "Sam"),
     "host",
     mulberry32(6),
   ),

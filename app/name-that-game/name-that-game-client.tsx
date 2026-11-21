@@ -5,7 +5,14 @@ import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { formatRoomCodeSpaced, isValidRoomCode, normalizeRoomCode } from "@/lib/funquiz/room-code";
 import type { GameClientState } from "@/lib/name-that-game/room";
-import { GAME_ERAS, GAME_PLAY_MODES, type GameEra, type GamePlayMode } from "@/lib/name-that-game/types";
+import {
+  GAME_ERAS,
+  GAME_LEVELS,
+  GAME_PLAY_MODES,
+  type GameEra,
+  type GameLevel,
+  type GamePlayMode,
+} from "@/lib/name-that-game/types";
 import { openRoomByCode } from "@/lib/room-directory";
 
 const PLAYER_ID_KEY = "name-that-game-player-id";
@@ -45,6 +52,7 @@ export function NameThatGameClient() {
   const [playerId, setPlayerId] = useState("");
   const [name, setName] = useState("");
   const [era, setEra] = useState<GameEra | null>(null);
+  const [level, setLevel] = useState<GameLevel | null>(null);
   const [mode, setMode] = useState<GamePlayMode | null>(null);
   const [joinCode, setJoinCode] = useState("");
   const [roomState, setRoomState] = useState<GameClientState | null>(null);
@@ -198,6 +206,10 @@ export function NameThatGameClient() {
       showSetupError("game-decade", "Choose a decade.");
       return;
     }
+    if (!level) {
+      showSetupError("game-level", "Choose medium or hard.");
+      return;
+    }
     const activePlayerId = playerId || getOrCreatePlayerId();
     if (!playerId) setPlayerId(activePlayerId);
     localStorage.setItem(PLAYER_NAME_KEY, name.trim());
@@ -211,6 +223,7 @@ export function NameThatGameClient() {
           playerName: name.trim(),
           era,
           mode,
+          level,
         }),
       });
       const state = await parseState(res);
@@ -342,7 +355,7 @@ export function NameThatGameClient() {
             Name That Game!
           </h1>
           <p className="mt-3 text-center text-sm leading-relaxed text-slate-300">
-            Two players, one room. A single screenshot appears, with no year or console to narrow it down. Name the game. Play together or take turns.
+            Two players, one room. Choose Medium or Hard, then name the game from one screenshot. Play together or take turns.
           </p>
           <label
             id="game-name"
@@ -425,6 +438,38 @@ export function NameThatGameClient() {
               <p className="mt-3 text-center text-sm text-red-300">{error}</p>
             ) : null}
           </div>
+          <div
+            id="game-level"
+            className={`mt-6 rounded-2xl p-1 ${error === "Choose medium or hard." ? "ring-2 ring-red-400" : ""}`}
+          >
+            <p className="text-sm font-medium text-slate-200">Level</p>
+            <div className="mt-3 grid gap-3">
+              {GAME_LEVELS.map((option) => {
+                const selected = level === option.id;
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => {
+                      setLevel(option.id);
+                      setError(null);
+                    }}
+                    className={`rounded-2xl border p-4 text-left transition ${
+                      selected
+                        ? "border-violet-400 bg-violet-950/50 ring-1 ring-violet-400/40"
+                        : "border-white/10 bg-black/30 hover:border-violet-400/40"
+                    }`}
+                  >
+                    <p className="text-sm font-semibold text-violet-200">{option.title}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-400">{option.description}</p>
+                  </button>
+                );
+              })}
+            </div>
+            {error === "Choose medium or hard." ? (
+              <p className="mt-3 text-center text-sm text-red-300">{error}</p>
+            ) : null}
+          </div>
           <button
             type="button"
             disabled={busy}
@@ -498,7 +543,7 @@ export function NameThatGameClient() {
       <header className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-violet-300">
-            Room {roomState.code} · {roomState.modeTitle} · {roomState.eraTitle}
+            Room {roomState.code} · {roomState.modeTitle} · {roomState.eraTitle} · {roomState.levelTitle}
           </p>
           <h1 className="text-2xl font-bold text-white">Name That Game!</h1>
         </div>
@@ -556,6 +601,9 @@ export function NameThatGameClient() {
           </p>
           <p className="mt-1 text-sm text-slate-300">
             Decade: <strong className="text-violet-200">{roomState.eraTitle}</strong>
+          </p>
+          <p className="mt-1 text-sm text-slate-300">
+            Level: <strong className="text-violet-200">{roomState.levelTitle}</strong>
           </p>
           <p className="mt-2 text-sm text-slate-300">
             Share code{" "}
@@ -686,7 +734,14 @@ export function NameThatGameClient() {
             <p className="mt-4 text-center text-sm text-slate-300">{roomState.statusMessage}</p>
           ) : null}
           <div className="mt-6 rounded-3xl border border-white/10 bg-slate-900/70 p-5 text-center">
-            <h2 className="text-lg font-semibold text-white">Which game is this?</h2>
+            {roomState.question.platform ? (
+              <p className="text-xs font-semibold uppercase tracking-widest text-violet-300">
+                {roomState.question.platform}
+              </p>
+            ) : null}
+            <h2 className={`${roomState.question.platform ? "mt-2" : ""} text-lg font-semibold text-white`}>
+              Which game is this?
+            </h2>
             {shotAttempt >= 3 || !playerId ? (
               <p className="mt-4 text-sm text-slate-300">
                 {playerId ? "The screenshot didn't load. Take a guess from the four titles." : "Loading the screenshot…"}
