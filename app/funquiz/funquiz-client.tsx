@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { QUIZ_CATEGORIES, QUIZ_CATEGORY_GENERAL_KNOWLEDGE } from "@/lib/funquiz/categories";
@@ -582,6 +583,16 @@ export function FunQuizClient() {
                 bottom — steal wrong answers, with classic quiz-show sounds.
               </p>
             </button>
+            <Link
+              href="/name-that-movie"
+              className="mt-3 block rounded-2xl border border-white/10 bg-black/30 p-4 text-left transition hover:border-violet-400/40"
+            >
+              <p className="text-sm font-semibold text-violet-200">Game 7 — Name That Movie!</p>
+              <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                A famous line appears. Take turns naming the film. Ten questions each, four
+                choices, and a score at the end.
+              </p>
+            </Link>
           </div>
 
           {selectedMode && !isStandaloneGameMode(selectedMode) ? (
