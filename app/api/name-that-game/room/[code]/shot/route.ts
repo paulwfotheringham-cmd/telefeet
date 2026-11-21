@@ -6,6 +6,7 @@ import { isValidRoomCode, normalizeRoomCode } from "@/lib/funquiz/room-code";
 import { loadGameRoom } from "@/lib/name-that-game/store";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 20;
 
 type Params = { params: { code: string } };
 
@@ -27,8 +28,12 @@ export async function GET(request: Request, { params }: Params) {
       return NextResponse.json({ error: "No screenshot for this turn" }, { status: 404 });
     }
     const shot = await loadGameShot(question.id);
-    if (!shot) {
-      return NextResponse.json({ error: "Screenshot unavailable" }, { status: 404 });
+    if ("error" in shot) {
+      console.error(`name-that-game shot ${question.id}: ${shot.error}`);
+      return NextResponse.json(
+        { error: "Screenshot unavailable" },
+        { status: 404, headers: { "X-Shot-Error": shot.error.replace(/[^\x20-\x7e]/g, " ").slice(0, 180) } },
+      );
     }
     return new NextResponse(Buffer.from(shot.bytes), {
       headers: {
