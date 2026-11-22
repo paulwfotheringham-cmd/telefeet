@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
+import { scoreDrawing } from "../lib/draw-the-organ/judge";
 import { ORGAN_ROUNDS, ORGANS } from "../lib/draw-the-organ/organs";
 import {
   addDrawPlayer,
   createDrawRoom,
   startDrawGame,
   submitDrawing,
-  submitVote,
   tickDrawRoom,
   toDrawClientState,
   REVEAL_MS,
@@ -25,7 +25,11 @@ function mulberry32(seed: number): () => number {
 const stroke = { color: "#0f172a", size: 8, points: [10, 10, 40, 80] };
 
 assert.equal(new Set(ORGANS.map((organ) => organ.id)).size, ORGANS.length);
+assert.equal(ORGAN_ROUNDS, 20);
 assert.ok(ORGANS.length >= ORGAN_ROUNDS);
+for (const title of ["Spleen", "Kidneys", "Prostate", "Appendix", "Heart", "Liver", "Femur", "Skull"]) {
+  assert.ok(ORGANS.some((organ) => organ.title === title), title);
+}
 
 let room = createDrawRoom("host", "Alex", "ABCDEF", 1_000);
 room = addDrawPlayer(room, "guest", "Sam");
@@ -42,21 +46,23 @@ assert.equal(stillHidden.boards.length, 0);
 assert.equal(stillHidden.phase, "draw");
 room = submitDrawing(room, "guest", [stroke], 3_100);
 const revealed = toDrawClientState(room, "guest");
-assert.equal(revealed.phase, "vote");
+assert.equal(revealed.phase, "reveal");
 assert.equal(revealed.boards.length, 2);
-assert.equal(revealed.boards.some((board) => board.strokes.length === 1), true);
-
-room = submitVote(room, "host", "guest", 4_000);
-assert.equal(room.phase, "vote");
-room = submitVote(room, "guest", "guest", 4_100);
-assert.equal(room.phase, "reveal");
-assert.equal(room.players.find((player) => player.id === "guest")?.score, 1);
-assert.equal(room.players.find((player) => player.id === "host")?.score, 0);
+assert.equal(revealed.roundScores.length, 2);
+assert.equal(room.players[0]?.score, room.players[1]?.score);
+assert.match(revealed.statusMessage ?? "", /closer|close/);
 const after = tickDrawRoom(room, 4_100 + REVEAL_MS);
 assert.equal(after.phase, "draw");
 assert.equal(after.turnIndex, 1);
 assert.notEqual(after.organs[1], after.organs[0]);
 
 assert.throws(() => submitDrawing(after, "host", [], 9_000), /Draw something before you submit/);
+
+const trace = {
+  color: "#0f172a",
+  size: 22,
+  points: [80, 200, 200, 280, 400, 500, 620, 700, 800, 820, 500, 900],
+};
+assert.ok(scoreDrawing("Heart", [trace]) > scoreDrawing("Heart", [stroke]));
 
 console.log("draw-the-organ.test.ts OK");
