@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { isValidRoomCode, normalizeRoomCode } from "@/lib/funquiz/room-code";
 import { loadRoom } from "@/lib/funquiz/store";
+import { loadDrawRoom } from "@/lib/draw-the-organ/store";
 import { loadGameRoom } from "@/lib/name-that-game/store";
 import { loadMovieRoom } from "@/lib/name-that-movie/store";
 import { loadShowRoom } from "@/lib/name-that-show/store";
@@ -17,6 +18,7 @@ const LOADERS = {
   tune: loadTuneRoom,
   show: loadShowRoom,
   game: loadGameRoom,
+  organ: loadDrawRoom,
 } as const;
 
 export async function GET(_request: Request, { params }: Params) {
