@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useMatchScore } from "@/lib/funquiz/use-match-score";
 import { createClient } from "@/lib/supabase/client";
 import { formatRoomCodeSpaced, isValidRoomCode, normalizeRoomCode } from "@/lib/funquiz/room-code";
 import type { ShowClientState } from "@/lib/name-that-show/room";
@@ -376,6 +377,14 @@ export function NameThatShowClient() {
     setError(null);
     clearRoomQuery();
   }
+
+  useMatchScore({
+    game: "Name That Show",
+    roomCode: roomState?.code,
+    phase: roomState?.phase,
+    score: roomState ? (roomState.jointScore ?? roomState.you.score) : undefined,
+    won: !!roomState && (roomState.winnerIds.includes(playerId) || (roomState.jointScore !== null && roomState.winnerIds.length !== 1)),
+  });
 
   if (screen === "home") {
     return (

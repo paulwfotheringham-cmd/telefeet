@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { markWeeklyRoom } from "@/lib/funquiz/club";
+import { mulberry32, weekSeed, weeklyGame } from "@/lib/funquiz/weekly";
 import { handleDrawStoreError } from "@/lib/draw-the-fast-food/api";
 import { startDrawGame, toDrawClientState } from "@/lib/draw-the-fast-food/room";
 import { isValidRoomCode, normalizeRoomCode } from "@/lib/funquiz/room-code";
@@ -11,12 +13,15 @@ type Params = { params: { code: string } };
 export async function POST(request: Request, { params }: Params) {
   try {
     const code = normalizeRoomCode(params.code ?? "");
-    const body = (await request.json()) as { playerId?: string };
+    const body = (await request.json()) as { playerId?: string; weekly?: boolean };
     const playerId = body.playerId?.trim();
     if (!isValidRoomCode(code) || !playerId) {
       return NextResponse.json({ error: "code and playerId required" }, { status: 400 });
     }
-    const room = await mutateDrawRoom(code, (current) => startDrawGame(current, playerId));
+    const weekly = body.weekly === true && weeklyGame().path === "/draw-the-fast-food";
+    const rng = weekly ? mulberry32(weekSeed("/draw-the-fast-food")) : Math.random;
+    const room = await mutateDrawRoom(code, (current) => startDrawGame(current, playerId, rng));
+    if (weekly) await markWeeklyRoom(code, weeklyGame().title);
     return NextResponse.json({ state: toDrawClientState(room, playerId) });
   } catch (err) {
     return handleDrawStoreError(err);

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type PointerEvent } from "react";
+import { useMatchScore } from "@/lib/funquiz/use-match-score";
 import { formatRoomCodeSpaced, isValidRoomCode, normalizeRoomCode } from "@/lib/funquiz/room-code";
 import type { Stroke } from "@/lib/draw-the-myth/drawing";
 import type { DrawClientState } from "@/lib/draw-the-myth/room";
@@ -326,6 +327,17 @@ export function DrawTheMythClient() {
     }
   }
 
+  const clubPlayers = roomState?.players ?? [];
+  const clubMe = clubPlayers.find((player) => player.id === playerId);
+  const clubBest = clubPlayers.reduce((best, player) => Math.max(best, player.score), 0);
+  useMatchScore({
+    game: "Draw the Myth",
+    roomCode: roomState?.code,
+    phase: roomState?.phase,
+    score: clubMe?.score,
+    won: !!clubMe && clubMe.score === clubBest && clubBest > 0,
+  });
+
   if (screen === "home") {
     return (
       <div className="mx-auto flex min-h-[100dvh] max-w-lg flex-col justify-center px-4 py-10">
@@ -463,7 +475,7 @@ export function DrawTheMythClient() {
             <button
               type="button"
               disabled={busy || roomState.players.length < 2}
-              onClick={() => void post(`/api/draw-the-myth/room/${roomState.code}/start`, { playerId })}
+              onClick={() => void post(`/api/draw-the-myth/room/${roomState.code}/start`, { playerId, weekly: new URLSearchParams(window.location.search).get("weekly") === "1" })}
               className="mt-6 w-full rounded-xl bg-gradient-to-r from-purple-500 to-fuchsia-600 py-3 text-sm font-semibold text-white disabled:opacity-60"
             >
               {roomState.players.length < 2 ? "Waiting for player 2" : "Start game"}
