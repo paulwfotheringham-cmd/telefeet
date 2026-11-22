@@ -498,6 +498,12 @@ export function NameThatTuneClient() {
                 value={joinCode}
                 onChange={(event) => setJoinCode(normalizeRoomCode(event.target.value))}
                 placeholder="ABC123"
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    void joinRoom();
+                  }
+                }}
                 maxLength={12}
                 autoCapitalize="characters"
                 autoCorrect="off"

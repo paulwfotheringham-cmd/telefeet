@@ -145,6 +145,8 @@ export function DrawTheOrganClient() {
   const [strokes, setStrokes] = useState<Stroke[]>([]);
   const [color, setColor] = useState(COLORS[0] ?? "#0f172a");
   const [size, setSize] = useState(SIZES[1] ?? 8);
+  const [copied, setCopied] = useState(false);
+  const nameRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const id = getOrCreatePlayerId();
@@ -202,6 +204,12 @@ export function DrawTheOrganClient() {
   useEffect(() => {
     setStrokes([]);
   }, [roomState?.code, roomState?.turnIndex]);
+
+  useEffect(() => {
+    if (screen === "home" && isValidRoomCode(normalizeRoomCode(joinCode)) && !name.trim()) {
+      nameRef.current?.focus();
+    }
+  }, [screen, joinCode, name]);
 
   const code = roomState?.code ?? "";
   const poll = useCallback(async () => {
@@ -327,46 +335,54 @@ export function DrawTheOrganClient() {
           <p className="mt-3 text-center text-sm leading-relaxed text-slate-300">
             Twenty organs and bones. You each draw, then the game picks the closer picture.
           </p>
-          <label className="mt-6 block text-sm font-medium text-slate-200">
-            Your name
-            <input
-              className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-rose-400/60"
-              value={name}
-              maxLength={24}
-              placeholder="Alex"
-              onChange={(event) => setName(event.target.value)}
-            />
-          </label>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => void createRoom()}
-            className="mt-6 w-full rounded-xl bg-gradient-to-r from-rose-500 to-fuchsia-500 py-3.5 text-sm font-semibold text-white shadow-lg shadow-rose-700/30 disabled:opacity-60"
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (normalizeRoomCode(joinCode)) void joinRoom();
+              else void createRoom();
+            }}
           >
-            Create room
-          </button>
-          {error && errorScope !== "join" ? <p className="mt-4 text-center text-sm text-red-300">{error}</p> : null}
-          <div id="organ-join" className={`mt-6 rounded-2xl p-1 ${errorScope === "join" ? "ring-2 ring-red-400" : ""}`}>
-            <label className="block text-sm font-medium text-slate-200">
-              Room code
+            <label className="mt-6 block text-sm font-medium text-slate-200">
+              Your name
               <input
-                className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-center font-mono tracking-[0.3em] text-white outline-none focus:ring-2 focus:ring-rose-400/60"
-                value={joinCode}
-                placeholder="ABC123"
-                maxLength={11}
-                onChange={(event) => setJoinCode(event.target.value.toUpperCase())}
+                ref={nameRef}
+                className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-rose-400/60"
+                value={name}
+                maxLength={24}
+                placeholder="Alex"
+                onChange={(event) => setName(event.target.value)}
               />
             </label>
             <button
               type="button"
               disabled={busy}
-              onClick={() => void joinRoom()}
-              className="mt-3 w-full rounded-xl border border-white/15 py-3 text-sm font-semibold text-slate-100"
+              onClick={() => void createRoom()}
+              className="mt-6 w-full rounded-xl bg-gradient-to-r from-rose-500 to-fuchsia-500 py-3.5 text-sm font-semibold text-white shadow-lg shadow-rose-700/30 disabled:opacity-60"
             >
-              Join room
+              Create room
             </button>
-            {errorScope === "join" && error ? <p className="mt-3 text-center text-sm text-red-300">{error}</p> : null}
-          </div>
+            {error && errorScope !== "join" ? <p className="mt-4 text-center text-sm text-red-300">{error}</p> : null}
+            <div id="organ-join" className={`mt-6 rounded-2xl p-1 ${errorScope === "join" ? "ring-2 ring-red-400" : ""}`}>
+              <label className="block text-sm font-medium text-slate-200">
+                Room code
+                <input
+                  className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-center font-mono tracking-[0.3em] text-white outline-none focus:ring-2 focus:ring-rose-400/60"
+                  value={joinCode}
+                  placeholder="ABC123"
+                  maxLength={18}
+                  onChange={(event) => setJoinCode(normalizeRoomCode(event.target.value))}
+                />
+              </label>
+              <button
+                type="submit"
+                disabled={busy}
+                className="mt-3 w-full rounded-xl border border-white/15 py-3 text-sm font-semibold text-slate-100"
+              >
+                Join room
+              </button>
+              {errorScope === "join" && error ? <p className="mt-3 text-center text-sm text-red-300">{error}</p> : null}
+            </div>
+          </form>
           <Link href="/funquiz" className="mt-6 block text-center text-sm text-rose-200">
             Back to Fun Quiz
           </Link>
@@ -422,6 +438,22 @@ export function DrawTheOrganClient() {
             Share code{" "}
             <span className="font-mono tracking-[0.2em] text-rose-200">{formatRoomCodeSpaced(roomState.code)}</span>
           </p>
+          <p className="mt-2 text-sm text-slate-400">
+            Your friend enters that code on Fun Quiz or this page, then presses Join room.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              const url = `${window.location.origin}/draw-the-organ?join=${roomState.code}`;
+              void navigator.clipboard.writeText(url).then(() => {
+                setCopied(true);
+                window.setTimeout(() => setCopied(false), 2000);
+              });
+            }}
+            className="mt-3 rounded-lg border border-white/15 px-3 py-1.5 text-xs text-slate-200"
+          >
+            {copied ? "Link copied" : "Copy invite link"}
+          </button>
           <ul className="mt-4 space-y-2 text-sm text-slate-200">
             {roomState.players.map((player) => (
               <li key={player.id}>{player.name}</li>
