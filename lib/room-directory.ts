@@ -13,6 +13,7 @@ export const ROOM_DIRECTORIES = [
   { id: "flower", path: "/draw-the-flower", nameKey: "draw-the-flower-player-name" },
   { id: "weapon", path: "/draw-the-weapon", nameKey: "draw-the-weapon-player-name" },
   { id: "geography", path: "/draw-the-geography", nameKey: "draw-the-geography-player-name" },
+  { id: "myth", path: "/draw-the-myth", nameKey: "draw-the-myth-player-name" },
 ] as const;
 
 export type RoomDirectoryId = (typeof ROOM_DIRECTORIES)[number]["id"];
