@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { isValidRoomCode, normalizeRoomCode } from "@/lib/funquiz/room-code";
 import { loadRoom } from "@/lib/funquiz/store";
 import { loadDrawRoom as loadAnimalRoom } from "@/lib/draw-the-animal/store";
+import { loadDrawRoom as loadContinentRoom } from "@/lib/draw-the-continent/store";
 import { loadDrawRoom as loadCountryRoom } from "@/lib/draw-the-country/store";
 import { loadDrawRoom } from "@/lib/draw-the-organ/store";
 import { loadGameRoom } from "@/lib/name-that-game/store";
@@ -23,6 +24,7 @@ const LOADERS = {
   organ: loadDrawRoom,
   animal: loadAnimalRoom,
   country: loadCountryRoom,
+  continent: loadContinentRoom,
 } as const;
 
 export async function GET(_request: Request, { params }: Params) {
