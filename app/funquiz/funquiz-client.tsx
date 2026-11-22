@@ -679,6 +679,15 @@ export function FunQuizClient() {
                 Twenty famous landmarks. The game decides whose drawing is closer after each one.
               </p>
             </Link>
+            <Link
+              href="/draw-the-flower"
+              className="mt-3 block rounded-2xl border border-white/10 bg-black/30 p-4 text-left transition hover:border-pink-400/40"
+            >
+              <p className="text-sm font-semibold text-pink-200">Game 17 — Draw the Flower!</p>
+              <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                Twenty flowers. The game decides whose drawing is closer after each one.
+              </p>
+            </Link>
           </div>
 
           {selectedMode && !isStandaloneGameMode(selectedMode) ? (
