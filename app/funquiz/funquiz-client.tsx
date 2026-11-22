@@ -643,6 +643,15 @@ export function FunQuizClient() {
                 Twenty animals. The game decides whose drawing is closer after each one.
               </p>
             </Link>
+            <Link
+              href="/draw-the-country"
+              className="mt-3 block rounded-2xl border border-white/10 bg-black/30 p-4 text-left transition hover:border-sky-400/40"
+            >
+              <p className="text-sm font-semibold text-sky-200">Game 13 — Draw the Country!</p>
+              <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                Twenty countries. The game decides whose outline is closer after each one.
+              </p>
+            </Link>
           </div>
 
           {selectedMode && !isStandaloneGameMode(selectedMode) ? (
