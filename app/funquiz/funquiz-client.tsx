@@ -715,6 +715,15 @@ export function FunQuizClient() {
                 Twenty mythical creatures. Dragons, unicorns, mermaids, and phoenixes.
               </p>
             </Link>
+            <Link
+              href="/draw-the-fast-food"
+              className="mt-3 block rounded-2xl border border-white/10 bg-black/30 p-4 text-left transition hover:border-yellow-400/40"
+            >
+              <p className="text-sm font-semibold text-yellow-200">Game 21 — Draw the Fast Food!</p>
+              <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                Twenty fast foods. Pizza, burgers, fries, hot dogs, and tacos.
+              </p>
+            </Link>
           </div>
 
           {selectedMode && !isStandaloneGameMode(selectedMode) ? (
