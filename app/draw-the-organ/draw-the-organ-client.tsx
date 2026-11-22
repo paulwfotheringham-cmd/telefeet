@@ -6,6 +6,7 @@ import { formatRoomCodeSpaced, isValidRoomCode, normalizeRoomCode } from "@/lib/
 import type { Stroke } from "@/lib/draw-the-organ/drawing";
 import type { DrawClientState } from "@/lib/draw-the-organ/room";
 import { openRoomByCode } from "@/lib/room-directory";
+import { OrganPicture } from "./organ-picture";
 
 const PLAYER_ID_KEY = "draw-the-organ-player-id";
 const PLAYER_NAME_KEY = "draw-the-organ-player-name";
@@ -508,16 +509,22 @@ export function DrawTheOrganClient() {
               ) : null}
             </div>
           ) : (
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              {roomState.boards.map((board) => (
-                <div key={board.playerId}>
-                  <p className="mb-2 text-sm font-medium text-slate-200">
-                    {board.name}
-                    {roomState.roundWinnerIds.includes(board.playerId) ? " · closer" : ""}
-                  </p>
-                  <DrawingBoard strokes={board.strokes} interactive={false} color={color} size={size} />
-                </div>
-              ))}
+            <div className="mt-4">
+              <p className="mb-2 text-center text-sm font-semibold text-rose-200">Answer</p>
+              <div className="mx-auto max-w-sm overflow-hidden rounded-2xl border border-white/10">
+                <OrganPicture name={roomState.organ} />
+              </div>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                {roomState.boards.map((board) => (
+                  <div key={board.playerId}>
+                    <p className="mb-2 text-sm font-medium text-slate-200">
+                      {board.name}
+                      {roomState.roundWinnerIds.includes(board.playerId) ? " · closer" : ""}
+                    </p>
+                    <DrawingBoard strokes={board.strokes} interactive={false} color={color} size={size} />
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
@@ -559,13 +566,18 @@ export function DrawTheOrganClient() {
           <h2 className="text-lg font-semibold text-white">Results</h2>
           <ul className="mt-4 space-y-2 text-sm text-slate-200">
             {(roomState.results ?? []).map((round) => (
-              <li key={round.organ}>
+              <li key={round.organ} className="flex items-center gap-3">
+                <span className="w-24 shrink-0 overflow-hidden rounded-lg">
+                  <OrganPicture name={round.organ} />
+                </span>
+                <span>
                 {round.organ}:{" "}
                 {round.winnerIds.length === 0
                   ? "no points"
                   : round.winnerIds
                       .map((id) => roomState.players.find((player) => player.id === id)?.name ?? "Player")
                       .join(" and ")}
+                </span>
               </li>
             ))}
           </ul>
