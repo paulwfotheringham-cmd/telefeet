@@ -1,5 +1,6 @@
-import type { ReactNode } from "react";
+import React, { type ReactNode } from "react";
 import { ORGANS, type OrganId } from "@/lib/draw-the-organ/organs";
+import { morePicture } from "./organ-picture-more";
 
 const TITLES = new Map(ORGANS.map((organ) => [organ.title, organ.id]));
 
@@ -210,7 +211,7 @@ function picture(id: OrganId, label: string) {
         </Frame>
       );
     default:
-      return null;
+      return morePicture(id, label);
   }
 }
 

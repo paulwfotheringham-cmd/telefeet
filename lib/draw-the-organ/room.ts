@@ -1,8 +1,9 @@
 import { cleanStrokes, type Stroke } from "./drawing";
+import { compareDrawings } from "./judge";
 import { ORGAN_ROUNDS, ORGANS } from "./organs";
 
 export const MAX_PLAYERS = 2;
-export const REVEAL_MS = 5500;
+export const REVEAL_MS = 8000;
 export const ROOM_TTL_MS = 4 * 60 * 60 * 1000;
 
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -20,9 +21,15 @@ export type DrawVote = {
   choice: string;
 };
 
+export type DrawScore = {
+  playerId: string;
+  score: number;
+};
+
 export type DrawRound = {
   organ: string;
   winnerIds: string[];
+  scores?: DrawScore[];
 };
 
 export type DrawRoom = {
@@ -58,6 +65,7 @@ export type DrawClientState = {
   you: DrawPlayer;
   statusMessage: string | null;
   roundWinnerIds: string[];
+  roundScores: DrawScore[];
   results: DrawRound[] | null;
   revision: number;
   error?: string;
@@ -157,13 +165,26 @@ export function submitDrawing(room: DrawRoom, playerId: string, rawStrokes: unkn
   const submitted = [...room.submitted, playerId];
   const drawings = { ...room.drawings, [playerId]: strokes };
   const ready = room.players.every((player) => submitted.includes(player.id));
+  if (!ready) {
+    return touch(room, { drawings, submitted }, now);
+  }
+  const organ = room.organs[room.turnIndex] ?? "Organ";
+  const judged = compareDrawings(
+    organ,
+    room.players.map((player) => ({ playerId: player.id, strokes: drawings[player.id] ?? [] })),
+  );
   return touch(
     room,
     {
       drawings,
       submitted,
-      phase: ready ? "vote" : room.phase,
-      votes: ready ? [] : room.votes,
+      votes: [],
+      phase: "reveal",
+      revealStartedAt: now,
+      rounds: [...room.rounds, { organ, winnerIds: judged.winnerIds, scores: judged.scores }],
+      players: room.players.map((player) =>
+        judged.winnerIds.includes(player.id) ? { ...player, score: player.score + 1 } : player,
+      ),
     },
     now,
   );
@@ -281,6 +302,7 @@ export function toDrawClientState(room: DrawRoom, viewerId: string): DrawClientS
       you: { id: viewerId, name: "", score: 0 },
       statusMessage: null,
       roundWinnerIds: [],
+      roundScores: [],
       results: null,
       revision: room.revision,
       error: "You are not in this room",
@@ -296,6 +318,16 @@ export function toDrawClientState(room: DrawRoom, viewerId: string): DrawClientS
     statusMessage = "Draw on your board. Your friend cannot see it until you both press Done.";
   }
   const currentRound = room.rounds[room.turnIndex];
+  if (room.phase === "reveal" && currentRound) {
+    if (currentRound.winnerIds.length === 0) {
+      statusMessage = "Neither drawing was close.";
+    } else if (currentRound.winnerIds.length > 1) {
+      statusMessage = "Too close to call. You both score.";
+    } else {
+      const winner = room.players.find((player) => player.id === currentRound.winnerIds[0]);
+      statusMessage = `${winner?.name ?? "One drawing"} is closer.`;
+    }
+  }
   return {
     code: room.code,
     hostId: room.hostId,
@@ -317,6 +349,7 @@ export function toDrawClientState(room: DrawRoom, viewerId: string): DrawClientS
     you,
     statusMessage,
     roundWinnerIds: room.phase === "reveal" && currentRound ? currentRound.winnerIds : [],
+    roundScores: room.phase === "reveal" && currentRound?.scores ? currentRound.scores : [],
     results: room.phase === "finished" ? room.rounds : null,
     revision: room.revision,
   };

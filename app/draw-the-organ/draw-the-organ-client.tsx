@@ -325,7 +325,7 @@ export function DrawTheOrganClient() {
           <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-rose-300">TeleFeet</p>
           <h1 className="mt-3 text-center text-4xl font-bold tracking-tight text-white">Draw the Organ!</h1>
           <p className="mt-3 text-center text-sm leading-relaxed text-slate-300">
-            Both players get a whiteboard. Draw the organ, then vote whose picture is closer.
+            Twenty organs and bones. You each draw, then the game picks the closer picture.
           </p>
           <label className="mt-6 block text-sm font-medium text-slate-200">
             Your name
@@ -446,7 +446,7 @@ export function DrawTheOrganClient() {
         <section className="mt-6">
           <div className="flex items-center justify-between text-xs text-slate-400">
             <span>Round {roundLabel} / {roomState.totalRounds}</span>
-            <span>{roomState.phase === "draw" ? "Draw" : roomState.phase === "vote" ? "Judge" : "Scores"}</span>
+            <span>{roomState.phase === "draw" ? "Draw" : roomState.phase === "vote" ? "Judge" : "Winner"}</span>
           </div>
           <h2 className="mt-3 text-center text-3xl font-bold text-white">Draw the {roomState.organ}</h2>
           {roomState.statusMessage ? <p className="mt-2 text-center text-sm text-slate-300">{roomState.statusMessage}</p> : null}
@@ -517,10 +517,13 @@ export function DrawTheOrganClient() {
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 {roomState.boards.map((board) => (
                   <div key={board.playerId}>
-                    <p className="mb-2 text-sm font-medium text-slate-200">
-                      {board.name}
-                      {roomState.roundWinnerIds.includes(board.playerId) ? " · closer" : ""}
-                    </p>
+                  <p className="mb-2 text-sm font-medium text-slate-200">
+                    {board.name}
+                    {roomState.roundWinnerIds.includes(board.playerId) ? " · closer" : ""}
+                    {roomState.roundScores.some((entry) => entry.playerId === board.playerId)
+                      ? ` · ${Math.round((roomState.roundScores.find((entry) => entry.playerId === board.playerId)?.score ?? 0) * 100)}%`
+                      : ""}
+                  </p>
                     <DrawingBoard strokes={board.strokes} interactive={false} color={color} size={size} />
                   </div>
                 ))}

@@ -3,7 +3,7 @@ import { DrawTheOrganClient } from "./draw-the-organ-client";
 
 export const metadata: Metadata = {
   title: "Draw the Organ! | TeleFeet",
-  description: "Two players draw the same human organ, then vote whose picture is closer.",
+  description: "Two players draw organs and bones. The game picks the closer picture after each one.",
 };
 
 export default function DrawTheOrganPage() {

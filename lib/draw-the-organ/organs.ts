@@ -1,4 +1,4 @@
-export const ORGAN_ROUNDS = 6;
+export const ORGAN_ROUNDS = 20;
 
 export const ORGANS = [
   { id: "heart", title: "Heart" },
@@ -20,6 +20,31 @@ export const ORGANS = [
   { id: "spleen", title: "Spleen" },
   { id: "diaphragm", title: "Diaphragm" },
   { id: "teeth", title: "Teeth" },
+  { id: "gallbladder", title: "Gallbladder" },
+  { id: "appendix", title: "Appendix" },
+  { id: "esophagus", title: "Esophagus" },
+  { id: "trachea", title: "Trachea" },
+  { id: "thyroid", title: "Thyroid" },
+  { id: "prostate", title: "Prostate" },
+  { id: "uterus", title: "Uterus" },
+  { id: "ovaries", title: "Ovaries" },
+  { id: "tongue", title: "Tongue" },
+  { id: "adrenals", title: "Adrenal glands" },
+  { id: "mandible", title: "Jawbone" },
+  { id: "sternum", title: "Sternum" },
+  { id: "clavicle", title: "Collarbone" },
+  { id: "scapula", title: "Shoulder blade" },
+  { id: "humerus", title: "Humerus" },
+  { id: "radius", title: "Radius" },
+  { id: "ulna", title: "Ulna" },
+  { id: "pelvis", title: "Pelvis" },
+  { id: "sacrum", title: "Sacrum" },
+  { id: "femur", title: "Femur" },
+  { id: "patella", title: "Kneecap" },
+  { id: "tibia", title: "Tibia" },
+  { id: "fibula", title: "Fibula" },
+  { id: "hand-bones", title: "Hand bones" },
+  { id: "foot-bones", title: "Foot bones" },
 ] as const;
 
 export type OrganId = (typeof ORGANS)[number]["id"];
