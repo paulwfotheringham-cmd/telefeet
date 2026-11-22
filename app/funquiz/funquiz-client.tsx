@@ -719,6 +719,12 @@ export function FunQuizClient() {
               }}
               placeholder="ABC123"
               maxLength={18}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  void joinRoom();
+                }
+              }}
               inputMode="text"
               autoCapitalize="characters"
               autoCorrect="off"

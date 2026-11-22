@@ -467,6 +467,12 @@ export function NameThatMovieClient() {
                 onChange={(event) => setJoinCode(normalizeRoomCode(event.target.value))}
                 placeholder="ABC123"
                 maxLength={12}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    void joinRoom();
+                  }
+                }}
                 autoCapitalize="characters"
                 autoCorrect="off"
                 spellCheck={false}
