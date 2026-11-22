@@ -706,6 +706,15 @@ export function FunQuizClient() {
                 Twenty geography features. Scree slopes, peaks, valleys, arêtes, and clouds.
               </p>
             </Link>
+            <Link
+              href="/draw-the-myth"
+              className="mt-3 block rounded-2xl border border-white/10 bg-black/30 p-4 text-left transition hover:border-purple-400/40"
+            >
+              <p className="text-sm font-semibold text-purple-200">Game 20 — Draw the Myth!</p>
+              <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                Twenty mythical creatures. Dragons, unicorns, mermaids, and phoenixes.
+              </p>
+            </Link>
           </div>
 
           {selectedMode && !isStandaloneGameMode(selectedMode) ? (
