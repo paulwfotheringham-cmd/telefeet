@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { useMatchScore } from "@/lib/funquiz/use-match-score";
 import { createClient } from "@/lib/supabase/client";
 import { isValidRoomCode, normalizeRoomCode, formatRoomCodeSpaced } from "@/lib/funquiz/room-code";
 import type { MovieClientState } from "@/lib/name-that-movie/room";
@@ -334,6 +335,14 @@ export function NameThatMovieClient() {
     setError(null);
     clearRoomQuery();
   }
+
+  useMatchScore({
+    game: "Name That Movie",
+    roomCode: roomState?.code,
+    phase: roomState?.phase,
+    score: roomState ? (roomState.jointScore ?? roomState.you.score) : undefined,
+    won: !!roomState && (roomState.winnerIds.includes(playerId) || (roomState.jointScore !== null && roomState.winnerIds.length !== 1)),
+  });
 
   if (screen === "home") {
     return (

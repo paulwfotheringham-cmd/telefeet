@@ -2,6 +2,10 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { FriendsClub } from "@/components/funquiz/friends-club";
+import { LoginScreen } from "@/components/funquiz/login-screen";
+import { clubToken, type ClubSession } from "@/lib/funquiz/club-browser";
+import { useMatchScore } from "@/lib/funquiz/use-match-score";
 import { createClient } from "@/lib/supabase/client";
 import { openRoomByCode } from "@/lib/room-directory";
 import { QUIZ_CATEGORIES, QUIZ_CATEGORY_GENERAL_KNOWLEDGE } from "@/lib/funquiz/categories";
@@ -134,6 +138,8 @@ export function FunQuizClient() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [storeWarning, setStoreWarning] = useState<string | null>(null);
+  const [account, setAccount] = useState<ClubSession | null>(null);
+  const [accountReady, setAccountReady] = useState(false);
 
   useEffect(() => {
     const id = getOrCreatePlayerId();
@@ -394,6 +400,35 @@ export function FunQuizClient() {
     }
   };
 
+  useEffect(() => {
+    const token = clubToken();
+    if (!token) {
+      setAccountReady(true);
+      return;
+    }
+    void fetch("/api/club/session", { headers: { Authorization: `Bearer ${token}` } })
+      .then(async (res) => {
+        if (!res.ok) {
+          setAccount(null);
+          return;
+        }
+        const data = (await res.json()) as { account?: { id: string; email: string; name: string } };
+        if (!data.account) return;
+        const session = { ...data.account, token };
+        setAccount(session);
+        setName(data.account.name);
+      })
+      .finally(() => setAccountReady(true));
+  }, []);
+
+  useMatchScore({
+    game: roomState ? `Fun Quiz · ${gameModeLabel(roomState.gameMode)}` : "Fun Quiz",
+    roomCode: roomState?.code,
+    phase: roomState?.phase,
+    score: roomState ? (roomState.jointScore ?? roomState.you.score) : undefined,
+    won: !!roomState && (roomState.winnerIds.includes(playerId) || (roomState.jointScore !== null && roomState.winnerIds.length !== 1)),
+  });
+
   const isHost = roomState?.hostId === playerId;
 
   const progressPct = roomState
@@ -409,6 +444,23 @@ export function FunQuizClient() {
     setNewGameDifficulty(null);
   };
 
+  if (screen === "home" && !accountReady) {
+    return <div className="flex min-h-[100dvh] items-center justify-center text-slate-300">Loading…</div>;
+  }
+
+  if (screen === "home" && !account) {
+    return (
+      <LoginScreen
+        onSuccess={(session) => {
+          setAccount(session);
+          setName(session.name);
+          const next = new URLSearchParams(window.location.search).get("next");
+          if (next && next.startsWith("/") && !next.startsWith("//") && !next.includes("://")) window.location.assign(next);
+        }}
+      />
+    );
+  }
+
   if (screen === "home") {
     return (
       <div className="mx-auto flex min-h-[100dvh] max-w-lg flex-col justify-center px-4 py-10">
@@ -422,6 +474,7 @@ export function FunQuizClient() {
           <p className="mt-3 text-center text-sm leading-relaxed text-slate-300">
             Choose a mode, create a room, and share the code with a friend.
           </p>
+          {account ? <FriendsClub account={account} onLogout={() => setAccount(null)} /> : null}
 
           {storeWarning ? (
             <p className="mt-4 rounded-xl border border-amber-500/40 bg-amber-950/40 px-3 py-2 text-xs text-amber-100">
