@@ -4,6 +4,7 @@ import { loadRoom } from "@/lib/funquiz/store";
 import { loadDrawRoom as loadAnimalRoom } from "@/lib/draw-the-animal/store";
 import { loadDrawRoom as loadApplianceRoom } from "@/lib/draw-the-appliance/store";
 import { loadDrawRoom as loadFlowerRoom } from "@/lib/draw-the-flower/store";
+import { loadDrawRoom as loadWeaponRoom } from "@/lib/draw-the-weapon/store";
 import { loadDrawRoom as loadLandmarkRoom } from "@/lib/draw-the-landmark/store";
 import { loadDrawRoom as loadContinentRoom } from "@/lib/draw-the-continent/store";
 import { loadDrawRoom as loadCountryRoom } from "@/lib/draw-the-country/store";
@@ -31,6 +32,7 @@ const LOADERS = {
   appliance: loadApplianceRoom,
   landmark: loadLandmarkRoom,
   flower: loadFlowerRoom,
+  weapon: loadWeaponRoom,
 } as const;
 
 export async function GET(_request: Request, { params }: Params) {
