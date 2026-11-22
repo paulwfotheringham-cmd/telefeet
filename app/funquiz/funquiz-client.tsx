@@ -697,6 +697,15 @@ export function FunQuizClient() {
                 Twenty military weapons. The game decides whose drawing is closer after each one.
               </p>
             </Link>
+            <Link
+              href="/draw-the-geography"
+              className="mt-3 block rounded-2xl border border-white/10 bg-black/30 p-4 text-left transition hover:border-blue-400/40"
+            >
+              <p className="text-sm font-semibold text-blue-200">Game 19 — Draw the Geography!</p>
+              <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                Twenty geography features. Scree slopes, peaks, valleys, arêtes, and clouds.
+              </p>
+            </Link>
           </div>
 
           {selectedMode && !isStandaloneGameMode(selectedMode) ? (
