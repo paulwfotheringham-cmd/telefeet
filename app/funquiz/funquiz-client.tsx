@@ -625,6 +625,15 @@ export function FunQuizClient() {
                 it.
               </p>
             </Link>
+            <Link
+              href="/draw-the-organ"
+              className="mt-3 block rounded-2xl border border-white/10 bg-black/30 p-4 text-left transition hover:border-rose-400/40"
+            >
+              <p className="text-sm font-semibold text-rose-200">Game 11 — Draw the Organ!</p>
+              <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                Both players draw the same human organ on a whiteboard. Vote whose picture is closer.
+              </p>
+            </Link>
           </div>
 
           {selectedMode && !isStandaloneGameMode(selectedMode) ? (

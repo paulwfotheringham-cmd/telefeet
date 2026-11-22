@@ -4,6 +4,7 @@ export const ROOM_DIRECTORIES = [
   { id: "tune", path: "/name-that-tune", nameKey: "name-that-tune-player-name" },
   { id: "show", path: "/name-that-show", nameKey: "name-that-show-player-name" },
   { id: "game", path: "/name-that-game", nameKey: "name-that-game-player-name" },
+  { id: "organ", path: "/draw-the-organ", nameKey: "draw-the-organ-player-name" },
 ] as const;
 
 export type RoomDirectoryId = (typeof ROOM_DIRECTORIES)[number]["id"];
