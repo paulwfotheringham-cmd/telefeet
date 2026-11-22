@@ -634,6 +634,15 @@ export function FunQuizClient() {
                 Twenty organs and bones. The game decides whose drawing is closer after each one.
               </p>
             </Link>
+            <Link
+              href="/draw-the-animal"
+              className="mt-3 block rounded-2xl border border-white/10 bg-black/30 p-4 text-left transition hover:border-amber-400/40"
+            >
+              <p className="text-sm font-semibold text-amber-200">Game 12 — Draw the Animal!</p>
+              <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                Twenty animals. The game decides whose drawing is closer after each one.
+              </p>
+            </Link>
           </div>
 
           {selectedMode && !isStandaloneGameMode(selectedMode) ? (
