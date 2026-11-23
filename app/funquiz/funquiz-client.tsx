@@ -135,6 +135,10 @@ const FUNQUIZ_TILES: FunQuizTile[] = [
   { id: "computer", title: "Name That Game", href: "/name-that-game", tone: "border-emerald-400/50 text-emerald-200 hover:bg-emerald-950/30" },
   { id: "quiz", title: "Quiz", tone: "border-violet-300/60 text-violet-100 hover:bg-violet-950/50" },
   { id: "tune", title: "Name That Tune", href: "/name-that-tune", tone: "border-fuchsia-400/50 text-fuchsia-200 hover:bg-fuchsia-950/30" },
+  { id: "draw", title: "Draw the", tone: "border-rose-400/60 text-rose-100 hover:bg-rose-950/40" },
+];
+
+const DRAW_TILES: FunQuizTile[] = [
   { id: "organ", title: "Draw the Organ", href: "/draw-the-organ", tone: "border-rose-400/50 text-rose-200 hover:bg-rose-950/30" },
   { id: "animal", title: "Draw the Animal", href: "/draw-the-animal", tone: "border-amber-400/50 text-amber-200 hover:bg-amber-950/30" },
   { id: "country", title: "Draw the Country", href: "/draw-the-country", tone: "border-sky-400/50 text-sky-200 hover:bg-sky-950/30" },
@@ -168,7 +172,9 @@ function chooseFunQuizGame(id: string, setPickedGame: (id: string) => void, setS
   }
   if (id === "blockbusters") {
     setSelectedMode(GAME_MODE_BLOCKBUSTERS);
+    return;
   }
+  setSelectedMode(null);
 }
 
 export function FunQuizClient() {
@@ -560,6 +566,20 @@ export function FunQuizClient() {
               );
             })}
           </div>
+
+          {pickedGame === "draw" ? (
+            <div className="mt-3 grid grid-cols-4 gap-2 sm:gap-3">
+              {DRAW_TILES.map((tile) => (
+                <Link
+                  key={tile.id}
+                  href={tile.href ?? "/funquiz"}
+                  className={`flex min-h-24 items-center justify-center rounded-2xl border bg-black/30 p-2 text-center text-xs font-semibold leading-tight transition sm:min-h-28 sm:p-3 sm:text-sm ${tile.tone}`}
+                >
+                  {tile.title}
+                </Link>
+              ))}
+            </div>
+          ) : null}
 
           {pickedGame === "quiz" ? (
             <>
