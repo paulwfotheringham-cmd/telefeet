@@ -122,13 +122,62 @@ function readPlayerId(): string {
   return getOrCreatePlayerId();
 }
 
+
+type FunQuizTile = { id: string; title: string; href?: string; tone: string };
+
+const FUNQUIZ_TILES: FunQuizTile[] = [
+  { id: "millionaire", title: "Millionaire", tone: "border-amber-400/50 text-amber-200 hover:bg-amber-950/40" },
+  { id: "holdem", title: "Texas Hold'em", tone: "border-emerald-400/50 text-emerald-200 hover:bg-emerald-950/40" },
+  { id: "catchphrase", title: "Catchphrase", tone: "border-[#ffcc00]/60 text-[#ffcc00] hover:bg-[#0047ab]/30" },
+  { id: "blockbusters", title: "Blockbusters", tone: "border-sky-300/60 text-sky-200 hover:bg-[#003399]/40" },
+  { id: "movie", title: "Name That Movie", href: "/name-that-movie", tone: "border-violet-400/50 text-violet-200 hover:bg-violet-950/40" },
+  { id: "show", title: "Name That Show", href: "/name-that-show", tone: "border-amber-300/50 text-amber-200 hover:bg-amber-950/30" },
+  { id: "computer", title: "Name That Game", href: "/name-that-game", tone: "border-emerald-400/50 text-emerald-200 hover:bg-emerald-950/30" },
+  { id: "quiz", title: "Quiz", tone: "border-violet-300/60 text-violet-100 hover:bg-violet-950/50" },
+  { id: "tune", title: "Name That Tune", href: "/name-that-tune", tone: "border-fuchsia-400/50 text-fuchsia-200 hover:bg-fuchsia-950/30" },
+  { id: "organ", title: "Draw the Organ", href: "/draw-the-organ", tone: "border-rose-400/50 text-rose-200 hover:bg-rose-950/30" },
+  { id: "animal", title: "Draw the Animal", href: "/draw-the-animal", tone: "border-amber-400/50 text-amber-200 hover:bg-amber-950/30" },
+  { id: "country", title: "Draw the Country", href: "/draw-the-country", tone: "border-sky-400/50 text-sky-200 hover:bg-sky-950/30" },
+  { id: "continent", title: "Draw the Continent", href: "/draw-the-continent", tone: "border-emerald-400/50 text-emerald-200 hover:bg-emerald-950/30" },
+  { id: "appliance", title: "Draw the Appliance", href: "/draw-the-appliance", tone: "border-violet-400/50 text-violet-200 hover:bg-violet-950/30" },
+  { id: "landmark", title: "Draw the Landmark", href: "/draw-the-landmark", tone: "border-orange-400/50 text-orange-200 hover:bg-orange-950/30" },
+  { id: "flower", title: "Draw the Flower", href: "/draw-the-flower", tone: "border-pink-400/50 text-pink-200 hover:bg-pink-950/30" },
+  { id: "weapon", title: "Draw the Weapon", href: "/draw-the-weapon", tone: "border-lime-400/50 text-lime-200 hover:bg-lime-950/30" },
+  { id: "geography", title: "Draw the Geography", href: "/draw-the-geography", tone: "border-blue-400/50 text-blue-200 hover:bg-blue-950/30" },
+  { id: "myth", title: "Draw the Myth", href: "/draw-the-myth", tone: "border-purple-400/50 text-purple-200 hover:bg-purple-950/30" },
+  { id: "fast-food", title: "Draw the Fast Food", href: "/draw-the-fast-food", tone: "border-yellow-400/50 text-yellow-200 hover:bg-yellow-950/20" },
+];
+
+function chooseFunQuizGame(id: string, setPickedGame: (id: string) => void, setSelectedMode: (mode: GameMode | null) => void, selectedMode: GameMode | null) {
+  setPickedGame(id);
+  if (id === "quiz") {
+    setSelectedMode(selectedMode === GAME_MODE_TAKE_TURNS || selectedMode === GAME_MODE_PLAY_TOGETHER ? selectedMode : null);
+    return;
+  }
+  if (id === "millionaire") {
+    setSelectedMode(isMillionaireGameMode(selectedMode) ? selectedMode : null);
+    return;
+  }
+  if (id === "holdem") {
+    setSelectedMode(GAME_MODE_TEXAS_HOLDEM);
+    return;
+  }
+  if (id === "catchphrase") {
+    setSelectedMode(GAME_MODE_CATCHPHRASE);
+    return;
+  }
+  if (id === "blockbusters") {
+    setSelectedMode(GAME_MODE_BLOCKBUSTERS);
+  }
+}
+
 export function FunQuizClient() {
   const [screen, setScreen] = useState<Screen>("home");
   const [playerId, setPlayerId] = useState(readPlayerId);
   const [name, setName] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [selectedMode, setSelectedMode] = useState<GameMode | null>(null);
-  const [game3Expanded, setGame3Expanded] = useState(false);
+  const [pickedGame, setPickedGame] = useState<string | null>(null);
   const [selectedDifficulty, setSelectedDifficulty] = useState<QuizDifficulty | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<QuizCategoryId | null>(null);
   const [newGameMode, setNewGameMode] = useState<GameMode | null>(null);
@@ -463,7 +512,7 @@ export function FunQuizClient() {
 
   if (screen === "home") {
     return (
-      <div className="mx-auto flex min-h-[100dvh] max-w-lg flex-col justify-center px-4 py-10">
+      <div className="mx-auto flex min-h-[100dvh] max-w-5xl flex-col justify-center px-4 py-10">
         <div className="rounded-3xl border border-violet-400/25 bg-gradient-to-b from-slate-900/95 to-indigo-950/90 p-8 shadow-2xl shadow-violet-900/40">
           <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-violet-300">
             Two-player quiz
@@ -472,9 +521,8 @@ export function FunQuizClient() {
             Fun Quiz
           </h1>
           <p className="mt-3 text-center text-sm leading-relaxed text-slate-300">
-            Choose a mode, create a room, and share the code with a friend.
+            Pick a game. Take turns and Play together appear after you choose Quiz.
           </p>
-          {account ? <FriendsClub account={account} onLogout={() => setAccount(null)} /> : null}
 
           {storeWarning ? (
             <p className="mt-4 rounded-xl border border-amber-500/40 bg-amber-950/40 px-3 py-2 text-xs text-amber-100">
@@ -494,290 +542,93 @@ export function FunQuizClient() {
             />
           </label>
 
-          <p className="mt-6 text-sm font-medium text-slate-200">Game mode</p>
-          <div className="mt-3 grid gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedMode(GAME_MODE_TAKE_TURNS);
-                setGame3Expanded(false);
-              }}
-              className={`rounded-2xl border p-4 text-left transition ${
-                selectedMode === GAME_MODE_TAKE_TURNS
-                  ? "border-violet-400 bg-violet-950/50"
-                  : "border-white/10 bg-black/30 hover:border-violet-400/40"
-              }`}
-            >
-              <p className="text-sm font-semibold text-violet-200">Game 1 — Take turns</p>
-              <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                Answer 25 different questions each. Take turns answering. See the correct
-                answers and compare your scores at the end.
-              </p>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedMode(GAME_MODE_PLAY_TOGETHER);
-                setGame3Expanded(false);
-              }}
-              className={`rounded-2xl border p-4 text-left transition ${
-                selectedMode === GAME_MODE_PLAY_TOGETHER
-                  ? "border-violet-400 bg-violet-950/50"
-                  : "border-white/10 bg-black/30 hover:border-violet-400/40"
-              }`}
-            >
-              <p className="text-sm font-semibold text-violet-200">Game 2 — Play together</p>
-              <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                Answer 50 shared questions together. Discuss each question and let the room
-                creator submit the agreed answer. See whether you are correct after every
-                question.
-              </p>
-            </button>
-            <div
-              className={`rounded-2xl border p-4 transition ${
-                isMillionaireGameMode(selectedMode)
-                  ? "border-amber-400 bg-amber-950/30"
-                  : "border-white/10 bg-black/30"
-              }`}
-            >
+          <div className="mt-6 grid grid-cols-4 gap-2 sm:gap-3">
+            {FUNQUIZ_TILES.map((tile) => {
+              const selected = pickedGame === tile.id;
+              const className = `flex min-h-24 items-center justify-center rounded-2xl border bg-black/30 p-2 text-center text-xs font-semibold leading-tight transition sm:min-h-28 sm:p-3 sm:text-sm ${tile.tone} ${selected ? "ring-2 ring-white" : ""}`;
+              if (tile.href) {
+                return (
+                  <Link key={tile.id} href={tile.href} className={className}>
+                    {tile.title}
+                  </Link>
+                );
+              }
+              return (
+                <button key={tile.id} type="button" onClick={() => chooseFunQuizGame(tile.id, setPickedGame, setSelectedMode, selectedMode)} className={className}>
+                  {tile.title}
+                </button>
+              );
+            })}
+          </div>
+
+          {pickedGame === "quiz" ? (
+            <>
+              <p className="mt-6 text-sm font-medium text-slate-200">Game mode</p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedMode(GAME_MODE_TAKE_TURNS)}
+                  className={`rounded-2xl border p-4 text-left transition ${
+                    selectedMode === GAME_MODE_TAKE_TURNS
+                      ? "border-violet-400 bg-violet-950/50"
+                      : "border-white/10 bg-black/30 hover:border-violet-400/40"
+                  }`}
+                >
+                  <p className="text-sm font-semibold text-violet-200">1 — Take turns</p>
+                  <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                    Answer 25 different questions each. Take turns answering. Compare scores at the end.
+                  </p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedMode(GAME_MODE_PLAY_TOGETHER)}
+                  className={`rounded-2xl border p-4 text-left transition ${
+                    selectedMode === GAME_MODE_PLAY_TOGETHER
+                      ? "border-violet-400 bg-violet-950/50"
+                      : "border-white/10 bg-black/30 hover:border-violet-400/40"
+                  }`}
+                >
+                  <p className="text-sm font-semibold text-violet-200">2 — Play together</p>
+                  <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                    Answer 50 shared questions together. The room creator submits the agreed answer.
+                  </p>
+                </button>
+              </div>
+            </>
+          ) : null}
+
+          {pickedGame === "millionaire" ? (
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <button
                 type="button"
-                onClick={() => setGame3Expanded((v) => !v)}
-                className="w-full text-left"
+                onClick={() => setSelectedMode(GAME_MODE_SHARED_MILLIONAIRE)}
+                className={`rounded-2xl border p-4 text-left transition ${
+                  selectedMode === GAME_MODE_SHARED_MILLIONAIRE
+                    ? "border-amber-400 bg-amber-950/50"
+                    : "border-white/10 bg-black/30 hover:border-amber-400/40"
+                }`}
               >
-                <p className="text-sm font-semibold text-amber-200">Game 3 — Millionaire</p>
+                <p className="text-sm font-semibold text-amber-100">1 — Play together</p>
                 <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                  Climb the prize ladder with a friend. Pick one way to play below.
+                  One shared question, one team ladder, lock in together, shared lifelines.
                 </p>
               </button>
-              {game3Expanded || isMillionaireGameMode(selectedMode) ? (
-                <div className="mt-4 grid gap-2 border-t border-white/10 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedMode(GAME_MODE_SHARED_MILLIONAIRE)}
-                    className={`rounded-xl border p-3 text-left transition ${
-                      selectedMode === GAME_MODE_SHARED_MILLIONAIRE
-                        ? "border-amber-400 bg-amber-950/50 ring-1 ring-amber-400/40"
-                        : "border-white/10 bg-black/20 hover:border-amber-400/40"
-                    }`}
-                  >
-                    <p className="text-xs font-semibold text-amber-100">1 — Play together</p>
-                    <p className="mt-1 text-[11px] text-slate-400">
-                      One shared question, one team ladder, lock in together, shared lifelines.
-                    </p>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedMode(GAME_MODE_PARALLEL_MILLIONAIRE)}
-                    className={`rounded-xl border p-3 text-left transition ${
-                      selectedMode === GAME_MODE_PARALLEL_MILLIONAIRE
-                        ? "border-amber-400 bg-amber-950/50 ring-1 ring-amber-400/40"
-                        : "border-white/10 bg-black/20 hover:border-amber-400/40"
-                    }`}
-                  >
-                    <p className="text-xs font-semibold text-amber-100">
-                      2 — Same room, separate ladders
-                    </p>
-                    <p className="mt-1 text-[11px] text-slate-400">
-                      Your own questions and prize bar; see your friend&apos;s question read-only.
-                    </p>
-                  </button>
-                </div>
-              ) : null}
+              <button
+                type="button"
+                onClick={() => setSelectedMode(GAME_MODE_PARALLEL_MILLIONAIRE)}
+                className={`rounded-2xl border p-4 text-left transition ${
+                  selectedMode === GAME_MODE_PARALLEL_MILLIONAIRE
+                    ? "border-amber-400 bg-amber-950/50"
+                    : "border-white/10 bg-black/30 hover:border-amber-400/40"
+                }`}
+              >
+                <p className="text-sm font-semibold text-amber-100">2 — Same room, separate ladders</p>
+                <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                  Your own questions and prize bar. Your friend&apos;s question stays read-only.
+                </p>
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedMode(GAME_MODE_TEXAS_HOLDEM);
-                setGame3Expanded(false);
-              }}
-              className={`mt-3 w-full rounded-2xl border p-4 text-left transition ${
-                selectedMode === GAME_MODE_TEXAS_HOLDEM
-                  ? "border-emerald-400 bg-emerald-950/40"
-                  : "border-white/10 bg-black/30 hover:border-emerald-400/40"
-              }`}
-            >
-              <p className="text-sm font-semibold text-emerald-200">Game 4 — Texas Hold&apos;em</p>
-              <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                Heads-up poker with a dealer button, blinds, and rotating dealer each hand. Play
-                from the same room code as your friend.
-              </p>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedMode(GAME_MODE_CATCHPHRASE);
-                setGame3Expanded(false);
-              }}
-              className={`mt-3 w-full rounded-2xl border p-4 text-left transition ${
-                selectedMode === GAME_MODE_CATCHPHRASE
-                  ? "border-[#ffcc00] bg-[#0047ab]/40 ring-1 ring-[#ffcc00]/50"
-                  : "border-white/10 bg-black/30 hover:border-[#ffcc00]/40"
-              }`}
-            >
-              <p className="text-sm font-semibold text-[#ffcc00]">Game 5 — Catchphrase</p>
-              <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                UK-style picture clues behind a square grid. Two players buzz in and guess the
-                hidden phrase — +2 points per correct answer, 8 rounds.
-              </p>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedMode(GAME_MODE_BLOCKBUSTERS);
-                setGame3Expanded(false);
-              }}
-              className={`mt-3 w-full rounded-2xl border p-4 text-left transition ${
-                selectedMode === GAME_MODE_BLOCKBUSTERS
-                  ? "border-sky-300 bg-[#003399]/50 ring-1 ring-sky-300/50"
-                  : "border-white/10 bg-black/30 hover:border-sky-400/40"
-              }`}
-            >
-              <p className="text-sm font-semibold text-sky-200">Game 6 — Blockbusters</p>
-              <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                Hex grid trivia from your chosen quiz. Gold links left to right, Blue links top to
-                bottom — steal wrong answers, with classic quiz-show sounds.
-              </p>
-            </button>
-            <Link
-              href="/name-that-movie"
-              className="mt-3 block rounded-2xl border border-white/10 bg-black/30 p-4 text-left transition hover:border-violet-400/40"
-            >
-              <p className="text-sm font-semibold text-violet-200">Game 7 — Name That Movie!</p>
-              <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                A famous line appears. Play together or take turns naming the film.
-              </p>
-            </Link>
-            <Link
-              href="/name-that-tune"
-              className="mt-3 block rounded-2xl border border-white/10 bg-black/30 p-4 text-left transition hover:border-fuchsia-400/40"
-            >
-              <p className="text-sm font-semibold text-fuchsia-200">Game 8 — Name That Tune!</p>
-              <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                Hear the first few bars of an 80s or 90s hit. Play together or take turns naming
-                the artist.
-              </p>
-            </Link>
-            <Link
-              href="/name-that-show"
-              className="mt-3 block rounded-2xl border border-white/10 bg-black/30 p-4 text-left transition hover:border-amber-300/40"
-            >
-              <p className="text-sm font-semibold text-amber-200">Game 9 — Name That Show!</p>
-              <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                UK gameshow themes from the 80s and 90s, Blockbusters included. Play together or
-                take turns.
-              </p>
-            </Link>
-            <Link
-              href="/name-that-game"
-              className="mt-3 block rounded-2xl border border-white/10 bg-black/30 p-4 text-left transition hover:border-emerald-400/40"
-            >
-              <p className="text-sm font-semibold text-emerald-200">Game 10 — Name That Game!</p>
-              <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                One screenshot from an 80s or 90s computer game. Play together or take turns naming
-                it.
-              </p>
-            </Link>
-            <Link
-              href="/draw-the-organ"
-              className="mt-3 block rounded-2xl border border-white/10 bg-black/30 p-4 text-left transition hover:border-rose-400/40"
-            >
-              <p className="text-sm font-semibold text-rose-200">Game 11 — Draw the Organ!</p>
-              <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                Twenty organs and bones. The game decides whose drawing is closer after each one.
-              </p>
-            </Link>
-            <Link
-              href="/draw-the-animal"
-              className="mt-3 block rounded-2xl border border-white/10 bg-black/30 p-4 text-left transition hover:border-amber-400/40"
-            >
-              <p className="text-sm font-semibold text-amber-200">Game 12 — Draw the Animal!</p>
-              <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                Twenty animals. The game decides whose drawing is closer after each one.
-              </p>
-            </Link>
-            <Link
-              href="/draw-the-country"
-              className="mt-3 block rounded-2xl border border-white/10 bg-black/30 p-4 text-left transition hover:border-sky-400/40"
-            >
-              <p className="text-sm font-semibold text-sky-200">Game 13 — Draw the Country!</p>
-              <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                Twenty countries. The game decides whose outline is closer after each one.
-              </p>
-            </Link>
-            <Link
-              href="/draw-the-continent"
-              className="mt-3 block rounded-2xl border border-white/10 bg-black/30 p-4 text-left transition hover:border-emerald-400/40"
-            >
-              <p className="text-sm font-semibold text-emerald-200">Game 14 — Draw the Continent!</p>
-              <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                All seven continents. The game decides whose outline is closer after each one.
-              </p>
-            </Link>
-            <Link
-              href="/draw-the-appliance"
-              className="mt-3 block rounded-2xl border border-white/10 bg-black/30 p-4 text-left transition hover:border-violet-400/40"
-            >
-              <p className="text-sm font-semibold text-violet-200">Game 15 — Draw the Appliance!</p>
-              <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                Twenty household appliances. The game decides whose drawing is closer after each one.
-              </p>
-            </Link>
-            <Link
-              href="/draw-the-landmark"
-              className="mt-3 block rounded-2xl border border-white/10 bg-black/30 p-4 text-left transition hover:border-orange-400/40"
-            >
-              <p className="text-sm font-semibold text-orange-200">Game 16 — Draw the Landmark!</p>
-              <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                Twenty famous landmarks. The game decides whose drawing is closer after each one.
-              </p>
-            </Link>
-            <Link
-              href="/draw-the-flower"
-              className="mt-3 block rounded-2xl border border-white/10 bg-black/30 p-4 text-left transition hover:border-pink-400/40"
-            >
-              <p className="text-sm font-semibold text-pink-200">Game 17 — Draw the Flower!</p>
-              <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                Twenty flowers. The game decides whose drawing is closer after each one.
-              </p>
-            </Link>
-            <Link
-              href="/draw-the-weapon"
-              className="mt-3 block rounded-2xl border border-white/10 bg-black/30 p-4 text-left transition hover:border-lime-400/40"
-            >
-              <p className="text-sm font-semibold text-lime-200">Game 18 — Draw the Weapon!</p>
-              <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                Twenty military weapons. The game decides whose drawing is closer after each one.
-              </p>
-            </Link>
-            <Link
-              href="/draw-the-geography"
-              className="mt-3 block rounded-2xl border border-white/10 bg-black/30 p-4 text-left transition hover:border-blue-400/40"
-            >
-              <p className="text-sm font-semibold text-blue-200">Game 19 — Draw the Geography!</p>
-              <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                Twenty geography features. Scree slopes, peaks, valleys, arêtes, and clouds.
-              </p>
-            </Link>
-            <Link
-              href="/draw-the-myth"
-              className="mt-3 block rounded-2xl border border-white/10 bg-black/30 p-4 text-left transition hover:border-purple-400/40"
-            >
-              <p className="text-sm font-semibold text-purple-200">Game 20 — Draw the Myth!</p>
-              <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                Twenty mythical creatures. Dragons, unicorns, mermaids, and phoenixes.
-              </p>
-            </Link>
-            <Link
-              href="/draw-the-fast-food"
-              className="mt-3 block rounded-2xl border border-white/10 bg-black/30 p-4 text-left transition hover:border-yellow-400/40"
-            >
-              <p className="text-sm font-semibold text-yellow-200">Game 21 — Draw the Fast Food!</p>
-              <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                Twenty fast foods. Pizza, burgers, fries, hot dogs, and tacos.
-              </p>
-            </Link>
-          </div>
+          ) : null}
 
           {selectedMode && !isStandaloneGameMode(selectedMode) ? (
             <>
@@ -889,6 +740,7 @@ export function FunQuizClient() {
               {error}
             </p>
           ) : null}
+          {account ? <FriendsClub account={account} onLogout={() => setAccount(null)} /> : null}
         </div>
       </div>
     );
