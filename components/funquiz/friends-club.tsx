@@ -5,7 +5,7 @@ import { clearClubSession, clubAuthHeaders, type ClubSession } from "@/lib/funqu
 
 type Home = {
   online: { id: string; name: string; game: string; path: string; roomCode: string }[];
-  board: { name: string; points: number; wins: number; games: number }[];
+  board: { id: string; name: string; points: number; wins: number; games: number }[];
   recent: { name: string; game: string; score: number; playedAt: string }[];
   weekly: { title: string; path: string; ends: string; leaders: { name: string; score: number }[] };
   challenges: { id: string; fromName: string; game: string; path: string; roomCode: string }[];
@@ -163,14 +163,20 @@ export function FriendsClub({ account, onLogout }: { account: ClubSession; onLog
         </ul>
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-        <p className="text-sm font-semibold text-violet-200">All-time board</p>
+      <a href="/funquiz/board" className="block rounded-2xl border border-white/10 bg-black/30 p-4 transition hover:border-violet-400/50">
+        <span className="flex items-center justify-between gap-3">
+          <span className="text-sm font-semibold text-violet-200">All-time board</span>
+          <span className="text-xs font-semibold text-violet-200">Open</span>
+        </span>
         <ul className="mt-2 space-y-1 text-sm text-slate-200">
-          {home?.board.slice(0, 8).map((row, index) => (
-            <li key={row.name}>{index + 1}. {row.name} · {row.points} points · {row.wins} wins · {row.games} games</li>
+          {home?.board.slice(0, 5).map((row, index) => (
+            <li key={row.id}>{index + 1}. {row.name} · {row.points} points · {row.wins} {row.wins === 1 ? "win" : "wins"} · {row.games} {row.games === 1 ? "game" : "games"}</li>
           ))}
         </ul>
-      </div>
+        <p className="mt-3 text-xs text-slate-400">
+          {home ? `${home.board.length} registered players. Scores for each game.` : "All registered players and scores for each game."}
+        </p>
+      </a>
 
       <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
         <p className="text-sm font-semibold text-slate-200">Recent games</p>

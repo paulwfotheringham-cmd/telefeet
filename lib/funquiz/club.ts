@@ -436,8 +436,8 @@ export async function clubHome(token: string) {
       roomCode: item.roomCode,
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
-  const totals = new Map<string, { name: string; points: number; wins: number; games: number }>();
-  for (const item of accounts) totals.set(item.id, { name: item.name, points: 0, wins: 0, games: 0 });
+  const totals = new Map<string, { id: string; name: string; points: number; wins: number; games: number }>();
+  for (const item of accounts) totals.set(item.id, { id: item.id, name: item.name, points: 0, wins: 0, games: 0 });
   for (const row of scores) {
     const total = totals.get(row.accountId);
     if (!total) continue;
@@ -475,4 +475,84 @@ export async function clubHome(token: string) {
       roomCode: row.roomCode,
     })),
   };
+}
+
+const GAME_ORDER = [
+  "Fun Quiz",
+  "Name That Movie",
+  "Name That Tune",
+  "Name That Show",
+  "Name That Game",
+  "Draw the Organ",
+  "Draw the Animal",
+  "Draw the Country",
+  "Draw the Continent",
+  "Draw the Appliance",
+  "Draw the Landmark",
+  "Draw the Flower",
+  "Draw the Weapon",
+  "Draw the Geography",
+  "Draw the Myth",
+  "Draw the Fast Food",
+];
+
+function gameRank(title: string) {
+  const index = GAME_ORDER.findIndex((name) => title === name || title.startsWith(`${name} `) || title.startsWith(`${name} ·`));
+  return index === -1 ? GAME_ORDER.length : index;
+}
+
+type BoardRow = { id: string; name: string; points: number; wins: number; games: number; best: number };
+
+function sortBoard(a: BoardRow, b: BoardRow) {
+  return b.points - a.points || b.best - a.best || b.wins - a.wins || a.name.localeCompare(b.name);
+}
+
+export async function clubBoard(token: string) {
+  const account = await accountFromToken(token);
+  if (!account) return { error: "Sign in again.", status: 401 as const };
+  const [accounts, scores] = await Promise.all([allAccounts(), allScores()]);
+  const names = new Map(accounts.map((item) => [item.id, item.name]));
+  const overall = new Map<string, BoardRow>();
+  for (const item of accounts) {
+    overall.set(item.id, { id: item.id, name: item.name, points: 0, wins: 0, games: 0, best: 0 });
+  }
+  const byGame = new Map<string, Map<string, BoardRow>>();
+  for (const row of scores) {
+    const name = names.get(row.accountId);
+    const player = overall.get(row.accountId);
+    if (!name || !player) continue;
+    player.points += row.score;
+    player.games += 1;
+    if (row.won) player.wins += 1;
+    player.best = Math.max(player.best, row.score);
+    let gameMap = byGame.get(row.game);
+    if (!gameMap) {
+      gameMap = new Map();
+      byGame.set(row.game, gameMap);
+    }
+    let gameRow = gameMap.get(row.accountId);
+    if (!gameRow) {
+      gameRow = { id: row.accountId, name, points: 0, wins: 0, games: 0, best: 0 };
+      gameMap.set(row.accountId, gameRow);
+    }
+    gameRow.points += row.score;
+    gameRow.games += 1;
+    if (row.won) gameRow.wins += 1;
+    gameRow.best = Math.max(gameRow.best, row.score);
+  }
+  const players = [...overall.values()].sort(sortBoard);
+  const games = [...byGame.entries()]
+    .map(([title, rows]) => ({ title, players: [...rows.values()].sort(sortBoard) }))
+    .sort((a, b) => gameRank(a.title) - gameRank(b.title) || a.title.localeCompare(b.title));
+  const matches = [...scores]
+    .sort((a, b) => b.playedAt.localeCompare(a.playedAt))
+    .slice(0, 200)
+    .map((row) => ({
+      accountId: row.accountId,
+      game: row.game,
+      score: row.score,
+      won: row.won,
+      playedAt: row.playedAt,
+    }));
+  return { meId: account.id, players, games, matches };
 }

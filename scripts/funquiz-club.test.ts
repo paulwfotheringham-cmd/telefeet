@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { clubHome, login, recordScore, signup } from "../lib/funquiz/club";
+import { clubBoard, clubHome, login, recordScore, signup } from "../lib/funquiz/club";
 import { mulberry32, weekSeed, weeklyGame } from "../lib/funquiz/weekly";
 
 process.env.SUPABASE_SERVICE_ROLE_KEY = "";
@@ -26,6 +26,23 @@ async function main() {
   assert.equal(home.board[0]?.points, 8);
   assert.equal(home.board[0]?.games, 1);
   assert.equal(home.recent.length, 2);
+  assert.equal(home.board.length, 2);
+
+  const quiet = await signup("quiet@example.com", "secret3");
+  assert.ok("token" in quiet && quiet.token);
+  const board = await clubBoard(created.token);
+  assert.ok(!("error" in board));
+  if ("error" in board) return;
+  assert.equal(board.players.length, 3);
+  assert.equal(board.players.find((row) => row.name === quiet.account.name)?.games, 0);
+  const food = board.games.find((game) => game.title === "Draw the Fast Food");
+  assert.equal(food?.players[0]?.name, created.account.name);
+  assert.equal(food?.players[0]?.points, 8);
+  assert.equal(food?.players[0]?.best, 8);
+  assert.equal(food?.players[0]?.wins, 1);
+  const quiz = board.games.find((game) => game.title === "Fun Quiz · Take turns");
+  assert.equal(quiz?.players[0]?.name, sam.account.name);
+  assert.equal(quiz?.players[0]?.points, 3);
 
   const week = weeklyGame();
   const first = mulberry32(weekSeed(week.path));
