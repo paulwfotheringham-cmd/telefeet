@@ -73,6 +73,36 @@ async function main() {
   assert.equal(podcasts.items[0]?.url, "https://example.com/night");
   const music = await listLinks(sam.token, "music");
   assert.ok(!("error" in music) && music.items.length === 0);
+  const book = await addLink(sam.token, {
+    kind: "book",
+    name: "The City",
+    url: "https://example.com/city-book",
+    description: "A novel",
+  });
+  assert.ok("item" in book && book.item.email === "sam@example.com");
+  const books = await listLinks(created.token, "book");
+  assert.ok(!("error" in books));
+  if ("error" in books) return;
+  assert.equal(books.items[0]?.name, "The City");
+  assert.equal(books.items[0]?.email, "sam@example.com");
+  const film = await addLink(created.token, {
+    kind: "movie",
+    name: "Night Train",
+    url: "https://example.com/night-train",
+    description: "A film",
+  });
+  assert.ok("item" in film && film.item.name === "Night Train");
+  const series = await addLink(sam.token, {
+    kind: "tv",
+    name: "Harbor",
+    url: "https://example.com/harbor-show",
+    description: "A series",
+  });
+  assert.ok("item" in series && series.item.email === "sam@example.com");
+  const shows = await listLinks(created.token, "tv");
+  assert.ok(!("error" in shows));
+  if ("error" in shows) return;
+  assert.equal(shows.items[0]?.name, "Harbor");
 
   const week = weeklyGame();
   const first = mulberry32(weekSeed(week.path));

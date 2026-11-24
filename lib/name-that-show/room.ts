@@ -1,6 +1,8 @@
 import { plannedShowLength, questionsForEra, selectGameQuestions } from "./game";
 import {
   SHOW_MODE_PLAY_TOGETHER,
+  SHOW_MODE_SINGLE,
+  sharesShowRound,
   SHOW_MODE_TAKE_TURNS,
   showEraTitle,
   showModeTitle,
@@ -122,7 +124,8 @@ function touch(room: ShowRoom, patch: Partial<ShowRoom>, now: number): ShowRoom 
 }
 
 export function roomMode(room: Pick<ShowRoom, "mode">): ShowPlayMode {
-  return room.mode === SHOW_MODE_PLAY_TOGETHER ? SHOW_MODE_PLAY_TOGETHER : SHOW_MODE_TAKE_TURNS;
+  if (room.mode === SHOW_MODE_PLAY_TOGETHER || room.mode === SHOW_MODE_SINGLE) return room.mode;
+  return SHOW_MODE_TAKE_TURNS;
 }
 
 export function matchLength(room: Pick<ShowRoom, "mode" | "era">): number {
@@ -218,7 +221,7 @@ export function startShowGame(
   if (room.phase !== "lobby") {
     throw new Error("Game already started");
   }
-  if (room.players.length < MAX_PLAYERS) {
+  if (room.mode !== "single" && room.players.length < MAX_PLAYERS) {
     throw new Error("Waiting for a second player");
   }
   const dealt = dealMatchQuestions(room.era, room.seenIds, rng, matchLength(room));
@@ -248,7 +251,7 @@ export function submitShowAnswer(
   if (room.phase !== "question") {
     throw new Error("Not accepting answers right now");
   }
-  const together = roomMode(room) === SHOW_MODE_PLAY_TOGETHER;
+  const together = sharesShowRound(roomMode(room));
   if (together && playerId !== room.hostId) {
     throw new Error("Only the room creator can submit answers in Play together");
   }
@@ -314,7 +317,7 @@ function advanceFromReveal(room: ShowRoom, now: number): ShowRoom {
       phase: "question",
       turnIndex: nextTurn,
       activePlayerId:
-        roomMode(room) === SHOW_MODE_PLAY_TOGETHER ? room.hostId : playerForTurn(room, nextTurn),
+        sharesShowRound(roomMode(room)) ? room.hostId : playerForTurn(room, nextTurn),
       revealStartedAt: null,
     },
     now,
@@ -396,7 +399,7 @@ export function toShowClientState(room: ShowRoom, viewerId: string): ShowClientS
       phase: room.phase,
       turnIndex: room.turnIndex,
       totalTurns: matchLength(room),
-      questionsPerPlayer: roomMode(room) === SHOW_MODE_PLAY_TOGETHER ? matchLength(room) : matchLength(room) / 2,
+      questionsPerPlayer: sharesShowRound(roomMode(room)) ? matchLength(room) : matchLength(room) / 2,
       activePlayerId: room.activePlayerId,
       isYourTurn: false,
       canSubmitAnswer: false,
@@ -421,7 +424,7 @@ export function toShowClientState(room: ShowRoom, viewerId: string): ShowClientS
     room.phase === "reveal"
       ? room.answers.find((answer) => answer.turnIndex === room.turnIndex)
       : undefined;
-  const together = mode === SHOW_MODE_PLAY_TOGETHER;
+  const together = sharesShowRound(mode);
   const active = room.players.find((player) => player.id === room.activePlayerId);
   const isYourTurn =
     room.phase === "question" &&
@@ -452,7 +455,7 @@ export function toShowClientState(room: ShowRoom, viewerId: string): ShowClientS
     phase: room.phase,
     turnIndex: room.turnIndex,
     totalTurns: matchLength(room),
-    questionsPerPlayer: roomMode(room) === SHOW_MODE_PLAY_TOGETHER ? matchLength(room) : matchLength(room) / 2,
+    questionsPerPlayer: sharesShowRound(roomMode(room)) ? matchLength(room) : matchLength(room) / 2,
     activePlayerId: room.activePlayerId,
     isYourTurn,
     canSubmitAnswer: isYourTurn,

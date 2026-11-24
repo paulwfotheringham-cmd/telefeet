@@ -32,9 +32,17 @@ export type DrawRound = {
   scores?: DrawScore[];
 };
 
+
+export type DrawPlayMode = "single" | "together" | "separate";
+
+function drawMode(room: { mode?: DrawPlayMode }): DrawPlayMode {
+  return room.mode === "single" || room.mode === "together" ? room.mode : "separate";
+}
+
 export type DrawRoom = {
   code: string;
   hostId: string;
+  mode: DrawPlayMode;
   phase: DrawPhase;
   turnIndex: number;
   organs: string[];
@@ -53,6 +61,7 @@ export type DrawRoom = {
 export type DrawClientState = {
   code: string;
   hostId: string;
+  mode: DrawPlayMode;
   phase: DrawPhase;
   turnIndex: number;
   totalRounds: number;
@@ -104,11 +113,13 @@ export function createDrawRoom(
   playerId: string,
   playerName: string,
   code: string,
+  mode: DrawPlayMode = "separate",
   now = Date.now(),
 ): DrawRoom {
   return {
     code,
     hostId: playerId,
+    mode,
     phase: "lobby",
     turnIndex: 0,
     organs: [],
@@ -138,7 +149,7 @@ export function addDrawPlayer(room: DrawRoom, playerId: string, playerName: stri
 export function startDrawGame(room: DrawRoom, playerId: string, rng: () => number = Math.random, now = Date.now()): DrawRoom {
   if (playerId !== room.hostId) throw new Error("Only the host can start");
   if (room.phase !== "lobby") throw new Error("Game already started");
-  if (room.players.length < MAX_PLAYERS) throw new Error("Waiting for a second player");
+  if (drawMode(room) !== "single" && room.players.length < MAX_PLAYERS) throw new Error("Waiting for a second player");
   const organs = shuffle(FLOWERS, rng).slice(0, FLOWER_ROUNDS).map((organ) => organ.title);
   return touch(
     room,
@@ -173,6 +184,10 @@ export function submitDrawing(room: DrawRoom, playerId: string, rawStrokes: unkn
     organ,
     room.players.map((player) => ({ playerId: player.id, strokes: drawings[player.id] ?? [] })),
   );
+  const winnerIds =
+    drawMode(room) === "together" && judged.winnerIds.length > 0
+      ? room.players.map((player) => player.id)
+      : judged.winnerIds;
   return touch(
     room,
     {
@@ -181,9 +196,9 @@ export function submitDrawing(room: DrawRoom, playerId: string, rawStrokes: unkn
       votes: [],
       phase: "reveal",
       revealStartedAt: now,
-      rounds: [...room.rounds, { organ, winnerIds: judged.winnerIds, scores: judged.scores }],
+      rounds: [...room.rounds, { organ, winnerIds, scores: judged.scores }],
       players: room.players.map((player) =>
-        judged.winnerIds.includes(player.id) ? { ...player, score: player.score + 1 } : player,
+        winnerIds.includes(player.id) ? { ...player, score: player.score + 1 } : player,
       ),
     },
     now,
@@ -290,6 +305,7 @@ export function toDrawClientState(room: DrawRoom, viewerId: string): DrawClientS
     return {
       code: room.code,
       hostId: room.hostId,
+      mode: drawMode(room),
       phase: room.phase,
       turnIndex: room.turnIndex,
       totalRounds: room.organs.length || FLOWER_ROUNDS,
@@ -315,7 +331,9 @@ export function toDrawClientState(room: DrawRoom, viewerId: string): DrawClientS
   } else if (room.phase === "vote" && room.votes.some((vote) => vote.playerId === viewerId) && opponent) {
     statusMessage = `Waiting for ${opponent.name} to choose the closer drawing.`;
   } else if (room.phase === "draw") {
-    statusMessage = "Draw on your board. Your friend cannot see it until you both press Done.";
+    statusMessage = drawMode(room) === "single"
+      ? "Draw on your board, then press Done."
+      : "Draw on your board. Your friend cannot see it until you both press Done.";
   }
   const currentRound = room.rounds[room.turnIndex];
   if (room.phase === "reveal" && currentRound) {
@@ -331,6 +349,7 @@ export function toDrawClientState(room: DrawRoom, viewerId: string): DrawClientS
   return {
     code: room.code,
     hostId: room.hostId,
+    mode: drawMode(room),
     phase: room.phase,
     turnIndex: room.turnIndex,
     totalRounds: room.organs.length || FLOWER_ROUNDS,

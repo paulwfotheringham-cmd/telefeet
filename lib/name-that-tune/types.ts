@@ -3,18 +3,24 @@ export const INTRO_SECONDS = 12;
 
 export const TUNE_MODE_TAKE_TURNS = "take_turns" as const;
 export const TUNE_MODE_PLAY_TOGETHER = "play_together" as const;
+export const TUNE_MODE_SINGLE = "single" as const;
 
 export const TUNE_PLAY_MODES = [
   {
-    id: TUNE_MODE_TAKE_TURNS,
-    title: "Take turns",
-    description: "Hear 10 different intros each. Take turns naming the artist, then compare scores.",
+    id: TUNE_MODE_SINGLE,
+    title: "Single player",
+    description: "Name the artists on your own. No second player.",
   },
   {
     id: TUNE_MODE_PLAY_TOGETHER,
     title: "Play together",
     description:
       "Hear 10 shared intros. Discuss each one, and the room creator submits the team's answer.",
+  },
+  {
+    id: TUNE_MODE_TAKE_TURNS,
+    title: "Play separate",
+    description: "Hear 10 different intros each. Take turns naming the artist, then compare scores.",
   },
 ] as const;
 
@@ -49,7 +55,11 @@ export type PresentedTune = {
 };
 
 export function isTunePlayMode(value: string): value is TunePlayMode {
-  return value === TUNE_MODE_TAKE_TURNS || value === TUNE_MODE_PLAY_TOGETHER;
+  return value === TUNE_MODE_TAKE_TURNS || value === TUNE_MODE_PLAY_TOGETHER || value === TUNE_MODE_SINGLE;
+}
+
+export function sharesTuneRound(mode: string) {
+  return mode === TUNE_MODE_PLAY_TOGETHER || mode === TUNE_MODE_SINGLE;
 }
 
 export function isTuneEra(value: string): value is TuneEra {

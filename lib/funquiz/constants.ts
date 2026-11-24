@@ -5,6 +5,11 @@ export const ROOM_TTL_SECONDS = 60 * 60 * 4; // 4 hours
 
 export const GAME_MODE_TAKE_TURNS = "take_turns" as const;
 export const GAME_MODE_PLAY_TOGETHER = "play_together" as const;
+export const GAME_MODE_SINGLE = "single" as const;
+
+export function isSharedQuizMode(mode: string) {
+  return mode === GAME_MODE_PLAY_TOGETHER || mode === GAME_MODE_SINGLE;
+}
 export const GAME_MODE_SHARED_MILLIONAIRE = "shared_millionaire" as const;
 export const GAME_MODE_PARALLEL_MILLIONAIRE = "parallel_millionaire" as const;
 export const GAME_MODE_TEXAS_HOLDEM = "texas_holdem" as const;

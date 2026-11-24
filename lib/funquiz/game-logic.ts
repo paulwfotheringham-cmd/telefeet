@@ -1,5 +1,6 @@
 import {
-  GAME_MODE_PLAY_TOGETHER,
+  GAME_MODE_SINGLE,
+  isSharedQuizMode,
   GAME_MODE_PARALLEL_MILLIONAIRE,
   GAME_MODE_SHARED_MILLIONAIRE,
   GAME_MODE_TAKE_TURNS,
@@ -197,7 +198,7 @@ function hasLogForTogetherQuestion(room: QuizRoom, questionIndex: number): boole
     (e) =>
       e.sessionId === room.sessionId &&
       e.turnIndex === questionIndex &&
-      room.gameMode === GAME_MODE_PLAY_TOGETHER,
+      isSharedQuizMode(room.gameMode),
   );
 }
 
@@ -251,7 +252,8 @@ export function startGame(room: QuizRoom, playerId: string): QuizRoom {
     return startMillionaireGame(initMillionaireOnCreate(room));
   }
 
-  if (room.players.length < MAX_PLAYERS) {
+  const solo = room.gameMode === GAME_MODE_SINGLE;
+  if (!solo && room.players.length < MAX_PLAYERS) {
     throw new Error("Waiting for a second player");
   }
 
@@ -267,7 +269,7 @@ export function startGame(room: QuizRoom, playerId: string): QuizRoom {
     exclude,
   );
   const guestId = guestPlayerId(room);
-  if (!guestId) {
+  if (!solo && !guestId) {
     throw new Error("Waiting for a second player");
   }
 
@@ -588,7 +590,7 @@ function currentBankId(room: QuizRoom): number | null {
     }
     return null;
   }
-  if (room.gameMode === GAME_MODE_PLAY_TOGETHER) {
+  if (isSharedQuizMode(room.gameMode)) {
     if (room.phase === "question" || room.phase === "reveal") {
       return room.questionOrder[room.questionIndex] ?? null;
     }
@@ -780,7 +782,7 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
 
   const scoresHidden = false;
   const jointScore =
-    room.gameMode === GAME_MODE_PLAY_TOGETHER ? room.jointScore : null;
+    isSharedQuizMode(room.gameMode) ? room.jointScore : null;
 
   let question = null;
   let correctIndex: number | null = null;
@@ -815,7 +817,7 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
       }
     }
   } else if (
-    room.gameMode === GAME_MODE_PLAY_TOGETHER &&
+    isSharedQuizMode(room.gameMode) &&
     (room.phase === "question" || room.phase === "reveal")
   ) {
     if (bankId !== null) {
@@ -847,7 +849,7 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
 
   const displayScore = (p: QuizPlayer) => {
     if (scoresHidden) return 0;
-    if (room.gameMode === GAME_MODE_PLAY_TOGETHER) return room.jointScore;
+    if (isSharedQuizMode(room.gameMode)) return room.jointScore;
     return p.score;
   };
 

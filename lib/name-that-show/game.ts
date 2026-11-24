@@ -39,7 +39,7 @@ export function questionsForEra(
 
 export function plannedShowLength(era: ShowEra, mode: ShowPlayMode, bank = SHOW_QUESTIONS): number {
   const pool = questionsForEra(era, bank).length;
-  if (mode === SHOW_MODE_PLAY_TOGETHER) return Math.min(8, pool);
+  if (mode === SHOW_MODE_PLAY_TOGETHER || mode === "single") return Math.min(8, pool);
   return Math.min(5, Math.floor(pool / 2)) * 2;
 }
 

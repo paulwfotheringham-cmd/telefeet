@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as { playerId?: string; playerName?: string };
+    const body = (await request.json()) as { playerId?: string; playerName?: string; mode?: string };
     const playerId = body.playerId?.trim();
     const playerName = body.playerName?.trim();
     if (!playerId || !playerName) {
@@ -18,7 +18,8 @@ export async function POST(request: Request) {
       if (!(await loadDrawRoom(code))) break;
       code = generateDrawRoomCode();
     }
-    const room = await persistNewDrawRoom(createDrawRoom(playerId, playerName, code));
+    const mode = body.mode === "single" || body.mode === "together" ? body.mode : "separate";
+    const room = await persistNewDrawRoom(createDrawRoom(playerId, playerName, code, mode));
     return NextResponse.json({ state: toDrawClientState(room, playerId) });
   } catch (err) {
     return handleDrawStoreError(err);

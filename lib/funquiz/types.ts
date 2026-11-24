@@ -11,6 +11,7 @@ import type { PlayedBankIdsByTopic } from "./question-history";
 export type GameMode =
   | "take_turns"
   | "play_together"
+  | "single"
   | "shared_millionaire"
   | "parallel_millionaire"
   | "texas_holdem"

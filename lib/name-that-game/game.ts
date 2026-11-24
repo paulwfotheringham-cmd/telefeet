@@ -105,7 +105,7 @@ export function plannedGameLength(
   level: GameLevel = "hard",
 ): number {
   const pool = questionsForLevel(era, level).length;
-  if (mode === GAME_MODE_PLAY_TOGETHER) return Math.min(10, pool);
+  if (mode === GAME_MODE_PLAY_TOGETHER || mode === "single") return Math.min(10, pool);
   return Math.min(10, Math.floor(pool / 2)) * 2;
 }
 

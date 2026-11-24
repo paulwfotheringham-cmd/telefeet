@@ -52,13 +52,13 @@ export const QUESTIONS_PER_GAME = 10;
 
 export const MOVIE_MODE_TAKE_TURNS = "take_turns" as const;
 export const MOVIE_MODE_PLAY_TOGETHER = "play_together" as const;
+export const MOVIE_MODE_SINGLE = "single" as const;
 
 export const MOVIE_PLAY_MODES = [
   {
-    id: MOVIE_MODE_TAKE_TURNS,
-    title: "Take turns",
-    description:
-      "Answer 10 different questions each. Take turns naming the film, then compare scores.",
+    id: MOVIE_MODE_SINGLE,
+    title: "Single player",
+    description: "Name the films on your own. No second player.",
   },
   {
     id: MOVIE_MODE_PLAY_TOGETHER,
@@ -66,12 +66,22 @@ export const MOVIE_PLAY_MODES = [
     description:
       "Answer 10 shared questions. Discuss each line, and the room creator submits the team's answer.",
   },
+  {
+    id: MOVIE_MODE_TAKE_TURNS,
+    title: "Play separate",
+    description:
+      "Answer 10 different questions each. Take turns naming the film, then compare scores.",
+  },
 ] as const;
 
 export type MoviePlayMode = (typeof MOVIE_PLAY_MODES)[number]["id"];
 
 export function isMoviePlayMode(value: string): value is MoviePlayMode {
-  return value === MOVIE_MODE_TAKE_TURNS || value === MOVIE_MODE_PLAY_TOGETHER;
+  return value === MOVIE_MODE_TAKE_TURNS || value === MOVIE_MODE_PLAY_TOGETHER || value === MOVIE_MODE_SINGLE;
+}
+
+export function sharesMovieRound(mode: string) {
+  return mode === MOVIE_MODE_PLAY_TOGETHER || mode === MOVIE_MODE_SINGLE;
 }
 
 export function movieModeTitle(mode: MoviePlayMode): string {

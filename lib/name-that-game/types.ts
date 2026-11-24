@@ -1,17 +1,23 @@
 export const GAME_MODE_TAKE_TURNS = "take_turns" as const;
 export const GAME_MODE_PLAY_TOGETHER = "play_together" as const;
+export const GAME_MODE_SINGLE = "single" as const;
 
 export const GAME_PLAY_MODES = [
   {
-    id: GAME_MODE_TAKE_TURNS,
-    title: "Take turns",
-    description: "See a different screenshot each turn. Name the game, then compare scores.",
+    id: GAME_MODE_SINGLE,
+    title: "Single player",
+    description: "Name the games on your own. No second player.",
   },
   {
     id: GAME_MODE_PLAY_TOGETHER,
     title: "Play together",
     description:
       "Share each screenshot. Discuss it, and the room creator submits the team's answer.",
+  },
+  {
+    id: GAME_MODE_TAKE_TURNS,
+    title: "Play separate",
+    description: "See a different screenshot each turn. Name the game, then compare scores.",
   },
 ] as const;
 
@@ -60,7 +66,11 @@ export type PresentedGame = {
 };
 
 export function isGamePlayMode(value: string): value is GamePlayMode {
-  return value === GAME_MODE_TAKE_TURNS || value === GAME_MODE_PLAY_TOGETHER;
+  return value === GAME_MODE_TAKE_TURNS || value === GAME_MODE_PLAY_TOGETHER || value === GAME_MODE_SINGLE;
+}
+
+export function sharesGameRound(mode: string) {
+  return mode === GAME_MODE_PLAY_TOGETHER || mode === GAME_MODE_SINGLE;
 }
 
 export function isGameEra(value: string): value is GameEra {

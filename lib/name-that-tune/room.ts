@@ -2,6 +2,8 @@ import { questionsForEra, selectGameQuestions } from "./game";
 import {
   QUESTIONS_PER_GAME,
   TUNE_MODE_PLAY_TOGETHER,
+  TUNE_MODE_SINGLE,
+  sharesTuneRound,
   TUNE_MODE_TAKE_TURNS,
   tuneEraTitle,
   tuneModeTitle,
@@ -125,11 +127,12 @@ function touch(room: TuneRoom, patch: Partial<TuneRoom>, now: number): TuneRoom 
 }
 
 export function roomMode(room: Pick<TuneRoom, "mode">): TunePlayMode {
-  return room.mode === TUNE_MODE_PLAY_TOGETHER ? TUNE_MODE_PLAY_TOGETHER : TUNE_MODE_TAKE_TURNS;
+  if (room.mode === TUNE_MODE_PLAY_TOGETHER || room.mode === TUNE_MODE_SINGLE) return room.mode;
+  return TUNE_MODE_TAKE_TURNS;
 }
 
 export function matchLength(room: Pick<TuneRoom, "mode">): number {
-  return roomMode(room) === TUNE_MODE_PLAY_TOGETHER ? QUESTIONS_PER_GAME : TURNS_PER_MATCH;
+  return sharesTuneRound(roomMode(room)) ? QUESTIONS_PER_GAME : TURNS_PER_MATCH;
 }
 
 export function createTuneRoom(
@@ -221,7 +224,7 @@ export function startTuneGame(
   if (room.phase !== "lobby") {
     throw new Error("Game already started");
   }
-  if (room.players.length < MAX_PLAYERS) {
+  if (room.mode !== "single" && room.players.length < MAX_PLAYERS) {
     throw new Error("Waiting for a second player");
   }
   const dealt = dealMatchQuestions(room.era, room.seenIds, rng, matchLength(room));
@@ -251,7 +254,7 @@ export function submitTuneAnswer(
   if (room.phase !== "question") {
     throw new Error("Not accepting answers right now");
   }
-  const together = roomMode(room) === TUNE_MODE_PLAY_TOGETHER;
+  const together = sharesTuneRound(roomMode(room));
   if (together && playerId !== room.hostId) {
     throw new Error("Only the room creator can submit answers in Play together");
   }
@@ -317,7 +320,7 @@ function advanceFromReveal(room: TuneRoom, now: number): TuneRoom {
       phase: "question",
       turnIndex: nextTurn,
       activePlayerId:
-        roomMode(room) === TUNE_MODE_PLAY_TOGETHER ? room.hostId : playerForTurn(room, nextTurn),
+        sharesTuneRound(roomMode(room)) ? room.hostId : playerForTurn(room, nextTurn),
       revealStartedAt: null,
     },
     now,
@@ -424,7 +427,7 @@ export function toTuneClientState(room: TuneRoom, viewerId: string): TuneClientS
     room.phase === "reveal"
       ? room.answers.find((answer) => answer.turnIndex === room.turnIndex)
       : undefined;
-  const together = mode === TUNE_MODE_PLAY_TOGETHER;
+  const together = sharesTuneRound(mode);
   const active = room.players.find((player) => player.id === room.activePlayerId);
   const isYourTurn =
     room.phase === "question" &&

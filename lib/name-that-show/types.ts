@@ -2,18 +2,24 @@ export const INTRO_SECONDS = 12;
 
 export const SHOW_MODE_TAKE_TURNS = "take_turns" as const;
 export const SHOW_MODE_PLAY_TOGETHER = "play_together" as const;
+export const SHOW_MODE_SINGLE = "single" as const;
 
 export const SHOW_PLAY_MODES = [
   {
-    id: SHOW_MODE_TAKE_TURNS,
-    title: "Take turns",
-    description: "Hear a different theme each turn. Name the UK gameshow, then compare scores.",
+    id: SHOW_MODE_SINGLE,
+    title: "Single player",
+    description: "Name the shows on your own. No second player.",
   },
   {
     id: SHOW_MODE_PLAY_TOGETHER,
     title: "Play together",
     description:
       "Hear shared themes. Discuss each one, and the room creator submits the team's answer.",
+  },
+  {
+    id: SHOW_MODE_TAKE_TURNS,
+    title: "Play separate",
+    description: "Hear a different theme each turn. Name the UK gameshow, then compare scores.",
   },
 ] as const;
 
@@ -50,7 +56,11 @@ export type PresentedShow = {
 };
 
 export function isShowPlayMode(value: string): value is ShowPlayMode {
-  return value === SHOW_MODE_TAKE_TURNS || value === SHOW_MODE_PLAY_TOGETHER;
+  return value === SHOW_MODE_TAKE_TURNS || value === SHOW_MODE_PLAY_TOGETHER || value === SHOW_MODE_SINGLE;
+}
+
+export function sharesShowRound(mode: string) {
+  return mode === SHOW_MODE_PLAY_TOGETHER || mode === SHOW_MODE_SINGLE;
 }
 
 export function isShowEra(value: string): value is ShowEra {

@@ -240,7 +240,7 @@ export function DrawTheFlowerClient() {
     window.history.replaceState(null, "", `${url.pathname}?${url.searchParams.toString()}`);
   }
 
-  async function createRoom() {
+  async function createRoom(mode: "single" | "together" | "separate" = "separate") {
     setError(null);
     if (!name.trim()) {
       setErrorScope("create");
@@ -255,7 +255,7 @@ export function DrawTheFlowerClient() {
       const res = await fetch("/api/draw-the-flower/room", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ playerId: activePlayerId, playerName: name.trim() }),
+        body: JSON.stringify({ playerId: activePlayerId, playerName: name.trim(), mode }),
       });
       const state = await parseState(res);
       if (!state) return;
@@ -365,14 +365,12 @@ export function DrawTheFlowerClient() {
                 onChange={(event) => setName(event.target.value)}
               />
             </label>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => void createRoom()}
-              className="mt-6 w-full rounded-xl bg-gradient-to-r from-pink-500 to-fuchsia-500 py-3.5 text-sm font-semibold text-white shadow-lg shadow-pink-700/30 disabled:opacity-60"
-            >
-              Create room
-            </button>
+            <div className="mt-6 grid gap-2">
+              <p className="text-sm font-medium text-slate-200">How to play</p>
+              <button type="button" disabled={busy} onClick={() => void createRoom("single")} className="w-full rounded-xl bg-gradient-to-r from-pink-500 to-fuchsia-500 py-3.5 text-sm font-semibold text-white shadow-lg shadow-pink-700/30 disabled:opacity-60">Single player</button>
+              <button type="button" disabled={busy} onClick={() => void createRoom("together")} className="w-full rounded-xl bg-gradient-to-r from-pink-500 to-fuchsia-500 py-3.5 text-sm font-semibold text-white shadow-lg shadow-pink-700/30 disabled:opacity-60">Play together</button>
+              <button type="button" disabled={busy} onClick={() => void createRoom("separate")} className="w-full rounded-xl bg-gradient-to-r from-pink-500 to-fuchsia-500 py-3.5 text-sm font-semibold text-white shadow-lg shadow-pink-700/30 disabled:opacity-60">Play separate</button>
+            </div>
             {error && errorScope !== "join" ? <p className="mt-4 text-center text-sm text-red-300">{error}</p> : null}
             <div id="flower-join" className={`mt-6 rounded-2xl p-1 ${errorScope === "join" ? "ring-2 ring-red-400" : ""}`}>
               <label className="block text-sm font-medium text-slate-200">
@@ -451,7 +449,7 @@ export function DrawTheFlowerClient() {
             <span className="font-mono tracking-[0.2em] text-pink-200">{formatRoomCodeSpaced(roomState.code)}</span>
           </p>
           <p className="mt-2 text-sm text-slate-400">
-            Your friend enters that code on Fun Quiz or this page, then presses Join room.
+            {roomState.mode === "single" ? "You are playing on your own. Press start when you are ready." : "Your friend enters that code on Fun Quiz or this page, then presses Join room."}
           </p>
           <button
             type="button"
@@ -474,11 +472,11 @@ export function DrawTheFlowerClient() {
           {isHost ? (
             <button
               type="button"
-              disabled={busy || roomState.players.length < 2}
+              disabled={busy || (roomState.mode !== "single" && roomState.players.length < 2)}
               onClick={() => void post(`/api/draw-the-flower/room/${roomState.code}/start`, { playerId, weekly: new URLSearchParams(window.location.search).get("weekly") === "1" })}
               className="mt-6 w-full rounded-xl bg-gradient-to-r from-pink-500 to-fuchsia-500 py-3 text-sm font-semibold text-white disabled:opacity-60"
             >
-              {roomState.players.length < 2 ? "Waiting for player 2" : "Start game"}
+              {roomState.mode !== "single" && roomState.players.length < 2 ? "Waiting for player 2" : "Start game"}
             </button>
           ) : (
             <p className="mt-6 text-center text-sm text-slate-400">Waiting for the host to start.</p>
