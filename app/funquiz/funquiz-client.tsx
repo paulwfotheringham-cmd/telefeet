@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { FriendsClub } from "@/components/funquiz/friends-club";
 import { CoverTile, WideChoice } from "@/components/funquiz/picture-board";
@@ -625,19 +626,35 @@ export function FunQuizClient() {
           A Selection of Games
         </h1>
         {account ? (
-          <p className="mt-3 text-center text-sm text-slate-300">
-            <span className="font-medium text-white">{account.email}</span>
-            <button
-              type="button"
-              onClick={() => {
-                clearClubSession();
-                setAccount(null);
-              }}
-              className="ml-3 text-xs font-semibold uppercase tracking-wide text-slate-400 hover:text-white"
-            >
-              Log out
-            </button>
-          </p>
+          <div className="mx-auto mt-3 flex w-full max-w-xl flex-col items-end gap-2">
+            <p className="w-full text-center text-sm text-slate-300">
+              <span className="font-medium text-white">{account.email}</span>
+              <button
+                type="button"
+                onClick={() => {
+                  clearClubSession();
+                  setAccount(null);
+                }}
+                className="ml-3 text-xs font-semibold uppercase tracking-wide text-slate-400 hover:text-white"
+              >
+                Log out
+              </button>
+            </p>
+            <div className="flex gap-2">
+              <Link
+                href="/funquiz/podcasts"
+                className="rounded-full border border-amber-300/40 bg-amber-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-100 hover:bg-amber-400/20"
+              >
+                Podcasts
+              </Link>
+              <Link
+                href="/funquiz/music"
+                className="rounded-full border border-amber-300/40 bg-amber-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-100 hover:bg-amber-400/20"
+              >
+                Music
+              </Link>
+            </div>
+          </div>
         ) : null}
 
         {storeWarning ? (

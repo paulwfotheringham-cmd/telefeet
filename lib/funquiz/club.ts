@@ -38,12 +38,28 @@ export type ClubChallenge = {
   createdAt: string;
 };
 
+export type LinkKind = "podcast" | "music";
+
+export type ClubLink = {
+  id: string;
+  accountId: string;
+  email: string;
+  kind: LinkKind;
+  name: string;
+  url: string;
+  description: string;
+  createdAt: string;
+};
+
+type StoredLink = Omit<ClubLink, "email">;
+
 type Memory = {
   accounts: Map<string, ClubAccount>;
   sessions: Map<string, { accountId: string; expiresAt: number }>;
   scores: ClubScore[];
   challenges: ClubChallenge[];
   weeklyRooms: Map<string, { game: string; weekStart: string }>;
+  links: StoredLink[];
 };
 
 const memoryGlobal = globalThis as typeof globalThis & { __funquizClub?: Memory };
@@ -56,8 +72,10 @@ function memory(): Memory {
       scores: [],
       challenges: [],
       weeklyRooms: new Map(),
+      links: [],
     };
   }
+  if (!memoryGlobal.__funquizClub.links) memoryGlobal.__funquizClub.links = [];
   return memoryGlobal.__funquizClub;
 }
 
@@ -635,4 +653,98 @@ export async function clubBoard(token: string) {
       playedAt: row.playedAt,
     }));
   return { meId: account.id, players, games, matches };
+}
+
+function isLinkKind(value: string): value is LinkKind {
+  return value === "podcast" || value === "music";
+}
+
+function cleanLinkUrl(raw: string): string | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(raw.trim());
+  } catch {
+    return null;
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
+  if (parsed.username || parsed.password) return null;
+  const href = parsed.toString();
+  if (href.length > 500) return null;
+  return href;
+}
+
+function withEmails(rows: StoredLink[], accounts: ClubAccount[]): ClubLink[] {
+  const emails = new Map(accounts.map((item) => [item.id, item.email]));
+  return rows.map((row) => ({ ...row, email: emails.get(row.accountId) ?? "Player" }));
+}
+
+export async function listLinks(token: string, kindRaw: string) {
+  const account = await accountFromToken(token);
+  if (!account) return { error: "Sign in again.", status: 401 as const };
+  if (!isLinkKind(kindRaw)) return { error: "Unknown section.", status: 400 as const };
+  if (!usesSupabase()) {
+    const rows = memory()
+      .links.filter((row) => row.kind === kindRaw)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    return { items: withEmails(rows, [...memory().accounts.values()]) };
+  }
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("funquiz_links")
+    .select("id, account_id, kind, name, url, description, created_at")
+    .eq("kind", kindRaw)
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (error) return { error: error.message, status: 500 as const };
+  const accounts = await allAccounts();
+  const rows: StoredLink[] = (data ?? []).map((row) => ({
+    id: String(row.id),
+    accountId: String(row.account_id),
+    kind: kindRaw,
+    name: String(row.name),
+    url: String(row.url),
+    description: String(row.description ?? ""),
+    createdAt: String(row.created_at),
+  }));
+  return { items: withEmails(rows, accounts) };
+}
+
+export async function addLink(
+  token: string,
+  input: { kind?: string; name?: string; url?: string; description?: string },
+) {
+  const account = await accountFromToken(token);
+  if (!account) return { error: "Sign in again.", status: 401 as const };
+  const kind = (input.kind ?? "").trim();
+  const name = (input.name ?? "").trim().replace(/\s+/g, " ");
+  const description = (input.description ?? "").trim().slice(0, 600);
+  const url = cleanLinkUrl(input.url ?? "");
+  if (!isLinkKind(kind)) return { error: "Unknown section.", status: 400 as const };
+  if (name.length < 1 || name.length > 80) return { error: "Enter a name.", status: 400 as const };
+  if (!url) return { error: "Enter a web address starting with https://", status: 400 as const };
+  const row: StoredLink = {
+    id: crypto.randomUUID(),
+    accountId: account.id,
+    kind,
+    name,
+    url,
+    description,
+    createdAt: new Date().toISOString(),
+  };
+  if (!usesSupabase()) {
+    memory().links.push(row);
+    return { item: { ...row, email: account.email } };
+  }
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("funquiz_links").insert({
+    id: row.id,
+    account_id: row.accountId,
+    kind: row.kind,
+    name: row.name,
+    url: row.url,
+    description: row.description,
+    created_at: row.createdAt,
+  });
+  if (error) return { error: error.message, status: 500 as const };
+  return { item: { ...row, email: account.email } };
 }
