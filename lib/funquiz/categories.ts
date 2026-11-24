@@ -11,6 +11,7 @@ export const QUIZ_CATEGORY_WORLD_FLAGS = "world_flags" as const;
 export const QUIZ_CATEGORY_CAPITAL_POPULATIONS = "capital_populations" as const;
 export const QUIZ_CATEGORY_SPORTS = "sports" as const;
 export const QUIZ_CATEGORY_STAR_TREK = "star_trek" as const;
+export const QUIZ_CATEGORY_WORLD_LEADERS = "world_leaders" as const;
 
 export type QuizCategoryId =
   | typeof QUIZ_CATEGORY_GENERAL_KNOWLEDGE
@@ -25,7 +26,8 @@ export type QuizCategoryId =
   | typeof QUIZ_CATEGORY_WORLD_FLAGS
   | typeof QUIZ_CATEGORY_CAPITAL_POPULATIONS
   | typeof QUIZ_CATEGORY_SPORTS
-  | typeof QUIZ_CATEGORY_STAR_TREK;
+  | typeof QUIZ_CATEGORY_STAR_TREK
+  | typeof QUIZ_CATEGORY_WORLD_LEADERS;
 
 export const QUIZ_CATEGORIES: {
   id: QuizCategoryId;
@@ -103,6 +105,12 @@ export const QUIZ_CATEGORIES: {
     id: QUIZ_CATEGORY_STAR_TREK,
     title: "Star Trek",
     description: "Starships, captains, and alien worlds from the original series through Voyager and the films.",
+  },
+  {
+    id: QUIZ_CATEGORY_WORLD_LEADERS,
+    title: "Presidents & PMs",
+    description:
+      "Current prime ministers and presidents in South America, Europe, and Asia. Three choices, and the recent ones are the trap.",
   },
 ];
 

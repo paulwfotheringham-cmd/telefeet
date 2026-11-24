@@ -12,6 +12,7 @@ import {
   QUIZ_CATEGORY_SPORTS,
   QUIZ_CATEGORY_STAR_TREK,
   QUIZ_CATEGORY_WORLD_FLAGS,
+  QUIZ_CATEGORY_WORLD_LEADERS,
   type QuizCategoryId,
 } from "../categories";
 import {
@@ -24,6 +25,7 @@ import { CAPITAL_POPULATION_DEFS } from "./builders/capital-populations";
 import { POPULATION_TOLERANCE } from "../population";
 import { SPORTS_HARD, SPORTS_INTERMEDIATE } from "./builders/sports";
 import { STAR_TREK_HARD, STAR_TREK_INTERMEDIATE } from "./builders/star-trek";
+import { LEADERS_HARD, LEADERS_INTERMEDIATE } from "./builders/world-leaders";
 import { CAPITAL_HARD_SUPPLEMENT } from "./builders/capitals-hard-supplement";
 import { capitalDifficultyForCountry, outlineDifficultyForCountry } from "./difficulty-quality";
 import { GEOGRAPHY_HARD_SUPPLEMENT } from "./builders/geography-hard-supplement";
@@ -107,6 +109,25 @@ function sportsToQuestion(
     mcqOptionSeed(`sports:${difficulty}:${def.prompt}`),
   );
   return mcq(QUIZ_CATEGORY_SPORTS, "Sports", { prompt: def.prompt, options, correctIndex }, difficulty);
+}
+
+function leadersToQuestion(
+  def: { prompt: string; options: [string, string, string]; correctIndex: number },
+  difficulty: QuizDifficulty,
+): Omit<QuizQuestionBankItem, "id"> {
+  const { options, correctIndex } = shuffleMcqOptions(
+    def.options,
+    def.correctIndex,
+    mcqOptionSeed(`leaders:${difficulty}:${def.prompt}`),
+  );
+  return {
+    categoryId: QUIZ_CATEGORY_WORLD_LEADERS,
+    category: "Presidents & PMs",
+    prompt: def.prompt,
+    options,
+    correctIndex,
+    difficulty,
+  };
 }
 
 function starTrekToQuestion(
@@ -202,6 +223,8 @@ export function buildQuestionBank(): QuizQuestionBankItem[] {
     ...SPORTS_HARD.map((d) => sportsToQuestion(d, QUIZ_DIFFICULTY_HARD)),
     ...STAR_TREK_INTERMEDIATE.map((d) => starTrekToQuestion(d, QUIZ_DIFFICULTY_INTERMEDIATE)),
     ...STAR_TREK_HARD.map((d) => starTrekToQuestion(d, QUIZ_DIFFICULTY_HARD)),
+    ...LEADERS_INTERMEDIATE.map((d) => leadersToQuestion(d, QUIZ_DIFFICULTY_INTERMEDIATE)),
+    ...LEADERS_HARD.map((d) => leadersToQuestion(d, QUIZ_DIFFICULTY_HARD)),
     ...GEOGRAPHY_QUESTION_DEFS.map((d) =>
       mcq(QUIZ_CATEGORY_GEOGRAPHY, "Geography", d, QUIZ_DIFFICULTY_INTERMEDIATE, ["geography"]),
     ),
