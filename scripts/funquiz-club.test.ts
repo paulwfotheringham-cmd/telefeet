@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { clubBoard, clubHome, login, recordScore, signup } from "../lib/funquiz/club";
+import { addLink, clubBoard, clubHome, listLinks, login, recordScore, signup } from "../lib/funquiz/club";
 import { mulberry32, weekSeed, weeklyGame } from "../lib/funquiz/weekly";
 
 process.env.SUPABASE_SERVICE_ROLE_KEY = "";
@@ -56,6 +56,23 @@ async function main() {
   const quiz = board.games.find((game) => game.title === "Fun Quiz · Take turns");
   assert.equal(quiz?.players[0]?.name, sam.account.name);
   assert.equal(quiz?.players[0]?.points, 3);
+
+  const saved = await addLink(created.token, {
+    kind: "podcast",
+    name: "Night desk",
+    url: "https://example.com/night",
+    description: "Late interviews",
+  });
+  assert.ok("item" in saved && saved.item.name === "Night desk");
+  const badUrl = await addLink(created.token, { kind: "music", name: "Nope", url: "javascript:alert(1)", description: "no" });
+  assert.equal("error" in badUrl ? badUrl.status : 0, 400);
+  const podcasts = await listLinks(created.token, "podcast");
+  assert.ok(!("error" in podcasts));
+  if ("error" in podcasts) return;
+  assert.equal(podcasts.items[0]?.email, "paul@example.com");
+  assert.equal(podcasts.items[0]?.url, "https://example.com/night");
+  const music = await listLinks(sam.token, "music");
+  assert.ok(!("error" in music) && music.items.length === 0);
 
   const week = weeklyGame();
   const first = mulberry32(weekSeed(week.path));
