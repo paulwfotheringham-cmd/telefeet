@@ -15,7 +15,7 @@ export function CoverTile({
   onClick?: () => void;
 }) {
   const className =
-    "group relative block aspect-[3/4] overflow-hidden rounded-2xl text-left shadow-lg shadow-black/40 ring-1 ring-white/15 transition duration-300 hover:-translate-y-1 hover:shadow-2xl hover:ring-white/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200";
+    "group relative block aspect-[75/41] overflow-hidden rounded-2xl text-left shadow-lg shadow-black/40 ring-1 ring-white/15 transition duration-300 hover:-translate-y-1 hover:shadow-2xl hover:ring-white/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200";
   const inner = (
     <>
       <Image
