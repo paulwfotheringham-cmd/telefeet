@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
-import { QUIZ_CATEGORY_GENERAL_MILITARY } from "../lib/funquiz/categories";
+import { QUIZ_CATEGORY_CAPITAL_POPULATIONS, QUIZ_CATEGORY_GENERAL_MILITARY } from "../lib/funquiz/categories";
 import { gradeAnswer, normalizeChoiceIndex } from "../lib/funquiz/answer-validation";
+import { GAME_MODE_SINGLE } from "../lib/funquiz/constants";
+import { QUIZ_DIFFICULTY_INTERMEDIATE } from "../lib/funquiz/difficulties";
 import {
   addPlayer,
   createRoom,
@@ -84,7 +86,47 @@ function runTakeTurnsRevealFeedback() {
   assert.equal(guestReveal.question!.id, bankId);
 }
 
+function runPopulationGuess() {
+  let room = createRoom(
+    "host",
+    "Host",
+    "POP001",
+    GAME_MODE_SINGLE,
+    QUIZ_CATEGORY_CAPITAL_POPULATIONS,
+    QUIZ_DIFFICULTY_INTERMEDIATE,
+  );
+  room = startGame(room, "host");
+  const bankId = room.questionOrder[0]!;
+  const q = getQuestionByBankId(bankId);
+  assert.ok(q.estimate);
+  const actual = q.estimate!.value;
+  room = submitAnswer(room, "host", String(actual + 2_000_000));
+  const close = toClientState(room, "host");
+  assert.equal(close.answerFeedback?.correct, true);
+  assert.equal(close.answerFeedback?.correctLabel, actual.toLocaleString("en-US"));
+  assert.equal(close.players.find((p) => p.id === "host")?.answerIndex !== actual, true);
+  assert.ok((room.players.find((p) => p.id === "host")?.answer ?? 99) <= 3);
+
+  let miss = createRoom(
+    "host",
+    "Host",
+    "POP002",
+    GAME_MODE_SINGLE,
+    QUIZ_CATEGORY_CAPITAL_POPULATIONS,
+    QUIZ_DIFFICULTY_INTERMEDIATE,
+  );
+  miss = startGame(miss, "host");
+  const missQ = getQuestionByBankId(miss.questionOrder[0]!);
+  miss = submitAnswer(miss, "host", "1,000");
+  const far = toClientState(miss, "host");
+  assert.equal(far.answerFeedback?.correct, false);
+  assert.equal(far.answerFeedback?.correctLabel, missQ.estimate!.value.toLocaleString("en-US"));
+  assert.equal(far.question?.input, "population");
+  assert.equal(far.question?.options.length, 0);
+}
+
 runGradeEveryOptionPosition();
+runPopulationGuess();
 runNormalizeChoiceIndex();
 runFeedbackMatchesScore();
 runTakeTurnsRevealFeedback();

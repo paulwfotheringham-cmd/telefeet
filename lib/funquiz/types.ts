@@ -83,10 +83,12 @@ export type QuizRoom = {
 export type PublicQuizQuestion = {
   id: number;
   prompt: string;
-  options: QuizOptionList;
+  options: readonly string[];
   category: string;
   outlineImageUrl?: string;
   flagImageUrl?: string;
+  /** `population` is a typed number. `choice` is the multiple-choice buttons. */
+  input?: "choice" | "population";
 };
 
 export type ScorecardPlayerBar = {
@@ -131,7 +133,7 @@ export type ResultRow = {
   correctIndex: number;
   correct: boolean;
   prompt: string;
-  options: QuizOptionList;
+  options: readonly string[];
   chosenLabel: string | null;
   correctLabel: string;
 };
@@ -171,6 +173,8 @@ export type ClientRoomState = {
     correctIndex: number;
     chosenLabel: string;
     correctLabel: string;
+    /** Absolute gap between a population guess and the city population. */
+    distance?: number;
   } | null;
   revealEndsAt: number | null;
   winnerIds: string[];

@@ -1,5 +1,6 @@
 import {
   QUIZ_CATEGORY_CAPITAL_CITIES,
+  QUIZ_CATEGORY_CAPITAL_POPULATIONS,
   QUIZ_CATEGORY_COUNTRY_OUTLINES,
   QUIZ_CATEGORY_GENERAL_KNOWLEDGE,
   QUIZ_CATEGORY_GENERAL_MILITARY,
@@ -8,6 +9,8 @@ import {
   QUIZ_CATEGORY_MILITARY_BATTLES,
   QUIZ_CATEGORY_MOVIES_POP_CULTURE,
   QUIZ_CATEGORY_SPACE,
+  QUIZ_CATEGORY_SPORTS,
+  QUIZ_CATEGORY_STAR_TREK,
   QUIZ_CATEGORY_WORLD_FLAGS,
   type QuizCategoryId,
 } from "../categories";
@@ -17,6 +20,10 @@ import {
   type QuizDifficulty,
 } from "../difficulties";
 import { CAPITAL_QUESTION_DEFS } from "./builders/capitals";
+import { CAPITAL_POPULATION_DEFS } from "./builders/capital-populations";
+import { POPULATION_TOLERANCE } from "../population";
+import { SPORTS_HARD, SPORTS_INTERMEDIATE } from "./builders/sports";
+import { STAR_TREK_HARD, STAR_TREK_INTERMEDIATE } from "./builders/star-trek";
 import { CAPITAL_HARD_SUPPLEMENT } from "./builders/capitals-hard-supplement";
 import { capitalDifficultyForCountry, outlineDifficultyForCountry } from "./difficulty-quality";
 import { GEOGRAPHY_HARD_SUPPLEMENT } from "./builders/geography-hard-supplement";
@@ -74,6 +81,44 @@ function capitalToQuestion(
     generalKnowledgeSubjects: ["geography", "culture"],
     difficulty,
   };
+}
+
+function populationToQuestion(
+  def: (typeof CAPITAL_POPULATION_DEFS)[number],
+): Omit<QuizQuestionBankItem, "id"> {
+  return {
+    categoryId: QUIZ_CATEGORY_CAPITAL_POPULATIONS,
+    category: "Capital populations",
+    prompt: `What is the population of ${def.city}, ${def.country}?`,
+    options: ["Type a number", "Type a number", "Type a number"],
+    correctIndex: 0,
+    estimate: { value: def.population, tolerance: POPULATION_TOLERANCE },
+    difficulty: def.difficulty,
+  };
+}
+
+function sportsToQuestion(
+  def: { prompt: string; options: [string, string, string, string]; correctIndex: number },
+  difficulty: QuizDifficulty,
+): Omit<QuizQuestionBankItem, "id"> {
+  const { options, correctIndex } = shuffleMcqOptions(
+    def.options,
+    def.correctIndex,
+    mcqOptionSeed(`sports:${difficulty}:${def.prompt}`),
+  );
+  return mcq(QUIZ_CATEGORY_SPORTS, "Sports", { prompt: def.prompt, options, correctIndex }, difficulty);
+}
+
+function starTrekToQuestion(
+  def: { prompt: string; options: [string, string, string, string]; correctIndex: number },
+  difficulty: QuizDifficulty,
+): Omit<QuizQuestionBankItem, "id"> {
+  const { options, correctIndex } = shuffleMcqOptions(
+    def.options,
+    def.correctIndex,
+    mcqOptionSeed(`star-trek:${difficulty}:${def.prompt}`),
+  );
+  return mcq(QUIZ_CATEGORY_STAR_TREK, "Star Trek", { prompt: def.prompt, options, correctIndex }, difficulty);
 }
 
 function flagToQuestion(
@@ -152,6 +197,11 @@ export function buildQuestionBank(): QuizQuestionBankItem[] {
     ...CAPITAL_HARD_SUPPLEMENT.map((d) =>
       capitalToQuestion(d, QUIZ_DIFFICULTY_HARD),
     ),
+    ...CAPITAL_POPULATION_DEFS.map((d) => populationToQuestion(d)),
+    ...SPORTS_INTERMEDIATE.map((d) => sportsToQuestion(d, QUIZ_DIFFICULTY_INTERMEDIATE)),
+    ...SPORTS_HARD.map((d) => sportsToQuestion(d, QUIZ_DIFFICULTY_HARD)),
+    ...STAR_TREK_INTERMEDIATE.map((d) => starTrekToQuestion(d, QUIZ_DIFFICULTY_INTERMEDIATE)),
+    ...STAR_TREK_HARD.map((d) => starTrekToQuestion(d, QUIZ_DIFFICULTY_HARD)),
     ...GEOGRAPHY_QUESTION_DEFS.map((d) =>
       mcq(QUIZ_CATEGORY_GEOGRAPHY, "Geography", d, QUIZ_DIFFICULTY_INTERMEDIATE, ["geography"]),
     ),

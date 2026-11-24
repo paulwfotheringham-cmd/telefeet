@@ -10,12 +10,21 @@ export {
 export type { QuizQuestionBankItem } from "./question-bank/types";
 
 export function toPublicQuestion(item: QuizQuestionBankItem): PublicQuizQuestion {
-  const options = [...item.options] as PublicQuizQuestion["options"];
+  if (item.estimate) {
+    return {
+      id: item.id,
+      prompt: item.prompt,
+      options: [],
+      category: item.category,
+      input: "population",
+    };
+  }
   return {
     id: item.id,
     prompt: item.prompt,
-    options,
+    options: [...item.options],
     category: item.category,
+    input: "choice",
     outlineImageUrl: item.outlineAssetId
       ? `/api/funquiz/outline/${item.outlineAssetId}`
       : undefined,

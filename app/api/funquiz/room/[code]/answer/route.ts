@@ -11,10 +11,10 @@ type Params = { params: { code: string } };
 export async function POST(request: Request, { params }: Params) {
   try {
     const code = normalizeRoomCode(params.code ?? "");
-    const body = (await request.json()) as { playerId?: string; choiceIndex?: number };
+    const body = (await request.json()) as { playerId?: string; choiceIndex?: unknown };
     const playerId = body.playerId?.trim();
     const choiceIndex = body.choiceIndex;
-    if (!code || !playerId || choiceIndex === undefined) {
+    if (!code || !playerId || choiceIndex === undefined || choiceIndex === null || choiceIndex === "") {
       return NextResponse.json(
         { error: "playerId and choiceIndex required" },
         { status: 400 },
