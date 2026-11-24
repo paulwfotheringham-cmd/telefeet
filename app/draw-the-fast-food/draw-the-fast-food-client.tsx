@@ -405,7 +405,6 @@ export function DrawTheFastFoodClient() {
     return <div className="flex min-h-[100dvh] items-center justify-center text-slate-300">Loading room…</div>;
   }
 
-  const opponent = roomState.players.find((player) => player.id !== playerId);
   const isHost = roomState.hostId === playerId;
   const drawingLocked = roomState.phase !== "draw" || roomState.youSubmitted;
   const roundLabel = Math.min(roomState.turnIndex + 1, roomState.totalRounds);
@@ -432,7 +431,7 @@ export function DrawTheFastFoodClient() {
         </button>
       </header>
 
-      <div className="mt-4 grid grid-cols-2 gap-3">
+      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {roomState.players.map((player) => (
           <div key={player.id} className="rounded-2xl border border-white/10 bg-slate-900/70 px-4 py-3">
             <p className="text-sm text-slate-300">{player.name}</p>
@@ -449,7 +448,7 @@ export function DrawTheFastFoodClient() {
             <span className="font-mono tracking-[0.2em] text-yellow-200">{formatRoomCodeSpaced(roomState.code)}</span>
           </p>
           <p className="mt-2 text-sm text-slate-400">
-            {roomState.mode === "single" ? "You are playing on your own. Press start when you are ready." : "Your friend enters that code on Fun Quiz or this page, then presses Join room."}
+            {roomState.mode === "single" ? "You are playing on your own. Press start when you are ready." : "Invite up to 3 friends with that code (4 players max). They join on Fun Quiz or this page."}
           </p>
           <button
             type="button"
@@ -476,7 +475,11 @@ export function DrawTheFastFoodClient() {
               onClick={() => void post(`/api/draw-the-fast-food/room/${roomState.code}/start`, { playerId, weekly: new URLSearchParams(window.location.search).get("weekly") === "1" })}
               className="mt-6 w-full rounded-xl bg-gradient-to-r from-red-500 to-amber-500 py-3 text-sm font-semibold text-white disabled:opacity-60"
             >
-              {roomState.mode !== "single" && roomState.players.length < 2 ? "Waiting for player 2" : "Start game"}
+              {roomState.mode !== "single" && roomState.players.length < 2
+                ? "Waiting for more players"
+                : roomState.mode !== "single"
+                  ? `Start game (${roomState.players.length}/4)`
+                  : "Start game"}
             </button>
           ) : (
             <p className="mt-6 text-center text-sm text-slate-400">Waiting for the host to start.</p>
@@ -556,7 +559,7 @@ export function DrawTheFastFoodClient() {
               <div className="mx-auto max-w-sm overflow-hidden rounded-2xl border border-white/10">
                 <FastFoodPicture name={roomState.organ} />
               </div>
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {roomState.boards.map((board) => (
                   <div key={board.playerId}>
                   <p className="mb-2 text-sm font-medium text-slate-200">
@@ -583,16 +586,19 @@ export function DrawTheFastFoodClient() {
               >
                 My drawing is closer
               </button>
-              {opponent ? (
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => void post(`/api/draw-the-fast-food/room/${roomState.code}/vote`, { playerId, choice: opponent.id })}
-                  className="rounded-xl border border-white/15 bg-slate-900/80 px-4 py-3 text-sm text-white"
-                >
-                  {opponent.name}&apos;s drawing is closer
-                </button>
-              ) : null}
+              {roomState.players
+                .filter((player) => player.id !== playerId)
+                .map((player) => (
+                  <button
+                    key={player.id}
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void post(`/api/draw-the-fast-food/room/${roomState.code}/vote`, { playerId, choice: player.id })}
+                    className="rounded-xl border border-white/15 bg-slate-900/80 px-4 py-3 text-sm text-white"
+                  >
+                    {player.name}&apos;s drawing is closer
+                  </button>
+                ))}
               <button
                 type="button"
                 disabled={busy}
