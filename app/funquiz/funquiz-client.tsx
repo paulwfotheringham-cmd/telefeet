@@ -135,9 +135,11 @@ function readPlayerId(): string {
 }
 
 
-type FunQuizTile = { id: string; title: string; href?: string; tone: string };
+type FunQuizTile = { id: string; title: string; href?: string };
 
-const HOME_LABEL = "flex min-h-16 items-center justify-center rounded-xl bg-sky-800 px-2 text-center text-[11px] font-semibold uppercase tracking-wide text-white sm:min-h-[4.5rem] sm:text-xs";
+const HOME_TILE = "flex min-h-14 items-center justify-center border border-[#0e5570] bg-[#1b7596] px-2 py-2 text-center text-xs font-medium leading-tight text-white transition hover:bg-[#2188ad] sm:min-h-16 sm:text-sm";
+
+const HOME_LABEL = `${HOME_TILE} font-semibold uppercase tracking-wide`;
 
 const QUIZ_HOME: { id: QuizCategoryId; title: string }[] = [
   { id: QUIZ_CATEGORY_GENERAL_KNOWLEDGE, title: "General Knowledge" },
@@ -153,29 +155,29 @@ const QUIZ_HOME: { id: QuizCategoryId; title: string }[] = [
 ];
 
 const GAME_TILES: FunQuizTile[] = [
-  { id: "millionaire", title: "Who wants to be a Millionaire", tone: "border-amber-400/50 text-amber-200 hover:bg-amber-950/40" },
-  { id: "holdem", title: "Texas Hold-em", tone: "border-emerald-400/50 text-emerald-200 hover:bg-emerald-950/40" },
-  { id: "catchphrase", title: "Catchphrase", tone: "border-[#ffcc00]/60 text-[#ffcc00] hover:bg-[#0047ab]/30" },
-  { id: "blockbusters", title: "Blockbusters", tone: "border-sky-300/60 text-sky-200 hover:bg-[#003399]/40" },
+  { id: "millionaire", title: "Who wants to be a Millionaire" },
+  { id: "holdem", title: "Texas Hold-em" },
+  { id: "catchphrase", title: "Catchphrase" },
+  { id: "blockbusters", title: "Blockbusters" },
 ];
 
 const NAME_THAT_TILES: FunQuizTile[] = [
-  { id: "movie", title: "Movie", href: "/name-that-movie", tone: "border-violet-400/50 text-violet-200 hover:bg-violet-950/40" },
-  { id: "show", title: "UK Game show", href: "/name-that-show", tone: "border-amber-300/50 text-amber-200 hover:bg-amber-950/30" },
-  { id: "computer", title: "Computer game", href: "/name-that-game", tone: "border-emerald-400/50 text-emerald-200 hover:bg-emerald-950/30" },
-  { id: "tune", title: "80-90's tunes", href: "/name-that-tune", tone: "border-fuchsia-400/50 text-fuchsia-200 hover:bg-fuchsia-950/30" },
+  { id: "movie", title: "Movie", href: "/name-that-movie" },
+  { id: "show", title: "UK Game show", href: "/name-that-show" },
+  { id: "computer", title: "Computer game", href: "/name-that-game" },
+  { id: "tune", title: "80-90's tunes", href: "/name-that-tune" },
 ];
 
 const DRAW_THAT_TILES: FunQuizTile[] = [
-  { id: "organ", title: "Human Body", href: "/draw-the-organ", tone: "border-rose-400/50 text-rose-200 hover:bg-rose-950/30" },
-  { id: "animal", title: "Animals", href: "/draw-the-animal", tone: "border-amber-400/50 text-amber-200 hover:bg-amber-950/30" },
-  { id: "country", title: "Country", href: "/draw-the-country", tone: "border-sky-400/50 text-sky-200 hover:bg-sky-950/30" },
-  { id: "myth", title: "Myth", href: "/draw-the-myth", tone: "border-purple-400/50 text-purple-200 hover:bg-purple-950/30" },
-  { id: "landmark", title: "Landmark", href: "/draw-the-landmark", tone: "border-orange-400/50 text-orange-200 hover:bg-orange-950/30" },
+  { id: "organ", title: "Human Body", href: "/draw-the-organ" },
+  { id: "animal", title: "Animals", href: "/draw-the-animal" },
+  { id: "country", title: "Country", href: "/draw-the-country" },
+  { id: "myth", title: "Myth", href: "/draw-the-myth" },
+  { id: "landmark", title: "Landmark", href: "/draw-the-landmark" },
 ];
 
-function homeTileClass(tone: string, selected = false): string {
-  return `flex min-h-16 items-center justify-center rounded-xl border bg-black/30 p-2 text-center text-xs font-semibold leading-tight transition sm:min-h-[4.5rem] sm:text-sm ${tone} ${selected ? "ring-2 ring-white" : ""}`;
+function homeTileClass(selected = false): string {
+  return `${HOME_TILE} ${selected ? "outline outline-2 outline-offset-2 outline-[#0e5570]" : ""}`;
 }
 
 function chooseFunQuizGame(id: string, setPickedGame: (id: string) => void, setSelectedMode: (mode: GameMode | null) => void, selectedMode: GameMode | null) {
@@ -574,10 +576,10 @@ export function FunQuizClient() {
             />
           </label>
 
-          <div className="mt-6 space-y-3">
+          <div className="mt-6 bg-white p-4 sm:p-5">
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-6 sm:gap-3">
-              <div className={`${HOME_LABEL} col-span-2 sm:col-span-1 sm:row-span-2`}>Quiz</div>
-              {QUIZ_HOME.map((cat) => (
+              <div className={`${HOME_LABEL} col-span-2 sm:col-span-1`}>Quiz</div>
+              {QUIZ_HOME.slice(0, 5).map((cat) => (
                 <button
                   key={cat.id}
                   type="button"
@@ -587,19 +589,30 @@ export function FunQuizClient() {
                     setSelectedMode(null);
                     setSelectedDifficulty(null);
                   }}
-                  className={homeTileClass(
-                    selectedCategory === cat.id
-                      ? "border-violet-300 text-violet-100"
-                      : "border-violet-400/40 text-violet-100 hover:bg-violet-950/40",
-                    selectedCategory === cat.id,
-                  )}
+                  className={homeTileClass(selectedCategory === cat.id)}
+                >
+                  {cat.title}
+                </button>
+              ))}
+              <div className="hidden sm:block" />
+              {QUIZ_HOME.slice(5).map((cat) => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => {
+                    setPickedGame("quiz");
+                    setSelectedCategory(cat.id);
+                    setSelectedMode(null);
+                    setSelectedDifficulty(null);
+                  }}
+                  className={homeTileClass(selectedCategory === cat.id)}
                 >
                   {cat.title}
                 </button>
               ))}
             </div>
 
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-6 sm:gap-3">
+            <div className="mt-8 grid grid-cols-2 gap-2 sm:grid-cols-6 sm:gap-3">
               <div className={`${HOME_LABEL} col-span-2 sm:col-span-1`}>Games</div>
               {GAME_TILES.map((tile) => (
                 <button
@@ -610,26 +623,26 @@ export function FunQuizClient() {
                     setSelectedCategory(null);
                     setSelectedDifficulty(null);
                   }}
-                  className={homeTileClass(tile.tone, pickedGame === tile.id)}
+                  className={homeTileClass(pickedGame === tile.id)}
                 >
                   {tile.title}
                 </button>
               ))}
             </div>
 
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-6 sm:gap-3">
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-6 sm:gap-3">
               <div className={`${HOME_LABEL} col-span-2 sm:col-span-1`}>Name That</div>
               {NAME_THAT_TILES.map((tile) => (
-                <Link key={tile.id} href={tile.href ?? "/funquiz"} className={homeTileClass(tile.tone)}>
+                <Link key={tile.id} href={tile.href ?? "/funquiz"} className={homeTileClass()}>
                   {tile.title}
                 </Link>
               ))}
             </div>
 
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-6 sm:gap-3">
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-6 sm:gap-3">
               <div className={`${HOME_LABEL} col-span-2 sm:col-span-1`}>Draw That</div>
               {DRAW_THAT_TILES.map((tile) => (
-                <Link key={tile.id} href={tile.href ?? "/funquiz"} className={homeTileClass(tile.tone)}>
+                <Link key={tile.id} href={tile.href ?? "/funquiz"} className={homeTileClass()}>
                   {tile.title}
                 </Link>
               ))}
