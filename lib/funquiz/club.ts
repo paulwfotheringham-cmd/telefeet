@@ -669,9 +669,22 @@ function cleanLinkUrl(raw: string): string | null {
   }
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
   if (parsed.username || parsed.password) return null;
+  if (!parsed.hostname) return null;
   const href = parsed.toString();
   if (href.length > 500) return null;
   return href;
+}
+
+function optionalLinkUrl(raw: string): { url: string } | { error: string; status: 400 } {
+  const trimmed = raw.trim();
+  if (!trimmed || trimmed === "http://" || trimmed === "https://") return { url: "" };
+  const withScheme = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  const cleaned = cleanLinkUrl(withScheme);
+  if (cleaned) return { url: cleaned };
+  if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed)) {
+    return { error: "Enter a web address starting with https://", status: 400 };
+  }
+  return { url: "" };
 }
 
 function withEmails(rows: StoredLink[], accounts: ClubAccount[]): ClubLink[] {
@@ -679,7 +692,7 @@ function withEmails(rows: StoredLink[], accounts: ClubAccount[]): ClubLink[] {
   return rows.map((row) => ({
     ...row,
     savedBy: row.savedBy || "",
-    email: row.savedBy || emails.get(row.accountId) || "Guest",
+    email: row.savedBy || emails.get(row.accountId) || "",
   }));
 }
 
@@ -721,12 +734,13 @@ export async function addLink(
   const kind = (input.kind ?? "").trim();
   const name = (input.name ?? "").trim().replace(/\s+/g, " ");
   const description = (input.description ?? "").trim().slice(0, 600);
-  const savedBy = (input.savedBy ?? "").trim().replace(/\s+/g, " ").slice(0, 80) || account?.email || "";
-  const url = cleanLinkUrl(input.url ?? "");
+  const typedSaver = (input.savedBy ?? "").trim().replace(/\s+/g, " ").slice(0, 80);
+  const savedBy = input.savedBy === undefined ? account?.email || "" : typedSaver;
+  const linkUrl = optionalLinkUrl(input.url ?? "");
+  if ("error" in linkUrl) return linkUrl;
+  const url = linkUrl.url;
   if (!isLinkKind(kind)) return { error: "Unknown section.", status: 400 as const };
-  if (!savedBy) return { error: "Enter your name.", status: 400 as const };
-  if (name.length < 1 || name.length > 80) return { error: "Enter a name.", status: 400 as const };
-  if (!url) return { error: "Enter a web address starting with https://", status: 400 as const };
+  if (name.length > 80) return { error: "Enter a name.", status: 400 as const };
   const row: StoredLink = {
     id: crypto.randomUUID(),
     accountId: account?.id ?? "",
