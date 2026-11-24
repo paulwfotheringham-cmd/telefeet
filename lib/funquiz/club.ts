@@ -436,19 +436,8 @@ export async function clubHome(token: string) {
       roomCode: item.roomCode,
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
-  const totals = new Map<string, { id: string; name: string; email: string; points: number; wins: number; games: number; best: number }>();
-  for (const item of accounts) {
-    totals.set(item.id, { id: item.id, name: item.name, email: item.email, points: 0, wins: 0, games: 0, best: 0 });
-  }
-  for (const row of scores) {
-    const total = totals.get(row.accountId);
-    if (!total) continue;
-    total.points += row.score;
-    total.games += 1;
-    if (row.won) total.wins += 1;
-    total.best = Math.max(total.best, row.score);
-  }
-  const board = [...totals.values()].sort((a, b) => b.points - a.points || b.wins - a.wins || a.email.localeCompare(b.email));
+  const scoreboard = buildHomeScoreboard(accounts, scores);
+  const board = scoreboard.players;
   const recent = [...scores].sort((a, b) => b.playedAt.localeCompare(a.playedAt)).slice(0, 12).map((row) => ({
     name: names.get(row.accountId) ?? "Player",
     game: row.game,
@@ -477,6 +466,7 @@ export async function clubHome(token: string) {
       path: row.path,
       roomCode: row.roomCode,
     })),
+    scoreboard,
   };
 }
 
@@ -502,6 +492,93 @@ const GAME_ORDER = [
 function gameRank(title: string) {
   const index = GAME_ORDER.findIndex((name) => title === name || title.startsWith(`${name} `) || title.startsWith(`${name} ·`));
   return index === -1 ? GAME_ORDER.length : index;
+}
+
+const SCOREBOARD_GAMES: { title: string; short: string }[] = [
+  { title: "Fun Quiz · Take turns", short: "Quiz · Turns" },
+  { title: "Fun Quiz · Play together", short: "Quiz · Together" },
+  { title: "Fun Quiz · Shared Millionaire", short: "Quiz · Millionaire" },
+  { title: "Fun Quiz · Dual Millionaire", short: "Quiz · Dual" },
+  { title: "Fun Quiz · Texas Hold'em", short: "Quiz · Hold'em" },
+  { title: "Fun Quiz · Catchphrase", short: "Quiz · Catchphrase" },
+  { title: "Fun Quiz · Blockbusters", short: "Quiz · Blockbusters" },
+  { title: "Name That Movie", short: "Movie" },
+  { title: "Name That Tune", short: "Tune" },
+  { title: "Name That Show", short: "UK show" },
+  { title: "Name That Game", short: "Computer" },
+  { title: "Draw the Organ", short: "Organ" },
+  { title: "Draw the Animal", short: "Animal" },
+  { title: "Draw the Country", short: "Country" },
+  { title: "Draw the Continent", short: "Continent" },
+  { title: "Draw the Appliance", short: "Appliance" },
+  { title: "Draw the Landmark", short: "Landmark" },
+  { title: "Draw the Flower", short: "Flower" },
+  { title: "Draw the Weapon", short: "Weapon" },
+  { title: "Draw the Geography", short: "Geography" },
+  { title: "Draw the Myth", short: "Myth" },
+  { title: "Draw the Fast Food", short: "Fast food" },
+];
+
+type ScoreStat = { points: number; wins: number; games: number; best: number };
+
+function emptyStat(): ScoreStat {
+  return { points: 0, wins: 0, games: 0, best: 0 };
+}
+
+function addStat(stat: ScoreStat, row: ClubScore) {
+  stat.points += row.score;
+  stat.games += 1;
+  if (row.won) stat.wins += 1;
+  stat.best = Math.max(stat.best, row.score);
+}
+
+function buildHomeScoreboard(accounts: ClubAccount[], scores: ClubScore[]) {
+  const players = new Map<string, { id: string; name: string; email: string } & ScoreStat>();
+  for (const item of accounts) {
+    players.set(item.id, { id: item.id, name: item.name, email: item.email, ...emptyStat() });
+  }
+  const byGame = new Map<string, Map<string, ScoreStat>>();
+  for (const row of scores) {
+    const player = players.get(row.accountId);
+    if (!player) continue;
+    addStat(player, row);
+    let game = byGame.get(row.game);
+    if (!game) {
+      game = new Map();
+      byGame.set(row.game, game);
+    }
+    let stat = game.get(row.accountId);
+    if (!stat) {
+      stat = emptyStat();
+      game.set(row.accountId, stat);
+    }
+    addStat(stat, row);
+  }
+  const ordered = [...players.values()].sort((a, b) => b.points - a.points || b.wins - a.wins || a.email.localeCompare(b.email));
+  const extra = [...byGame.keys()]
+    .filter((title) => !SCOREBOARD_GAMES.some((game) => game.title === title))
+    .sort((a, b) => gameRank(a) - gameRank(b) || a.localeCompare(b))
+    .map((title) => ({ title, short: title }));
+  const games = [...SCOREBOARD_GAMES, ...extra].map((game) => {
+    const stats = byGame.get(game.title);
+    return {
+      title: game.title,
+      short: game.short,
+      players: ordered.map((player) => ({ id: player.id, ...(stats?.get(player.id) ?? emptyStat()) })),
+    };
+  });
+  const emails = new Map(accounts.map((item) => [item.id, item.email]));
+  const matches = [...scores]
+    .sort((a, b) => b.playedAt.localeCompare(a.playedAt))
+    .slice(0, 40)
+    .map((row) => ({
+      email: emails.get(row.accountId) ?? "Player",
+      game: row.game,
+      score: row.score,
+      won: row.won,
+      playedAt: row.playedAt,
+    }));
+  return { players: ordered, games, matches };
 }
 
 type BoardRow = { id: string; name: string; points: number; wins: number; games: number; best: number };

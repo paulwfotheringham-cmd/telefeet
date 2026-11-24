@@ -30,6 +30,16 @@ async function main() {
   assert.equal(home.board.find((row) => row.email === "sam@example.com")?.points, 3);
   assert.equal(home.recent.length, 2);
   assert.equal(home.board.length, 2);
+  assert.ok(home.scoreboard.games.length >= 22);
+  const movie = home.scoreboard.games.find((game) => game.title === "Name That Movie");
+  assert.equal(movie?.players.every((row) => row.points === 0 && row.games === 0), true);
+  const foodHome = home.scoreboard.games.find((game) => game.title === "Draw the Fast Food");
+  assert.equal(foodHome?.players.find((row) => row.id === created.account.id)?.points, 8);
+  assert.equal(foodHome?.players.find((row) => row.id === sam.account.id)?.points, 0);
+  const turns = home.scoreboard.games.find((game) => game.title === "Fun Quiz · Take turns");
+  assert.equal(turns?.players.find((row) => row.id === sam.account.id)?.points, 3);
+  assert.ok(home.scoreboard.matches.some((row) => row.email === "sam@example.com" && row.game === "Fun Quiz · Take turns"));
+  assert.ok(home.scoreboard.matches.some((row) => row.email === "paul@example.com" && row.game === "Draw the Fast Food" && row.score === 8 && row.won));
 
   const quiet = await signup("quiet@example.com", "secret3");
   assert.ok("token" in quiet && quiet.token);
