@@ -155,7 +155,7 @@ const DRAW_TILES: FunQuizTile[] = [
 function chooseFunQuizGame(id: string, setPickedGame: (id: string) => void, setSelectedMode: (mode: GameMode | null) => void, selectedMode: GameMode | null) {
   setPickedGame(id);
   if (id === "quiz") {
-    setSelectedMode(selectedMode === GAME_MODE_TAKE_TURNS || selectedMode === GAME_MODE_PLAY_TOGETHER ? selectedMode : null);
+    setSelectedMode(null);
     return;
   }
   if (id === "millionaire") {
@@ -527,7 +527,7 @@ export function FunQuizClient() {
             Fun Quiz
           </h1>
           <p className="mt-3 text-center text-sm leading-relaxed text-slate-300">
-            Pick Quiz for Geography, Space, Military, and the other subjects.
+            Pick Quiz, choose a subject, then Take turns or Play together, then Easy, Intermediate, or Hard.
           </p>
 
           {storeWarning ? (
@@ -560,7 +560,18 @@ export function FunQuizClient() {
                 );
               }
               return (
-                <button key={tile.id} type="button" onClick={() => chooseFunQuizGame(tile.id, setPickedGame, setSelectedMode, selectedMode)} className={className}>
+                <button
+                  key={tile.id}
+                  type="button"
+                  onClick={() => {
+                    chooseFunQuizGame(tile.id, setPickedGame, setSelectedMode, selectedMode);
+                    if (tile.id === "quiz") {
+                      setSelectedCategory(null);
+                      setSelectedDifficulty(null);
+                    }
+                  }}
+                  className={className}
+                >
                   {tile.title}
                 </button>
               );
@@ -588,7 +599,11 @@ export function FunQuizClient() {
                   <button
                     key={cat.id}
                     type="button"
-                    onClick={() => setSelectedCategory(cat.id)}
+                    onClick={() => {
+                      setSelectedCategory(cat.id);
+                      setSelectedMode(null);
+                      setSelectedDifficulty(null);
+                    }}
                     className={`flex min-h-24 items-center justify-center rounded-2xl border bg-black/30 p-2 text-center text-xs font-semibold leading-tight text-violet-100 transition sm:min-h-28 sm:p-3 sm:text-sm ${
                       selectedCategory === cat.id
                         ? "border-violet-300 ring-2 ring-white"
@@ -599,37 +614,67 @@ export function FunQuizClient() {
                   </button>
                 ))}
               </div>
-              <p className="mt-6 text-sm font-medium text-slate-200">Game mode</p>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={() => setSelectedMode(GAME_MODE_TAKE_TURNS)}
-                  className={`rounded-2xl border p-4 text-left transition ${
-                    selectedMode === GAME_MODE_TAKE_TURNS
-                      ? "border-violet-400 bg-violet-950/50"
-                      : "border-white/10 bg-black/30 hover:border-violet-400/40"
-                  }`}
-                >
-                  <p className="text-sm font-semibold text-violet-200">1 — Take turns</p>
-                  <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                    Answer 25 different questions each. Take turns answering. Compare scores at the end.
-                  </p>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedMode(GAME_MODE_PLAY_TOGETHER)}
-                  className={`rounded-2xl border p-4 text-left transition ${
-                    selectedMode === GAME_MODE_PLAY_TOGETHER
-                      ? "border-violet-400 bg-violet-950/50"
-                      : "border-white/10 bg-black/30 hover:border-violet-400/40"
-                  }`}
-                >
-                  <p className="text-sm font-semibold text-violet-200">2 — Play together</p>
-                  <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                    Answer 50 shared questions together. The room creator submits the agreed answer.
-                  </p>
-                </button>
-              </div>
+              {selectedCategory ? (
+                <>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedMode(GAME_MODE_TAKE_TURNS);
+                        setSelectedDifficulty(null);
+                      }}
+                      className={`rounded-2xl border p-4 text-left transition ${
+                        selectedMode === GAME_MODE_TAKE_TURNS
+                          ? "border-violet-400 bg-violet-950/50"
+                          : "border-white/10 bg-black/30 hover:border-violet-400/40"
+                      }`}
+                    >
+                      <p className="text-sm font-semibold text-violet-200">Take turns</p>
+                      <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                        Answer 25 different questions each. Take turns answering. Compare scores at the end.
+                      </p>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedMode(GAME_MODE_PLAY_TOGETHER);
+                        setSelectedDifficulty(null);
+                      }}
+                      className={`rounded-2xl border p-4 text-left transition ${
+                        selectedMode === GAME_MODE_PLAY_TOGETHER
+                          ? "border-violet-400 bg-violet-950/50"
+                          : "border-white/10 bg-black/30 hover:border-violet-400/40"
+                      }`}
+                    >
+                      <p className="text-sm font-semibold text-violet-200">Play together</p>
+                      <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                        Answer 50 shared questions together. The room creator submits the agreed answer.
+                      </p>
+                    </button>
+                  </div>
+                  {selectedMode === GAME_MODE_TAKE_TURNS || selectedMode === GAME_MODE_PLAY_TOGETHER ? (
+                    <>
+                    <p className="mt-6 text-sm font-medium text-slate-200">Mode</p>
+                    <div className="mt-3 grid grid-cols-3 gap-2 sm:gap-3">
+                      {QUIZ_DIFFICULTIES.map((d) => (
+                        <button
+                          key={d.id}
+                          type="button"
+                          onClick={() => setSelectedDifficulty(d.id)}
+                          className={`flex min-h-20 items-center justify-center rounded-2xl border bg-black/30 p-2 text-center text-xs font-semibold transition sm:min-h-24 sm:text-sm ${
+                            selectedDifficulty === d.id
+                              ? "border-violet-300 text-violet-100 ring-2 ring-white"
+                              : "border-violet-400/40 text-violet-100 hover:bg-violet-950/40"
+                          }`}
+                        >
+                          {d.title}
+                        </button>
+                      ))}
+                    </div>
+                    </>
+                  ) : null}
+                </>
+              ) : null}
             </>
           ) : null}
 
@@ -666,7 +711,7 @@ export function FunQuizClient() {
             </div>
           ) : null}
 
-          {pickedGame === "quiz" || (selectedMode && !isStandaloneGameMode(selectedMode)) ? (
+          {pickedGame !== "quiz" && selectedMode && !isStandaloneGameMode(selectedMode) ? (
             <>
               <p className="mt-6 text-sm font-medium text-slate-200">Difficulty</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
