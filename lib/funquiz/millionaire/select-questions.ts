@@ -51,6 +51,7 @@ function poolFor(
 ): number[] {
   return QUIZ_QUESTIONS.filter((q) => {
     if (q.estimate) return false;
+    if (q.options.length < 4) return false;
     if (!inCategory(q, categoryId) || q.difficulty !== difficulty) return false;
     if (skipTrivia && isTooEasyForHardQuestion(q)) return false;
     return true;

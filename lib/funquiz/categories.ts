@@ -12,6 +12,8 @@ export const QUIZ_CATEGORY_CAPITAL_POPULATIONS = "capital_populations" as const;
 export const QUIZ_CATEGORY_SPORTS = "sports" as const;
 export const QUIZ_CATEGORY_STAR_TREK = "star_trek" as const;
 export const QUIZ_CATEGORY_WORLD_LEADERS = "world_leaders" as const;
+export const QUIZ_CATEGORY_TRUE_OR_FALSE = "true_or_false" as const;
+export const QUIZ_CATEGORY_CLOSEST = "closest_wins" as const;
 
 export type QuizCategoryId =
   | typeof QUIZ_CATEGORY_GENERAL_KNOWLEDGE
@@ -27,7 +29,9 @@ export type QuizCategoryId =
   | typeof QUIZ_CATEGORY_CAPITAL_POPULATIONS
   | typeof QUIZ_CATEGORY_SPORTS
   | typeof QUIZ_CATEGORY_STAR_TREK
-  | typeof QUIZ_CATEGORY_WORLD_LEADERS;
+  | typeof QUIZ_CATEGORY_WORLD_LEADERS
+  | typeof QUIZ_CATEGORY_TRUE_OR_FALSE
+  | typeof QUIZ_CATEGORY_CLOSEST;
 
 export const QUIZ_CATEGORIES: {
   id: QuizCategoryId;
@@ -111,6 +115,16 @@ export const QUIZ_CATEGORIES: {
     title: "Presidents & PMs",
     description:
       "Current prime ministers and presidents in South America, Europe, and Asia. Three choices, and the recent ones are the trap.",
+  },
+  {
+    id: QUIZ_CATEGORY_TRUE_OR_FALSE,
+    title: "True or false",
+    description: "Two choices. The familiar version of the fact is often the wrong one.",
+  },
+  {
+    id: QUIZ_CATEGORY_CLOSEST,
+    title: "Closest wins",
+    description: "Type a number. With two players, the closest guess scores. On your own, within 10% scores.",
   },
 ];
 

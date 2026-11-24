@@ -18,8 +18,8 @@ export function validateQuestionBank(): string[] {
   for (const q of QUIZ_QUESTIONS) {
     if (ids.has(q.id)) errors.push(`Duplicate id ${q.id}`);
     ids.add(q.id);
-    if (q.options.length !== 3 && q.options.length !== 4) {
-      errors.push(`Question ${q.id} must have 3 or 4 options`);
+    if (q.options.length < 2 || q.options.length > 4) {
+      errors.push(`Question ${q.id} must have 2, 3, or 4 options`);
     }
     if (q.correctIndex < 0 || q.correctIndex >= q.options.length) {
       errors.push(`Question ${q.id} has invalid correctIndex`);

@@ -16,7 +16,7 @@ export function toPublicQuestion(item: QuizQuestionBankItem): PublicQuizQuestion
       prompt: item.prompt,
       options: [],
       category: item.category,
-      input: "population",
+      input: item.estimate.scoring === "closest" ? "closest" : "population",
     };
   }
   return {

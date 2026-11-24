@@ -23,6 +23,8 @@ import {
   QUIZ_CATEGORY_STAR_TREK,
   QUIZ_CATEGORY_WORLD_FLAGS,
   QUIZ_CATEGORY_WORLD_LEADERS,
+  QUIZ_CATEGORY_TRUE_OR_FALSE,
+  QUIZ_CATEGORY_CLOSEST,
 } from "@/lib/funquiz/categories";
 import type { QuizCategoryId } from "@/lib/funquiz/categories";
 import { QUIZ_DIFFICULTIES, QUIZ_DIFFICULTY_INTERMEDIATE } from "@/lib/funquiz/difficulties";
@@ -47,6 +49,7 @@ import {
   isValidRoomCode,
   normalizeRoomCode,
 } from "@/lib/funquiz/room-code";
+import { formatClosestInput, parseClosestGuess } from "@/lib/funquiz/closest";
 import { formatPopulation, formatPopulationInput, parsePopulationGuess } from "@/lib/funquiz/population";
 import type { ClientRoomState, GameMode } from "@/lib/funquiz/types";
 
@@ -159,6 +162,8 @@ const QUIZ_HOME: { id: QuizCategoryId; title: string; image: string }[] = [
   { id: QUIZ_CATEGORY_SPORTS, title: "Sports", image: "/funquiz/covers/cover-sports.jpg" },
   { id: QUIZ_CATEGORY_STAR_TREK, title: "Star Trek", image: "/funquiz/covers/cover-star-trek.jpg" },
   { id: QUIZ_CATEGORY_WORLD_LEADERS, title: "Presidents & PMs", image: "/funquiz/covers/cover-world-leaders.jpg" },
+  { id: QUIZ_CATEGORY_TRUE_OR_FALSE, title: "True or false", image: "/funquiz/covers/cover-true-or-false.jpg" },
+  { id: QUIZ_CATEGORY_CLOSEST, title: "Closest wins", image: "/funquiz/covers/cover-closest-wins.jpg" },
 ];
 
 const GAME_TILES: FunQuizTile[] = [
@@ -1079,7 +1084,7 @@ export function FunQuizClient() {
           <div className="mb-3 flex items-center justify-between text-xs text-slate-400">
             <span>{question.category}</span>
             <span>
-              {gameMode === GAME_MODE_TAKE_TURNS
+              {gameMode === GAME_MODE_TAKE_TURNS && question.input !== "closest"
                 ? `Turn ${roomState.turnIndex + 1} / ${roomState.totalQuestions}`
                 : `Q ${roomState.questionIndex + 1} / ${roomState.totalQuestions}`}
             </span>
@@ -1116,28 +1121,44 @@ export function FunQuizClient() {
           <h2 className="mt-6 text-xl font-semibold leading-snug text-white sm:text-2xl">
             {question.prompt}
           </h2>
-          {question.input === "population" ? (
+          {question.input === "closest" || question.input === "population" ? (
             <form
               className="mx-auto mt-6 w-full max-w-md"
               onSubmit={(event) => {
                 event.preventDefault();
                 if (!roomState.canSubmitAnswer || busy) return;
                 try {
-                  void submitAnswer(parsePopulationGuess(populationGuess));
+                  void submitAnswer(
+                    question.input === "closest"
+                      ? parseClosestGuess(populationGuess)
+                      : parsePopulationGuess(populationGuess),
+                  );
                 } catch (e) {
-                  setError(e instanceof Error ? e.message : "Enter a whole number, like 1,000,000");
+                  setError(e instanceof Error ? e.message : "Enter a whole number");
                 }
               }}
             >
               <p className="text-center text-sm text-slate-300">
-                Type a number. Within 2,000,000 of the population wins.
+                {question.input === "closest"
+                  ? roomState.gameMode === GAME_MODE_TAKE_TURNS
+                    ? "Type a number. The closest guess wins."
+                    : roomState.gameMode === GAME_MODE_PLAY_TOGETHER
+                      ? "Everyone types a number. The closest scores if it is within 10%."
+                      : "Type a number. Within 10% of the answer scores."
+                  : "Type a number. Within 2,000,000 of the population wins."}
               </p>
               <input
                 value={populationGuess}
-                onChange={(event) => setPopulationGuess(formatPopulationInput(event.target.value))}
+                onChange={(event) =>
+                  setPopulationGuess(
+                    question.input === "closest"
+                      ? formatClosestInput(event.target.value)
+                      : formatPopulationInput(event.target.value),
+                  )
+                }
                 inputMode="numeric"
-                placeholder="1,000,000"
-                aria-label="Population"
+                placeholder={question.input === "closest" ? "206" : "1,000,000"}
+                aria-label={question.input === "closest" ? "Your number" : "Population"}
                 className="mt-3 w-full rounded-2xl border border-white/15 bg-slate-950/80 px-4 py-4 text-center text-2xl font-semibold tracking-wide text-white outline-none placeholder:text-slate-500 focus:border-amber-300/70"
               />
               <button
@@ -1218,7 +1239,25 @@ export function FunQuizClient() {
                 ? "Correct!"
                 : "Incorrect"}
           </p>
-          {roomState.answerFeedback.distance !== undefined ? (
+          {roomState.answerFeedback.guesses ? (
+            <>
+              {roomState.answerFeedback.guesses.map((guess) => (
+                <p
+                  key={guess.name}
+                  className="mt-3 rounded-xl border border-white/10 bg-slate-900/60 px-4 py-3 text-sm text-slate-200"
+                >
+                  {guess.name}: <strong>{guess.label}</strong>
+                  {guess.closest ? " · closest" : ""}
+                </p>
+              ))}
+              <p className="mt-3 rounded-xl bg-emerald-900/40 px-4 py-3 text-emerald-100">
+                Answer: <strong>{roomState.answerFeedback.correctLabel}</strong>
+              </p>
+              {roomState.answerFeedback.note ? (
+                <p className="mt-3 text-sm text-slate-200">{roomState.answerFeedback.note}</p>
+              ) : null}
+            </>
+          ) : roomState.answerFeedback.distance !== undefined ? (
             <>
               <p className="mt-3 rounded-xl border border-white/10 bg-slate-900/60 px-4 py-3 text-sm text-slate-200">
                 Your guess: <strong>{roomState.answerFeedback.chosenLabel}</strong>

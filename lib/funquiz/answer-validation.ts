@@ -1,3 +1,4 @@
+import { parseClosestGuess, withinClosestWindow } from "./closest";
 import { formatPopulation, parsePopulationGuess, populationWithinTolerance } from "./population";
 import { getQuestionByBankId } from "./questions";
 import type { QuizQuestionBankItem } from "./question-bank/types";
@@ -62,11 +63,15 @@ export function gradeAnswer(bankId: number, choiceIndex: number): GradedAnswer {
       throw new Error("Enter a whole number, like 1,000,000");
     }
     const labels = describeScoredAnswer(question, guess);
+    const correct =
+      question.estimate.scoring === "closest"
+        ? withinClosestWindow(guess, question.estimate.value, question.estimate.tolerance)
+        : populationWithinTolerance(guess, question.estimate.value, question.estimate.tolerance);
     return {
       bankId,
       choiceIndex: guess,
       correctIndex: 0,
-      correct: populationWithinTolerance(guess, question.estimate.value, question.estimate.tolerance),
+      correct,
       chosenLabel: labels.chosenLabel,
       correctLabel: labels.correctLabel,
       question,
@@ -88,6 +93,7 @@ export function gradeAnswer(bankId: number, choiceIndex: number): GradedAnswer {
 
 export function choiceFromSubmission(bankId: number, raw: unknown): number {
   const question = getQuestionByBankId(bankId);
+  if (question.estimate?.scoring === "closest") return parseClosestGuess(raw);
   if (question.estimate) return parsePopulationGuess(raw);
   const choice = normalizeChoiceIndex(raw);
   assertValidChoiceIndex(choice, question.options.length);

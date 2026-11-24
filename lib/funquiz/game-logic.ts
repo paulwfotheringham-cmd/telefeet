@@ -49,8 +49,8 @@ import {
   createInitialMillionaireState,
   createInitialParallelMillionaireState,
 } from "./millionaire/types";
-import type { QuizCategoryId } from "./categories";
-import { categoryTitle } from "./categories";
+import { QUIZ_CATEGORY_CLOSEST, categoryTitle, type QuizCategoryId } from "./categories";
+import { formatClosest, parseClosestGuess } from "./closest";
 import type { QuizDifficulty } from "./difficulties";
 import { difficultyTitle } from "./difficulties";
 import {
@@ -196,6 +196,16 @@ export function guestPlayerId(room: QuizRoom): string | null {
 function hasLogForTakeTurn(room: QuizRoom, turnIndex: number): boolean {
   return room.answerLog.some(
     (e) => e.sessionId === room.sessionId && e.turnIndex === turnIndex,
+  );
+}
+
+function isClosestRoom(room: QuizRoom): boolean {
+  return room.quizCategoryId === QUIZ_CATEGORY_CLOSEST;
+}
+
+function closestLogs(room: QuizRoom, questionIndex: number): AnswerLogEntry[] {
+  return room.answerLog.filter(
+    (e) => e.sessionId === room.sessionId && e.turnIndex === questionIndex,
   );
 }
 
@@ -366,6 +376,95 @@ function expectedPlayerForTurn(room: QuizRoom, turnIndex: number): string {
   return turnIndex % 2 === 0 ? room.hostId : guestId;
 }
 
+function scoreClosestBatch(room: QuizRoom, questionIndex: number): QuizRoom {
+  const bankId = room.questionOrder[questionIndex];
+  if (bankId === undefined) throw new Error("No question");
+  const question = getQuestionByBankId(bankId);
+  const actual = question.estimate?.value;
+  if (actual === undefined || question.estimate?.scoring !== "closest") {
+    throw new Error("Not a closest-wins question");
+  }
+  const logs = closestLogs(room, questionIndex);
+  const best = Math.min(...logs.map((e) => Math.abs(e.choiceIndex - actual)));
+  const competitive = room.gameMode === GAME_MODE_TAKE_TURNS && room.players.length > 1;
+  const window = question.estimate.tolerance;
+  const winners = new Set(
+    logs
+      .filter((e) => {
+        const distance = Math.abs(e.choiceIndex - actual);
+        return distance === best && (competitive || distance <= window);
+      })
+      .map((e) => e.playerId),
+  );
+  const answerLog = room.answerLog.map((e) => {
+    if (e.sessionId !== room.sessionId || e.turnIndex !== questionIndex) return e;
+    return { ...e, correct: winners.has(e.playerId) };
+  });
+  let jointScore = room.jointScore;
+  let players = room.players;
+  if (competitive) {
+    players = players.map((p) => (winners.has(p.id) ? { ...p, score: p.score + 1 } : p));
+  } else if (winners.size > 0) {
+    jointScore += 1;
+    players = players.map((p) => ({ ...p, score: jointScore }));
+  }
+  return {
+    ...room,
+    players,
+    jointScore,
+    answerLog,
+    phase: "reveal",
+    revealStartedAt: Date.now(),
+    turnIndex: questionIndex,
+    updatedAt: Date.now(),
+  };
+}
+
+function submitClosest(room: QuizRoom, playerId: string, choiceRaw: unknown): QuizRoom {
+  if (room.phase !== "question") {
+    throw new Error("Not accepting answers right now");
+  }
+  const you = room.players.find((p) => p.id === playerId);
+  if (!you) throw new Error("Player not in room");
+  if (you.answer !== null) return room;
+  const bankId = room.questionOrder[room.questionIndex];
+  if (bankId === undefined) throw new Error("No question");
+  if (closestLogs(room, room.questionIndex).some((e) => e.playerId === playerId)) return room;
+
+  const guess = parseClosestGuess(choiceRaw);
+  const entry: AnswerLogEntry = {
+    sessionId: room.sessionId,
+    turnIndex: room.questionIndex,
+    bankId,
+    playerId,
+    choiceIndex: guess,
+    correct: false,
+  };
+  const next: QuizRoom = {
+    ...room,
+    players: room.players.map((p) => (p.id === playerId ? { ...p, answer: 0 } : p)),
+    answerLog: [...room.answerLog, entry],
+    updatedAt: Date.now(),
+  };
+  if (closestLogs(next, room.questionIndex).length < room.players.length) return next;
+  return scoreClosestBatch(next, room.questionIndex);
+}
+
+function closestNote(
+  room: QuizRoom,
+  mine: AnswerLogEntry | undefined,
+): string {
+  const competitive = room.gameMode === GAME_MODE_TAKE_TURNS && room.players.length > 1;
+  if (!mine) return "Waiting for every guess.";
+  if (competitive) {
+    const winners = closestLogs(room, room.questionIndex).filter((e) => e.correct).length;
+    if (mine.correct && winners > 1) return "It's a tie. The closest guesses score.";
+    if (mine.correct) return "You were closest.";
+    return "The other guess was closer.";
+  }
+  return mine.correct ? "Within 10%." : "Further than 10%.";
+}
+
 function submitTakeTurns(room: QuizRoom, playerId: string, choiceRaw: unknown): QuizRoom {
   if (room.phase !== "question") {
     throw new Error("Not accepting answers right now");
@@ -463,6 +562,9 @@ export function submitAnswer(room: QuizRoom, playerId: string, choiceIndexRaw: u
   ) {
     return millionaireSelectAnswer(room, playerId, normalizeChoiceIndex(choiceIndexRaw));
   }
+  if (isClosestRoom(room)) {
+    return submitClosest(room, playerId, choiceIndexRaw);
+  }
   if (room.gameMode === GAME_MODE_TAKE_TURNS) {
     return submitTakeTurns(room, playerId, choiceIndexRaw);
   }
@@ -519,7 +621,35 @@ function advanceFromRevealPlayTogether(room: QuizRoom): QuizRoom {
   };
 }
 
+function advanceClosest(room: QuizRoom): QuizRoom {
+  const nextIndex = room.questionIndex + 1;
+  const clearedPlayers = room.players.map((p) => ({ ...p, answer: null }));
+  if (nextIndex >= QUESTIONS_PER_GAME) {
+    return {
+      ...room,
+      phase: "finished",
+      questionIndex: nextIndex,
+      turnIndex: nextIndex,
+      activePlayerId: null,
+      revealStartedAt: null,
+      players: clearedPlayers,
+      updatedAt: Date.now(),
+    };
+  }
+  return {
+    ...room,
+    phase: "question",
+    questionIndex: nextIndex,
+    turnIndex: nextIndex,
+    activePlayerId: null,
+    revealStartedAt: null,
+    players: clearedPlayers,
+    updatedAt: Date.now(),
+  };
+}
+
 function advanceFromReveal(room: QuizRoom): QuizRoom {
+  if (isClosestRoom(room)) return advanceClosest(room);
   if (room.gameMode === GAME_MODE_TAKE_TURNS) {
     return advanceFromRevealTakeTurns(room);
   }
@@ -580,6 +710,12 @@ export function buildResultRows(room: QuizRoom): ResultRow[] {
 }
 
 function currentBankId(room: QuizRoom): number | null {
+  if (isClosestRoom(room)) {
+    if (room.phase === "question" || room.phase === "reveal") {
+      return room.questionOrder[room.questionIndex] ?? null;
+    }
+    return null;
+  }
   if (room.gameMode === GAME_MODE_TAKE_TURNS) {
     if (room.turnIndex >= QUESTIONS_PER_GAME) return null;
     if (room.phase === "question" || room.phase === "reveal") {
@@ -802,7 +938,16 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
   let canSubmitAnswer = false;
   let statusMessage: string | null = null;
 
-  if (room.gameMode === GAME_MODE_TAKE_TURNS) {
+  if (isClosestRoom(room) && (room.phase === "question" || room.phase === "reveal")) {
+    if (bankId !== null) {
+      question = toPublicQuestion(getQuestionByBankId(bankId));
+    }
+    isYourTurn = room.phase === "question" && you.answer === null;
+    canSubmitAnswer = isYourTurn;
+    if (room.phase === "question" && you.answer !== null && room.players.length > 1) {
+      statusMessage = "Answer submitted. Waiting for the other player.";
+    }
+  } else if (room.gameMode === GAME_MODE_TAKE_TURNS) {
     if (room.phase === "reveal" && revealEntry) {
       question = toPublicQuestion(getQuestionByBankId(revealEntry.bankId));
       const answerer = room.players.find((p) => p.id === revealEntry.playerId);
@@ -837,7 +982,34 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
     }
   }
 
-  if (room.phase === "reveal" && revealEntry) {
+  if (room.phase === "reveal" && isClosestRoom(room)) {
+    const revealedId = room.questionOrder[room.questionIndex];
+    if (revealedId !== undefined) {
+      const q = getQuestionByBankId(revealedId);
+      const logs = closestLogs(room, room.questionIndex);
+      const mine = logs.find((e) => e.playerId === viewerId) ?? logs[logs.length - 1];
+      const actual = q.estimate?.value ?? 0;
+      if (mine) {
+        const labels = describeScoredAnswer(q, mine.choiceIndex);
+        answerFeedback = {
+          correct: mine.correct,
+          choiceIndex: mine.choiceIndex,
+          correctIndex: 0,
+          chosenLabel: labels.chosenLabel,
+          correctLabel: labels.correctLabel,
+          distance: labels.distance,
+          guesses: logs.map((e) => ({
+            name: room.players.find((p) => p.id === e.playerId)?.name ?? "Player",
+            label: formatClosest(e.choiceIndex),
+            distance: Math.abs(e.choiceIndex - actual),
+            closest: e.correct,
+          })),
+          note: closestNote(room, mine),
+        };
+      }
+      correctIndex = null;
+    }
+  } else if (room.phase === "reveal" && revealEntry) {
     const q = getQuestionByBankId(revealEntry.bankId);
     const labels = describeScoredAnswer(q, revealEntry.choiceIndex);
     correctIndex = q.estimate ? null : q.correctIndex;
@@ -895,9 +1067,11 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
             ? p.answer
             : null,
       wasCorrect:
-        room.phase === "reveal" && revealEntry && p.id === revealEntry.playerId
-          ? revealEntry.correct
-          : null,
+        room.phase === "reveal" && isClosestRoom(room)
+          ? closestLogs(room, room.questionIndex).find((e) => e.playerId === p.id)?.correct ?? null
+          : room.phase === "reveal" && revealEntry && p.id === revealEntry.playerId
+            ? revealEntry.correct
+            : null,
     })),
     question,
     correctIndex,

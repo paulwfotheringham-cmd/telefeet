@@ -13,6 +13,8 @@ import {
   QUIZ_CATEGORY_STAR_TREK,
   QUIZ_CATEGORY_WORLD_FLAGS,
   QUIZ_CATEGORY_WORLD_LEADERS,
+  QUIZ_CATEGORY_TRUE_OR_FALSE,
+  QUIZ_CATEGORY_CLOSEST,
   type QuizCategoryId,
 } from "../categories";
 import {
@@ -26,6 +28,9 @@ import { POPULATION_TOLERANCE } from "../population";
 import { SPORTS_HARD, SPORTS_INTERMEDIATE } from "./builders/sports";
 import { STAR_TREK_HARD, STAR_TREK_INTERMEDIATE } from "./builders/star-trek";
 import { LEADERS_HARD, LEADERS_INTERMEDIATE } from "./builders/world-leaders";
+import { TRUE_FALSE_HARD, TRUE_FALSE_INTERMEDIATE } from "./builders/true-or-false";
+import { CLOSEST_HARD, CLOSEST_INTERMEDIATE } from "./builders/closest-wins";
+import { closestWindow } from "../closest";
 import { CAPITAL_HARD_SUPPLEMENT } from "./builders/capitals-hard-supplement";
 import { capitalDifficultyForCountry, outlineDifficultyForCountry } from "./difficulty-quality";
 import { GEOGRAPHY_HARD_SUPPLEMENT } from "./builders/geography-hard-supplement";
@@ -109,6 +114,44 @@ function sportsToQuestion(
     mcqOptionSeed(`sports:${difficulty}:${def.prompt}`),
   );
   return mcq(QUIZ_CATEGORY_SPORTS, "Sports", { prompt: def.prompt, options, correctIndex }, difficulty);
+}
+
+function trueFalseToQuestion(
+  def: { prompt: string; answer: boolean },
+  difficulty: QuizDifficulty,
+): Omit<QuizQuestionBankItem, "id"> {
+  const { options, correctIndex } = shuffleMcqOptions(
+    ["True", "False"] as [string, string],
+    def.answer ? 0 : 1,
+    mcqOptionSeed(`true-false:${difficulty}:${def.prompt}`),
+  );
+  return {
+    categoryId: QUIZ_CATEGORY_TRUE_OR_FALSE,
+    category: "True or false",
+    prompt: def.prompt,
+    options,
+    correctIndex,
+    difficulty,
+  };
+}
+
+function closestToQuestion(
+  def: { prompt: string; value: number },
+  difficulty: QuizDifficulty,
+): Omit<QuizQuestionBankItem, "id"> {
+  return {
+    categoryId: QUIZ_CATEGORY_CLOSEST,
+    category: "Closest wins",
+    prompt: def.prompt,
+    options: ["Type a number", "Type a number", "Type a number"],
+    correctIndex: 0,
+    estimate: {
+      value: def.value,
+      tolerance: closestWindow(def.value),
+      scoring: "closest",
+    },
+    difficulty,
+  };
 }
 
 function leadersToQuestion(
@@ -225,6 +268,10 @@ export function buildQuestionBank(): QuizQuestionBankItem[] {
     ...STAR_TREK_HARD.map((d) => starTrekToQuestion(d, QUIZ_DIFFICULTY_HARD)),
     ...LEADERS_INTERMEDIATE.map((d) => leadersToQuestion(d, QUIZ_DIFFICULTY_INTERMEDIATE)),
     ...LEADERS_HARD.map((d) => leadersToQuestion(d, QUIZ_DIFFICULTY_HARD)),
+    ...TRUE_FALSE_INTERMEDIATE.map((d) => trueFalseToQuestion(d, QUIZ_DIFFICULTY_INTERMEDIATE)),
+    ...TRUE_FALSE_HARD.map((d) => trueFalseToQuestion(d, QUIZ_DIFFICULTY_HARD)),
+    ...CLOSEST_INTERMEDIATE.map((d) => closestToQuestion(d, QUIZ_DIFFICULTY_INTERMEDIATE)),
+    ...CLOSEST_HARD.map((d) => closestToQuestion(d, QUIZ_DIFFICULTY_HARD)),
     ...GEOGRAPHY_QUESTION_DEFS.map((d) =>
       mcq(QUIZ_CATEGORY_GEOGRAPHY, "Geography", d, QUIZ_DIFFICULTY_INTERMEDIATE, ["geography"]),
     ),
