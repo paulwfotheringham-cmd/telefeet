@@ -15,6 +15,12 @@ import {
   QUIZ_CATEGORY_WORLD_LEADERS,
   QUIZ_CATEGORY_TRUE_OR_FALSE,
   QUIZ_CATEGORY_CLOSEST,
+  QUIZ_CATEGORY_INVENTIONS,
+  QUIZ_CATEGORY_WILDLIFE,
+  QUIZ_CATEGORY_MEDICAL,
+  QUIZ_CATEGORY_WONDERS,
+  QUIZ_CATEGORY_CURRENCIES,
+  QUIZ_CATEGORY_COUNTRY_POPULATIONS,
   type QuizCategoryId,
 } from "../categories";
 import {
@@ -30,6 +36,12 @@ import { STAR_TREK_HARD, STAR_TREK_INTERMEDIATE } from "./builders/star-trek";
 import { LEADERS_HARD, LEADERS_INTERMEDIATE } from "./builders/world-leaders";
 import { TRUE_FALSE_HARD, TRUE_FALSE_INTERMEDIATE } from "./builders/true-or-false";
 import { CLOSEST_HARD, CLOSEST_INTERMEDIATE } from "./builders/closest-wins";
+import { INVENTIONS_HARD, INVENTIONS_INTERMEDIATE } from "./builders/inventions";
+import { WILDLIFE_HARD, WILDLIFE_INTERMEDIATE } from "./builders/wildlife";
+import { MEDICAL_HARD, MEDICAL_INTERMEDIATE } from "./builders/medical";
+import { WONDERS_HARD, WONDERS_INTERMEDIATE } from "./builders/wonders";
+import { CURRENCY_HARD, CURRENCY_INTERMEDIATE } from "./builders/currencies";
+import { COUNTRY_POPULATION_HARD, COUNTRY_POPULATION_INTERMEDIATE } from "./builders/country-populations";
 import { closestWindow } from "../closest";
 import { CAPITAL_HARD_SUPPLEMENT } from "./builders/capitals-hard-supplement";
 import { capitalDifficultyForCountry, outlineDifficultyForCountry } from "./difficulty-quality";
@@ -104,6 +116,60 @@ function populationToQuestion(
   };
 }
 
+function wonderToQuestion(
+  def: (typeof WONDERS_INTERMEDIATE)[number],
+  difficulty: QuizDifficulty,
+): Omit<QuizQuestionBankItem, "id"> {
+  const { options, correctIndex } = shuffleMcqOptions(
+    def.options,
+    def.correctIndex,
+    mcqOptionSeed(`wonders:${difficulty}:${def.prompt}`),
+  );
+  return mcq(QUIZ_CATEGORY_WONDERS, "Wonders", { prompt: def.prompt, options, correctIndex }, difficulty);
+}
+
+function currencyToQuestion(
+  def: { country: string; currency: string },
+  pool: { country: string; currency: string }[],
+  difficulty: QuizDifficulty,
+): Omit<QuizQuestionBankItem, "id"> {
+  const bag = pool.map((row) => row.currency).filter((currency) => currency !== def.currency);
+  const picked: string[] = [];
+  let seed = mcqOptionSeed(`currency-pick:${difficulty}:${def.country}`);
+  while (picked.length < 3 && bag.length > 0) {
+    seed = (Math.imul(seed, 1103515245) + 12345) >>> 0;
+    const index = seed % bag.length;
+    picked.push(bag.splice(index, 1)[0]!);
+  }
+  const { options, correctIndex } = shuffleMcqOptions(
+    [def.currency, picked[0]!, picked[1]!, picked[2]!] as [string, string, string, string],
+    0,
+    mcqOptionSeed(`currency:${difficulty}:${def.country}`),
+  );
+  return mcq(
+    QUIZ_CATEGORY_CURRENCIES,
+    "Currencies",
+    { prompt: `What is the currency of ${def.country}?`, options, correctIndex },
+    difficulty,
+  );
+}
+
+function countryPopulationToQuestion(def: {
+  country: string;
+  population: number;
+  difficulty: QuizDifficulty;
+}): Omit<QuizQuestionBankItem, "id"> {
+  return {
+    categoryId: QUIZ_CATEGORY_COUNTRY_POPULATIONS,
+    category: "Country populations",
+    prompt: `What is the population of ${def.country}?`,
+    options: ["Type a number", "Type a number", "Type a number"],
+    correctIndex: 0,
+    estimate: { value: def.population, tolerance: Math.max(1_000_000, Math.round(def.population * 0.1)) },
+    difficulty: def.difficulty,
+  };
+}
+
 function sportsToQuestion(
   def: { prompt: string; options: [string, string, string, string]; correctIndex: number },
   difficulty: QuizDifficulty,
@@ -169,6 +235,47 @@ function leadersToQuestion(
     prompt: def.prompt,
     options,
     correctIndex,
+    difficulty,
+  };
+}
+
+function inventionToQuestion(
+  def: (typeof INVENTIONS_INTERMEDIATE)[number],
+  difficulty: QuizDifficulty,
+): Omit<QuizQuestionBankItem, "id"> {
+  const { options, correctIndex } = shuffleMcqOptions(
+    def.options,
+    def.correctIndex,
+    mcqOptionSeed(`inventions:${difficulty}:${def.prompt}`),
+  );
+  return mcq(
+    QUIZ_CATEGORY_INVENTIONS,
+    "Inventions",
+    { prompt: def.prompt, options, correctIndex },
+    difficulty,
+  );
+}
+
+function picturedToQuestion(
+  categoryId: QuizCategoryId,
+  category: string,
+  def: { slug: string; answer: string; wrongs: [string, string, string] },
+  difficulty: QuizDifficulty,
+  prompt: string,
+): Omit<QuizQuestionBankItem, "id"> {
+  const raw = [def.answer, ...def.wrongs] as [string, string, string, string];
+  const { options, correctIndex } = shuffleMcqOptions(
+    raw,
+    0,
+    mcqOptionSeed(`${categoryId}:${difficulty}:${def.slug}`),
+  );
+  return {
+    categoryId,
+    category,
+    prompt,
+    options,
+    correctIndex,
+    pictureUrl: `/funquiz/quiz-pictures/${categoryId}/${def.slug}.jpg`,
     difficulty,
   };
 }
@@ -272,6 +379,26 @@ export function buildQuestionBank(): QuizQuestionBankItem[] {
     ...TRUE_FALSE_HARD.map((d) => trueFalseToQuestion(d, QUIZ_DIFFICULTY_HARD)),
     ...CLOSEST_INTERMEDIATE.map((d) => closestToQuestion(d, QUIZ_DIFFICULTY_INTERMEDIATE)),
     ...CLOSEST_HARD.map((d) => closestToQuestion(d, QUIZ_DIFFICULTY_HARD)),
+    ...INVENTIONS_INTERMEDIATE.map((d) => inventionToQuestion(d, QUIZ_DIFFICULTY_INTERMEDIATE)),
+    ...INVENTIONS_HARD.map((d) => inventionToQuestion(d, QUIZ_DIFFICULTY_HARD)),
+    ...WILDLIFE_INTERMEDIATE.map((d) =>
+      picturedToQuestion(QUIZ_CATEGORY_WILDLIFE, "Wildlife", d, QUIZ_DIFFICULTY_INTERMEDIATE, "What animal is this?"),
+    ),
+    ...WILDLIFE_HARD.map((d) =>
+      picturedToQuestion(QUIZ_CATEGORY_WILDLIFE, "Wildlife", d, QUIZ_DIFFICULTY_HARD, "What animal is this?"),
+    ),
+    ...MEDICAL_INTERMEDIATE.map((d) =>
+      picturedToQuestion(QUIZ_CATEGORY_MEDICAL, "Medical", d, QUIZ_DIFFICULTY_INTERMEDIATE, "What is this?"),
+    ),
+    ...MEDICAL_HARD.map((d) =>
+      picturedToQuestion(QUIZ_CATEGORY_MEDICAL, "Medical", d, QUIZ_DIFFICULTY_HARD, "What is this?"),
+    ),
+    ...WONDERS_INTERMEDIATE.map((d) => wonderToQuestion(d, QUIZ_DIFFICULTY_INTERMEDIATE)),
+    ...WONDERS_HARD.map((d) => wonderToQuestion(d, QUIZ_DIFFICULTY_HARD)),
+    ...CURRENCY_INTERMEDIATE.map((d) => currencyToQuestion(d, CURRENCY_INTERMEDIATE, QUIZ_DIFFICULTY_INTERMEDIATE)),
+    ...CURRENCY_HARD.map((d) => currencyToQuestion(d, CURRENCY_HARD, QUIZ_DIFFICULTY_HARD)),
+    ...COUNTRY_POPULATION_INTERMEDIATE.map((d) => countryPopulationToQuestion(d)),
+    ...COUNTRY_POPULATION_HARD.map((d) => countryPopulationToQuestion(d)),
     ...GEOGRAPHY_QUESTION_DEFS.map((d) =>
       mcq(QUIZ_CATEGORY_GEOGRAPHY, "Geography", d, QUIZ_DIFFICULTY_INTERMEDIATE, ["geography"]),
     ),

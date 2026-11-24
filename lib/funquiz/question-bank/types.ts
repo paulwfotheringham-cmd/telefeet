@@ -29,6 +29,8 @@ export type QuizQuestionBankItem = {
   outlineAssetId?: string;
   /** ISO 3166-1 alpha-2 for world flag image (/api/funquiz/flag/{iso2}). */
   flagIso2?: string;
+  /** Photograph or diagram served from /public, such as a wildlife or anatomy picture. */
+  pictureUrl?: string;
   /**
    * Numeric guess. Options are unused.
    * `tolerance` scores a lone or shared guess. `closest` scores the nearest guess when two people answer.

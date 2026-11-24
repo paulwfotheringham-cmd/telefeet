@@ -29,5 +29,6 @@ export function toPublicQuestion(item: QuizQuestionBankItem): PublicQuizQuestion
       ? `/api/funquiz/outline/${item.outlineAssetId}`
       : undefined,
     flagImageUrl: item.flagIso2 ? `/api/funquiz/flag/${item.flagIso2}` : undefined,
+    pictureImageUrl: item.pictureUrl,
   };
 }

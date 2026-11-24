@@ -3,6 +3,7 @@ export const WEEKLY_GAMES = [
   { id: "animal", title: "Draw the Animal", path: "/draw-the-animal" },
   { id: "country", title: "Draw the Country", path: "/draw-the-country" },
   { id: "appliance", title: "Draw the Appliance", path: "/draw-the-appliance" },
+  { id: "instrument", title: "Draw the Instrument", path: "/draw-the-instrument" },
   { id: "landmark", title: "Draw the Landmark", path: "/draw-the-landmark" },
   { id: "flower", title: "Draw the Flower", path: "/draw-the-flower" },
   { id: "weapon", title: "Draw the Weapon", path: "/draw-the-weapon" },

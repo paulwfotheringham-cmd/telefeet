@@ -1,6 +1,7 @@
 export const ROOM_DIRECTORIES = [
   { id: "funquiz", path: "/funquiz", nameKey: "funquiz-player-name" },
   { id: "movie", path: "/name-that-movie", nameKey: "name-that-movie-player-name" },
+  { id: "star", path: "/name-that-star", nameKey: "name-that-star-player-name" },
   { id: "tune", path: "/name-that-tune", nameKey: "name-that-tune-player-name" },
   { id: "show", path: "/name-that-show", nameKey: "name-that-show-player-name" },
   { id: "game", path: "/name-that-game", nameKey: "name-that-game-player-name" },
@@ -9,6 +10,7 @@ export const ROOM_DIRECTORIES = [
   { id: "country", path: "/draw-the-country", nameKey: "draw-the-country-player-name" },
   { id: "continent", path: "/draw-the-continent", nameKey: "draw-the-continent-player-name" },
   { id: "appliance", path: "/draw-the-appliance", nameKey: "draw-the-appliance-player-name" },
+  { id: "instrument", path: "/draw-the-instrument", nameKey: "draw-the-instrument-player-name" },
   { id: "landmark", path: "/draw-the-landmark", nameKey: "draw-the-landmark-player-name" },
   { id: "flower", path: "/draw-the-flower", nameKey: "draw-the-flower-player-name" },
   { id: "weapon", path: "/draw-the-weapon", nameKey: "draw-the-weapon-player-name" },

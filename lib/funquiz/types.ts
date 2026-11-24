@@ -90,6 +90,8 @@ export type PublicQuizQuestion = {
   category: string;
   outlineImageUrl?: string;
   flagImageUrl?: string;
+  /** Animal, organ, or bone picture. The file name is not the answer. */
+  pictureImageUrl?: string;
   /** `population` and `closest` are typed numbers. `choice` is the buttons. */
   input?: "choice" | "population" | "closest";
 };

@@ -3,6 +3,7 @@ export const CLUB_TOKEN_KEY = "funquiz-account-token";
 export const CLUB_PLAYER_KEYS = [
   "funquiz",
   "name-that-movie",
+  "name-that-star",
   "name-that-tune",
   "name-that-show",
   "name-that-game",
@@ -11,6 +12,7 @@ export const CLUB_PLAYER_KEYS = [
   "draw-the-country",
   "draw-the-continent",
   "draw-the-appliance",
+  "draw-the-instrument",
   "draw-the-landmark",
   "draw-the-flower",
   "draw-the-weapon",
