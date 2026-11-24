@@ -4,7 +4,7 @@ import {
   GAME_MODE_PLAY_TOGETHER,
   GAME_MODE_SHARED_MILLIONAIRE,
   GAME_MODE_TAKE_TURNS,
-  QUESTIONS_PER_GAME,
+  hostQuestionShare,
 } from "./constants";
 import { MILLIONAIRE_LADDER, MILLIONAIRE_QUESTION_COUNT } from "./millionaire/config";
 import type { QuizRoom, ScorecardData } from "./types";
@@ -18,14 +18,18 @@ export function buildScorecard(room: QuizRoom): ScorecardData | null {
   if (!terminal) return null;
 
   if (room.gameMode === GAME_MODE_TAKE_TURNS) {
-    const total = room.quizCategoryId === QUIZ_CATEGORY_CLOSEST ? QUESTIONS_PER_GAME : 25;
+    const hostShare = hostQuestionShare(room.questionCount);
+    const totalFor = (playerId: string) => {
+      if (room.quizCategoryId === QUIZ_CATEGORY_CLOSEST) return room.questionCount;
+      return playerId === room.hostId ? hostShare : room.questionCount - hostShare;
+    };
     return {
       kind: "take_turns",
       players: room.players.map((p) => ({
         id: p.id,
         name: p.name,
         correct: p.score,
-        total,
+        total: totalFor(p.id),
       })),
     };
   }

@@ -56,6 +56,8 @@ export type QuizRoom = {
   gameMode: GameMode;
   quizCategoryId: QuizCategoryId;
   quizDifficulty: QuizDifficulty;
+  /** 25 or 50 questions in this quiz. Other game modes keep 50 and ignore it. */
+  questionCount: 25 | 50;
   sessionId: string;
   phase: QuizPhase;
   questionIndex: number;

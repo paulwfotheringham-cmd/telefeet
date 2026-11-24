@@ -9,6 +9,7 @@ import {
   GAME_MODE_CATCHPHRASE,
   GAME_MODE_BLOCKBUSTERS,
   GAME_MODE_TEXAS_HOLDEM,
+  isQuestionCount,
 } from "@/lib/funquiz/constants";
 import { isQuizCategoryId } from "@/lib/funquiz/categories";
 import { isQuizDifficulty } from "@/lib/funquiz/difficulties";
@@ -29,6 +30,7 @@ export async function POST(request: Request, { params }: Params) {
       gameMode?: string;
       quizCategory?: string;
       quizDifficulty?: string;
+      questionCount?: number;
     };
     const playerId = body.playerId?.trim();
     const gameModeRaw = body.gameMode?.trim();
@@ -80,7 +82,14 @@ export async function POST(request: Request, { params }: Params) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
     const room = await mutateRoomPersisted(code, (room) =>
-      resetRoomForNewGame(room, playerId, gameMode, quizCategoryFinal, quizDifficultyFinal),
+      resetRoomForNewGame(
+        room,
+        playerId,
+        gameMode,
+        quizCategoryFinal,
+        quizDifficultyFinal,
+        isQuestionCount(body.questionCount) ? body.questionCount : exists.questionCount,
+      ),
     );
     return NextResponse.json({ state: toClientState(room, playerId) });
   } catch (err) {

@@ -19,4 +19,16 @@ export const GAME_MODE_BLOCKBUSTERS = "blockbusters" as const;
 export const MILLIONAIRE_REVEAL_MS = 3_500;
 
 export const QUESTIONS_PER_GAME = 50;
+export const QUESTION_COUNT_SHORT = 25;
 export const TAKE_TURNS_QUESTIONS_PER_PLAYER = 25;
+
+export type QuestionCount = typeof QUESTIONS_PER_GAME | typeof QUESTION_COUNT_SHORT;
+
+export function isQuestionCount(value: unknown): value is QuestionCount {
+  return value === QUESTIONS_PER_GAME || value === QUESTION_COUNT_SHORT;
+}
+
+/** Host answers the extra question when the quiz length is odd. */
+export function hostQuestionShare(total: number): number {
+  return Math.ceil(total / 2);
+}

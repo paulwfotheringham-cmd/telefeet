@@ -12,6 +12,7 @@ import {
 } from "../lib/funquiz/difficulties";
 import {
   GAME_MODE_PLAY_TOGETHER,
+  GAME_MODE_SINGLE,
   GAME_MODE_TAKE_TURNS,
   QUESTIONS_PER_GAME,
   TAKE_TURNS_QUESTIONS_PER_PLAYER,
@@ -149,6 +150,48 @@ function runNewGameCategoryChange() {
   assert.equal(room.quizDifficulty, QUIZ_DIFFICULTY_HARD);
 }
 
+function runShortQuizLength() {
+  const allocated = allocateQuestionsForGame(
+    QUIZ_CATEGORIES[1]!.id,
+    QUIZ_DIFFICULTY_INTERMEDIATE,
+    [],
+    25,
+  );
+  assert.equal(allocated.questionOrder.length, 25);
+  assert.equal(allocated.hostQuestionOrder.length, 13);
+  assert.equal(allocated.guestQuestionOrder.length, 12);
+  const guest = new Set(allocated.guestQuestionOrder);
+  for (const id of allocated.hostQuestionOrder) assert.ok(!guest.has(id));
+
+  let room = createRoom(
+    "h",
+    "H",
+    "LEN25",
+    GAME_MODE_SINGLE,
+    QUIZ_CATEGORIES[1]!.id,
+    QUIZ_DIFFICULTY_INTERMEDIATE,
+    25,
+  );
+  room = startGame(room, "h");
+  assert.equal(room.questionOrder.length, 25);
+  assert.equal(toClientState(room, "h").totalQuestions, 25);
+
+  let turns = createRoom(
+    "h",
+    "H",
+    "LEN26",
+    GAME_MODE_TAKE_TURNS,
+    QUIZ_CATEGORIES[1]!.id,
+    QUIZ_DIFFICULTY_HARD,
+    25,
+  );
+  turns = addPlayer(turns, "g", "G");
+  turns = startGame(turns, "h");
+  assert.equal(turns.questionOrder.length, 25);
+  assert.equal(turns.hostQuestionOrder.length, 13);
+  assert.equal(turns.guestQuestionOrder.length, 12);
+}
+
 function runStartUsesRoomCategory() {
   let room = createRoom(
     "h",
@@ -175,5 +218,6 @@ runPlayTogetherSameSequence();
 runCountryOutlinesNoLeak();
 runInsufficientCategoryFails();
 runNewGameCategoryChange();
+runShortQuizLength();
 runStartUsesRoomCategory();
 console.log("funquiz-categories.test.ts OK");

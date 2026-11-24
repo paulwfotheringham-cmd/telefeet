@@ -26,6 +26,7 @@ import {
   GAME_MODE_BLOCKBUSTERS,
   GAME_MODE_TEXAS_HOLDEM,
   QUESTIONS_PER_GAME,
+  isQuestionCount,
 } from "./constants";
 import { MILLIONAIRE_QUESTION_COUNT } from "./millionaire/config";
 
@@ -55,6 +56,7 @@ export type FunquizRoomRow = {
   catchphrase_state?: unknown;
   blockbusters_state?: unknown;
   played_bank_ids_by_topic?: unknown;
+  question_count?: number | null;
 };
 
 export type FunquizPlayerRow = {
@@ -291,6 +293,7 @@ export function roomToDbRows(room: QuizRoom): {
       catchphrase_state: room.catchphrase ?? null,
       blockbusters_state: room.blockbusters ?? null,
       played_bank_ids_by_topic: room.playedBankIdsByTopic,
+      question_count: room.questionCount,
     },
     players: playerRows,
   };
@@ -325,6 +328,7 @@ export function dbRowsToRoom(roomRow: FunquizRoomRow, playerRows: FunquizPlayerR
       roomRow.quiz_difficulty && isQuizDifficulty(roomRow.quiz_difficulty)
         ? roomRow.quiz_difficulty
         : QUIZ_DIFFICULTY_INTERMEDIATE,
+    questionCount: isQuestionCount(roomRow.question_count) ? roomRow.question_count : QUESTIONS_PER_GAME,
     sessionId: roomRow.session_id ?? "legacy",
     phase: roomRow.phase,
     questionIndex: roomRow.question_index,
@@ -372,7 +376,7 @@ export function assertQuestionOrderLength(order: number[], gameMode?: GameMode):
     }
     return;
   }
-  if (order.length !== QUESTIONS_PER_GAME) {
-    throw new Error(`question_order must have ${QUESTIONS_PER_GAME} ids when set`);
+  if (!isQuestionCount(order.length)) {
+    throw new Error(`question_order must have 25 or ${QUESTIONS_PER_GAME} ids when set`);
   }
 }
