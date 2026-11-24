@@ -12,7 +12,7 @@ export default function MusicPage() {
       <LinkLibrary
         kind="music"
         title="Music"
-        intro="Add a song, album, or artist. Enter the name, the web address, and a short description."
+        intro="Every saved piece of music, and who added it."
       />
     </div>
   );
