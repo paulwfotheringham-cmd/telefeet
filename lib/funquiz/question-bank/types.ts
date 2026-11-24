@@ -10,7 +10,10 @@ export type GeneralKnowledgeSubject =
   | "culture"
   | "technology";
 
-export type QuizOptions = readonly [string, string, string] | readonly [string, string, string, string];
+export type QuizOptions =
+  | readonly [string, string]
+  | readonly [string, string, string]
+  | readonly [string, string, string, string];
 
 export type QuizQuestionBankItem = {
   id: number;
@@ -26,7 +29,10 @@ export type QuizQuestionBankItem = {
   outlineAssetId?: string;
   /** ISO 3166-1 alpha-2 for world flag image (/api/funquiz/flag/{iso2}). */
   flagIso2?: string;
-  /** Numeric guess. A guess within `tolerance` of `value` is correct. Options are unused. */
-  estimate?: { value: number; tolerance: number };
+  /**
+   * Numeric guess. Options are unused.
+   * `tolerance` scores a lone or shared guess. `closest` scores the nearest guess when two people answer.
+   */
+  estimate?: { value: number; tolerance: number; scoring?: "tolerance" | "closest" };
   difficulty: QuizDifficulty;
 };

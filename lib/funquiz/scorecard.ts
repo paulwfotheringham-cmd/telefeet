@@ -1,8 +1,10 @@
+import { QUIZ_CATEGORY_CLOSEST } from "./categories";
 import {
   GAME_MODE_PARALLEL_MILLIONAIRE,
   GAME_MODE_PLAY_TOGETHER,
   GAME_MODE_SHARED_MILLIONAIRE,
   GAME_MODE_TAKE_TURNS,
+  QUESTIONS_PER_GAME,
 } from "./constants";
 import { MILLIONAIRE_LADDER, MILLIONAIRE_QUESTION_COUNT } from "./millionaire/config";
 import type { QuizRoom, ScorecardData } from "./types";
@@ -16,7 +18,7 @@ export function buildScorecard(room: QuizRoom): ScorecardData | null {
   if (!terminal) return null;
 
   if (room.gameMode === GAME_MODE_TAKE_TURNS) {
-    const total = 25;
+    const total = room.quizCategoryId === QUIZ_CATEGORY_CLOSEST ? QUESTIONS_PER_GAME : 25;
     return {
       kind: "take_turns",
       players: room.players.map((p) => ({
@@ -32,15 +34,20 @@ export function buildScorecard(room: QuizRoom): ScorecardData | null {
     const rows = room.answerLog
       .filter((e) => e.sessionId === room.sessionId)
       .sort((a, b) => a.turnIndex - b.turnIndex);
+    const scored = new Map<number, boolean>();
+    for (const row of rows) {
+      scored.set(row.turnIndex, (scored.get(row.turnIndex) ?? false) || row.correct);
+    }
+    const turns = [...scored.keys()].sort((a, b) => a - b);
     let cumulative = 0;
-    const cumulativeSeries = rows.map((r, i) => {
-      if (r.correct) cumulative += 1;
+    const cumulativeSeries = turns.map((turn, i) => {
+      if (scored.get(turn)) cumulative += 1;
       return { label: `${i + 1}`, value: cumulative };
     });
     return {
       kind: "play_together",
       correct: room.jointScore,
-      total: rows.length,
+      total: turns.length,
       cumulativeSeries,
     };
   }

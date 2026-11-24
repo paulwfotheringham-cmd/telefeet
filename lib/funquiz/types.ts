@@ -19,6 +19,7 @@ export type GameMode =
   | "blockbusters";
 
 export type QuizOptionList =
+  | readonly [string, string]
   | readonly [string, string, string]
   | readonly [string, string, string, string];
 
@@ -87,8 +88,8 @@ export type PublicQuizQuestion = {
   category: string;
   outlineImageUrl?: string;
   flagImageUrl?: string;
-  /** `population` is a typed number. `choice` is the multiple-choice buttons. */
-  input?: "choice" | "population";
+  /** `population` and `closest` are typed numbers. `choice` is the buttons. */
+  input?: "choice" | "population" | "closest";
 };
 
 export type ScorecardPlayerBar = {
@@ -173,8 +174,11 @@ export type ClientRoomState = {
     correctIndex: number;
     chosenLabel: string;
     correctLabel: string;
-    /** Absolute gap between a population guess and the city population. */
+    /** Absolute gap between a typed guess and the real number. */
     distance?: number;
+    /** Every guess on a Closest Wins question. */
+    guesses?: { name: string; label: string; distance: number; closest: boolean }[];
+    note?: string;
   } | null;
   revealEndsAt: number | null;
   winnerIds: string[];

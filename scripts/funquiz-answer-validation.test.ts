@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { QUIZ_CATEGORY_CAPITAL_POPULATIONS, QUIZ_CATEGORY_GENERAL_MILITARY } from "../lib/funquiz/categories";
+import { QUIZ_CATEGORY_CAPITAL_POPULATIONS, QUIZ_CATEGORY_CLOSEST, QUIZ_CATEGORY_GENERAL_MILITARY, QUIZ_CATEGORY_TRUE_OR_FALSE } from "../lib/funquiz/categories";
 import { gradeAnswer, normalizeChoiceIndex } from "../lib/funquiz/answer-validation";
 import { GAME_MODE_SINGLE } from "../lib/funquiz/constants";
 import { QUIZ_DIFFICULTY_INTERMEDIATE } from "../lib/funquiz/difficulties";
@@ -125,6 +125,96 @@ function runPopulationGuess() {
   assert.equal(far.question?.options.length, 0);
 }
 
+function runTrueOrFalse() {
+  const q = QUIZ_QUESTIONS.find((item) => item.categoryId === QUIZ_CATEGORY_TRUE_OR_FALSE);
+  assert.ok(q);
+  assert.equal(q.options.length, 2);
+  assert.deepEqual([...q.options].sort(), ["False", "True"]);
+  const graded = gradeAnswer(q.id, q.correctIndex);
+  assert.equal(graded.correct, true);
+  assert.equal(graded.chosenLabel, q.options[q.correctIndex]);
+}
+
+function runClosestSoloAndRace() {
+  let solo = createRoom(
+    "host",
+    "Host",
+    "CLS001",
+    GAME_MODE_SINGLE,
+    QUIZ_CATEGORY_CLOSEST,
+    QUIZ_DIFFICULTY_INTERMEDIATE,
+  );
+  solo = startGame(solo, "host");
+  const actual = getQuestionByBankId(solo.questionOrder[0]!).estimate!.value;
+  const window = getQuestionByBankId(solo.questionOrder[0]!).estimate!.tolerance;
+  solo = submitAnswer(solo, "host", String(actual + window));
+  const close = toClientState(solo, "host");
+  assert.equal(close.phase, "reveal");
+  assert.equal(close.question?.input, "closest");
+  assert.equal(close.answerFeedback?.correct, true);
+  assert.equal(close.answerFeedback?.note, "Within 10%.");
+  assert.equal(close.jointScore, 1);
+
+  let miss = createRoom(
+    "host",
+    "Host",
+    "CLS002",
+    GAME_MODE_SINGLE,
+    QUIZ_CATEGORY_CLOSEST,
+    QUIZ_DIFFICULTY_HARD,
+  );
+  miss = startGame(miss, "host");
+  const hard = getQuestionByBankId(miss.questionOrder[0]!).estimate!;
+  miss = submitAnswer(miss, "host", String(hard.value + hard.tolerance + 5));
+  assert.equal(toClientState(miss, "host").answerFeedback?.note, "Further than 10%.");
+
+  let race = createRoom(
+    "host",
+    "Host",
+    "CLS003",
+    GAME_MODE_TAKE_TURNS,
+    QUIZ_CATEGORY_CLOSEST,
+    QUIZ_DIFFICULTY_INTERMEDIATE,
+  );
+  race = addPlayer(race, "guest", "Guest");
+  race = startGame(race, "host");
+  const target = getQuestionByBankId(race.questionOrder[0]!).estimate!.value;
+  race = submitAnswer(race, "host", String(target + 50));
+  const waiting = toClientState(race, "host");
+  assert.equal(waiting.phase, "question");
+  assert.equal(waiting.canSubmitAnswer, false);
+  assert.equal(toClientState(race, "guest").canSubmitAnswer, true);
+  race = submitAnswer(race, "guest", String(target + 1));
+  const hostView = toClientState(race, "host");
+  const guestView = toClientState(race, "guest");
+  assert.equal(hostView.phase, "reveal");
+  assert.equal(hostView.answerFeedback?.correct, false);
+  assert.equal(hostView.answerFeedback?.note, "The other guess was closer.");
+  assert.equal(guestView.answerFeedback?.correct, true);
+  assert.equal(guestView.answerFeedback?.note, "You were closest.");
+  assert.equal(guestView.answerFeedback?.guesses?.length, 2);
+  assert.equal(race.players.find((p) => p.id === "guest")?.score, 1);
+  assert.equal(race.players.find((p) => p.id === "host")?.score, 0);
+
+  let tie = createRoom(
+    "host",
+    "Host",
+    "CLS004",
+    GAME_MODE_TAKE_TURNS,
+    QUIZ_CATEGORY_CLOSEST,
+    QUIZ_DIFFICULTY_INTERMEDIATE,
+  );
+  tie = addPlayer(tie, "guest", "Guest");
+  tie = startGame(tie, "host");
+  tie = submitAnswer(tie, "guest", "10");
+  tie = submitAnswer(tie, "host", "10");
+  assert.equal(toClientState(tie, "host").answerFeedback?.note, "It's a tie. The closest guesses score.");
+  assert.equal(tie.players.find((p) => p.id === "host")?.score, 1);
+  assert.equal(tie.players.find((p) => p.id === "guest")?.score, 1);
+}
+
+runTrueOrFalse();
+runClosestSoloAndRace();
 runGradeEveryOptionPosition();
 runPopulationGuess();
 runNormalizeChoiceIndex();
