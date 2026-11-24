@@ -592,11 +592,7 @@ export function FunQuizClient() {
     const instantCover = GAME_TILES.find((tile) => tile.id === pickedGame)?.image;
     return (
       <div className="mx-auto flex min-h-[100dvh] max-w-6xl flex-col px-4 py-8 sm:py-10">
-        <h1 className="text-center text-4xl font-bold tracking-tight text-white sm:text-5xl">
-          A Selection of Games
-        </h1>
-        <div className="mx-auto mt-3 flex w-full max-w-3xl flex-col items-end gap-2">
-            <div className="flex flex-wrap justify-end gap-2">
+        <div className="mb-6 flex flex-wrap justify-center gap-2">
               <Link
                 href="/funquiz/podcasts"
                 className="rounded-full border border-amber-300/40 bg-amber-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-100 hover:bg-amber-400/20"
@@ -627,8 +623,10 @@ export function FunQuizClient() {
               >
                 TV series
               </Link>
-            </div>
         </div>
+        <h1 className="text-center text-4xl font-bold tracking-tight text-white sm:text-5xl">
+          A Selection of Games
+        </h1>
 
         {storeWarning ? (
           <p className="mx-auto mt-4 max-w-3xl rounded-xl border border-amber-500/40 bg-amber-950/40 px-3 py-2 text-xs text-amber-100">
