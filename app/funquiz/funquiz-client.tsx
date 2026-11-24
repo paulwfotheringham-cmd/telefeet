@@ -8,7 +8,19 @@ import { clubToken, type ClubSession } from "@/lib/funquiz/club-browser";
 import { useMatchScore } from "@/lib/funquiz/use-match-score";
 import { createClient } from "@/lib/supabase/client";
 import { openRoomByCode } from "@/lib/room-directory";
-import { QUIZ_CATEGORIES, QUIZ_CATEGORY_GENERAL_KNOWLEDGE } from "@/lib/funquiz/categories";
+import {
+  QUIZ_CATEGORIES,
+  QUIZ_CATEGORY_CAPITAL_CITIES,
+  QUIZ_CATEGORY_COUNTRY_OUTLINES,
+  QUIZ_CATEGORY_GENERAL_KNOWLEDGE,
+  QUIZ_CATEGORY_GENERAL_MILITARY,
+  QUIZ_CATEGORY_GEOGRAPHY,
+  QUIZ_CATEGORY_HISTORY,
+  QUIZ_CATEGORY_MILITARY_BATTLES,
+  QUIZ_CATEGORY_MOVIES_POP_CULTURE,
+  QUIZ_CATEGORY_SPACE,
+  QUIZ_CATEGORY_WORLD_FLAGS,
+} from "@/lib/funquiz/categories";
 import type { QuizCategoryId } from "@/lib/funquiz/categories";
 import { QUIZ_DIFFICULTIES, QUIZ_DIFFICULTY_INTERMEDIATE } from "@/lib/funquiz/difficulties";
 import type { QuizDifficulty } from "@/lib/funquiz/difficulties";
@@ -125,32 +137,46 @@ function readPlayerId(): string {
 
 type FunQuizTile = { id: string; title: string; href?: string; tone: string };
 
-const FUNQUIZ_TILES: FunQuizTile[] = [
-  { id: "millionaire", title: "Who Wants To be A Millionaire", tone: "border-amber-400/50 text-amber-200 hover:bg-amber-950/40" },
-  { id: "holdem", title: "Texas Hold'em", tone: "border-emerald-400/50 text-emerald-200 hover:bg-emerald-950/40" },
-  { id: "catchphrase", title: "Catchphrase", tone: "border-[#ffcc00]/60 text-[#ffcc00] hover:bg-[#0047ab]/30" },
-  { id: "blockbusters", title: "Blockbusters", tone: "border-sky-300/60 text-sky-200 hover:bg-[#003399]/40" },
-  { id: "movie", title: "Name That Movie", href: "/name-that-movie", tone: "border-violet-400/50 text-violet-200 hover:bg-violet-950/40" },
-  { id: "show", title: "Name That Show", href: "/name-that-show", tone: "border-amber-300/50 text-amber-200 hover:bg-amber-950/30" },
-  { id: "computer", title: "Name The Computer Game", href: "/name-that-game", tone: "border-emerald-400/50 text-emerald-200 hover:bg-emerald-950/30" },
-  { id: "quiz", title: "Trivia Quiz Games", tone: "border-violet-300/60 text-violet-100 hover:bg-violet-950/50" },
-  { id: "tune", title: "Name That Tune", href: "/name-that-tune", tone: "border-fuchsia-400/50 text-fuchsia-200 hover:bg-fuchsia-950/30" },
-  { id: "draw", title: "Drawing Games", tone: "border-rose-400/60 text-rose-100 hover:bg-rose-950/40" },
+const HOME_LABEL = "flex min-h-16 items-center justify-center rounded-xl bg-sky-800 px-2 text-center text-[11px] font-semibold uppercase tracking-wide text-white sm:min-h-[4.5rem] sm:text-xs";
+
+const QUIZ_HOME: { id: QuizCategoryId; title: string }[] = [
+  { id: QUIZ_CATEGORY_GENERAL_KNOWLEDGE, title: "General Knowledge" },
+  { id: QUIZ_CATEGORY_SPACE, title: "Space" },
+  { id: QUIZ_CATEGORY_HISTORY, title: "History" },
+  { id: QUIZ_CATEGORY_MILITARY_BATTLES, title: "Military Battles" },
+  { id: QUIZ_CATEGORY_GENERAL_MILITARY, title: "General Military" },
+  { id: QUIZ_CATEGORY_CAPITAL_CITIES, title: "Capital Cities" },
+  { id: QUIZ_CATEGORY_COUNTRY_OUTLINES, title: "Country Outlines" },
+  { id: QUIZ_CATEGORY_GEOGRAPHY, title: "Geography" },
+  { id: QUIZ_CATEGORY_MOVIES_POP_CULTURE, title: "Movies" },
+  { id: QUIZ_CATEGORY_WORLD_FLAGS, title: "Flags of the world" },
 ];
 
-const DRAW_TILES: FunQuizTile[] = [
-  { id: "organ", title: "Draw the Organ", href: "/draw-the-organ", tone: "border-rose-400/50 text-rose-200 hover:bg-rose-950/30" },
-  { id: "animal", title: "Draw the Animal", href: "/draw-the-animal", tone: "border-amber-400/50 text-amber-200 hover:bg-amber-950/30" },
-  { id: "country", title: "Draw the Country", href: "/draw-the-country", tone: "border-sky-400/50 text-sky-200 hover:bg-sky-950/30" },
-  { id: "continent", title: "Draw the Continent", href: "/draw-the-continent", tone: "border-emerald-400/50 text-emerald-200 hover:bg-emerald-950/30" },
-  { id: "appliance", title: "Draw the Appliance", href: "/draw-the-appliance", tone: "border-violet-400/50 text-violet-200 hover:bg-violet-950/30" },
-  { id: "landmark", title: "Draw the Landmark", href: "/draw-the-landmark", tone: "border-orange-400/50 text-orange-200 hover:bg-orange-950/30" },
-  { id: "flower", title: "Draw the Flower", href: "/draw-the-flower", tone: "border-pink-400/50 text-pink-200 hover:bg-pink-950/30" },
-  { id: "weapon", title: "Draw the Weapon", href: "/draw-the-weapon", tone: "border-lime-400/50 text-lime-200 hover:bg-lime-950/30" },
-  { id: "geography", title: "Draw the Geography", href: "/draw-the-geography", tone: "border-blue-400/50 text-blue-200 hover:bg-blue-950/30" },
-  { id: "myth", title: "Draw the Myth", href: "/draw-the-myth", tone: "border-purple-400/50 text-purple-200 hover:bg-purple-950/30" },
-  { id: "fast-food", title: "Draw the Fast Food", href: "/draw-the-fast-food", tone: "border-yellow-400/50 text-yellow-200 hover:bg-yellow-950/20" },
+const GAME_TILES: FunQuizTile[] = [
+  { id: "millionaire", title: "Who wants to be a Millionaire", tone: "border-amber-400/50 text-amber-200 hover:bg-amber-950/40" },
+  { id: "holdem", title: "Texas Hold-em", tone: "border-emerald-400/50 text-emerald-200 hover:bg-emerald-950/40" },
+  { id: "catchphrase", title: "Catchphrase", tone: "border-[#ffcc00]/60 text-[#ffcc00] hover:bg-[#0047ab]/30" },
+  { id: "blockbusters", title: "Blockbusters", tone: "border-sky-300/60 text-sky-200 hover:bg-[#003399]/40" },
 ];
+
+const NAME_THAT_TILES: FunQuizTile[] = [
+  { id: "movie", title: "Movie", href: "/name-that-movie", tone: "border-violet-400/50 text-violet-200 hover:bg-violet-950/40" },
+  { id: "show", title: "UK Game show", href: "/name-that-show", tone: "border-amber-300/50 text-amber-200 hover:bg-amber-950/30" },
+  { id: "computer", title: "Computer game", href: "/name-that-game", tone: "border-emerald-400/50 text-emerald-200 hover:bg-emerald-950/30" },
+  { id: "tune", title: "80-90's tunes", href: "/name-that-tune", tone: "border-fuchsia-400/50 text-fuchsia-200 hover:bg-fuchsia-950/30" },
+];
+
+const DRAW_THAT_TILES: FunQuizTile[] = [
+  { id: "organ", title: "Human Body", href: "/draw-the-organ", tone: "border-rose-400/50 text-rose-200 hover:bg-rose-950/30" },
+  { id: "animal", title: "Animals", href: "/draw-the-animal", tone: "border-amber-400/50 text-amber-200 hover:bg-amber-950/30" },
+  { id: "country", title: "Country", href: "/draw-the-country", tone: "border-sky-400/50 text-sky-200 hover:bg-sky-950/30" },
+  { id: "myth", title: "Myth", href: "/draw-the-myth", tone: "border-purple-400/50 text-purple-200 hover:bg-purple-950/30" },
+  { id: "landmark", title: "Landmark", href: "/draw-the-landmark", tone: "border-orange-400/50 text-orange-200 hover:bg-orange-950/30" },
+];
+
+function homeTileClass(tone: string, selected = false): string {
+  return `flex min-h-16 items-center justify-center rounded-xl border bg-black/30 p-2 text-center text-xs font-semibold leading-tight transition sm:min-h-[4.5rem] sm:text-sm ${tone} ${selected ? "ring-2 ring-white" : ""}`;
+}
 
 function chooseFunQuizGame(id: string, setPickedGame: (id: string) => void, setSelectedMode: (mode: GameMode | null) => void, selectedMode: GameMode | null) {
   setPickedGame(id);
@@ -527,7 +553,7 @@ export function FunQuizClient() {
             Fun Quiz
           </h1>
           <p className="mt-3 text-center text-sm leading-relaxed text-slate-300">
-            Pick Trivia Quiz Games, choose a subject, then Easy, Intermediate, or Hard, then play separate or together.
+            Pick a quiz subject, then Easy, Intermediate, or Hard, then play separate or together.
           </p>
 
           {storeWarning ? (
@@ -548,126 +574,120 @@ export function FunQuizClient() {
             />
           </label>
 
-          <div className="mt-6 grid grid-cols-4 gap-2 sm:gap-3">
-            {FUNQUIZ_TILES.map((tile) => {
-              const selected = pickedGame === tile.id;
-              const className = `flex min-h-24 items-center justify-center rounded-2xl border bg-black/30 p-2 text-center text-xs font-semibold leading-tight transition sm:min-h-28 sm:p-3 sm:text-sm ${tile.tone} ${selected ? "ring-2 ring-white" : ""}`;
-              if (tile.href) {
-                return (
-                  <Link key={tile.id} href={tile.href} className={className}>
-                    {tile.title}
-                  </Link>
-                );
-              }
-              return (
+          <div className="mt-6 space-y-3">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-6 sm:gap-3">
+              <div className={`${HOME_LABEL} col-span-2 sm:col-span-1 sm:row-span-2`}>Quiz</div>
+              {QUIZ_HOME.map((cat) => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => {
+                    setPickedGame("quiz");
+                    setSelectedCategory(cat.id);
+                    setSelectedMode(null);
+                    setSelectedDifficulty(null);
+                  }}
+                  className={homeTileClass(
+                    selectedCategory === cat.id
+                      ? "border-violet-300 text-violet-100"
+                      : "border-violet-400/40 text-violet-100 hover:bg-violet-950/40",
+                    selectedCategory === cat.id,
+                  )}
+                >
+                  {cat.title}
+                </button>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-6 sm:gap-3">
+              <div className={`${HOME_LABEL} col-span-2 sm:col-span-1`}>Games</div>
+              {GAME_TILES.map((tile) => (
                 <button
                   key={tile.id}
                   type="button"
                   onClick={() => {
                     chooseFunQuizGame(tile.id, setPickedGame, setSelectedMode, selectedMode);
-                    if (tile.id === "quiz") {
-                      setSelectedCategory(null);
-                      setSelectedDifficulty(null);
-                    }
+                    setSelectedCategory(null);
+                    setSelectedDifficulty(null);
                   }}
-                  className={className}
+                  className={homeTileClass(tile.tone, pickedGame === tile.id)}
                 >
                   {tile.title}
                 </button>
-              );
-            })}
-          </div>
+              ))}
+            </div>
 
-          {pickedGame === "draw" ? (
-            <div className="mt-3 grid grid-cols-4 gap-2 sm:gap-3">
-              {DRAW_TILES.map((tile) => (
-                <Link
-                  key={tile.id}
-                  href={tile.href ?? "/funquiz"}
-                  className={`flex min-h-24 items-center justify-center rounded-2xl border bg-black/30 p-2 text-center text-xs font-semibold leading-tight transition sm:min-h-28 sm:p-3 sm:text-sm ${tile.tone}`}
-                >
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-6 sm:gap-3">
+              <div className={`${HOME_LABEL} col-span-2 sm:col-span-1`}>Name That</div>
+              {NAME_THAT_TILES.map((tile) => (
+                <Link key={tile.id} href={tile.href ?? "/funquiz"} className={homeTileClass(tile.tone)}>
                   {tile.title}
                 </Link>
               ))}
             </div>
-          ) : null}
 
-          {pickedGame === "quiz" ? (
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-6 sm:gap-3">
+              <div className={`${HOME_LABEL} col-span-2 sm:col-span-1`}>Draw That</div>
+              {DRAW_THAT_TILES.map((tile) => (
+                <Link key={tile.id} href={tile.href ?? "/funquiz"} className={homeTileClass(tile.tone)}>
+                  {tile.title}
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {selectedCategory ? (
             <>
-              <div className="mt-3 grid grid-cols-4 gap-2 sm:gap-3">
-                {QUIZ_CATEGORIES.map((cat) => (
+              <div className="mt-3 grid grid-cols-3 gap-2 sm:gap-3">
+                {QUIZ_DIFFICULTIES.map((d) => (
                   <button
-                    key={cat.id}
+                    key={d.id}
                     type="button"
                     onClick={() => {
-                      setSelectedCategory(cat.id);
+                      setSelectedDifficulty(d.id);
                       setSelectedMode(null);
-                      setSelectedDifficulty(null);
                     }}
-                    className={`flex min-h-24 items-center justify-center rounded-2xl border bg-black/30 p-2 text-center text-xs font-semibold leading-tight text-violet-100 transition sm:min-h-28 sm:p-3 sm:text-sm ${
-                      selectedCategory === cat.id
-                        ? "border-violet-300 ring-2 ring-white"
-                        : "border-violet-400/40 hover:bg-violet-950/40"
+                    className={`flex min-h-16 items-center justify-center rounded-xl border bg-black/30 p-2 text-center text-xs font-semibold transition sm:min-h-20 sm:text-sm ${
+                      selectedDifficulty === d.id
+                        ? "border-violet-300 text-violet-100 ring-2 ring-white"
+                        : "border-violet-400/40 text-violet-100 hover:bg-violet-950/40"
                     }`}
                   >
-                    {cat.title}
+                    {d.title}
                   </button>
                 ))}
               </div>
-              {selectedCategory ? (
-                <>
-                  <div className="mt-3 grid grid-cols-3 gap-2 sm:gap-3">
-                    {QUIZ_DIFFICULTIES.map((d) => (
-                      <button
-                        key={d.id}
-                        type="button"
-                        onClick={() => {
-                          setSelectedDifficulty(d.id);
-                          setSelectedMode(null);
-                        }}
-                        className={`flex min-h-20 items-center justify-center rounded-2xl border bg-black/30 p-2 text-center text-xs font-semibold transition sm:min-h-24 sm:text-sm ${
-                          selectedDifficulty === d.id
-                            ? "border-violet-300 text-violet-100 ring-2 ring-white"
-                            : "border-violet-400/40 text-violet-100 hover:bg-violet-950/40"
-                        }`}
-                      >
-                        {d.title}
-                      </button>
-                    ))}
-                  </div>
-                  {selectedDifficulty ? (
-                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedMode(GAME_MODE_TAKE_TURNS)}
-                        className={`rounded-2xl border p-4 text-left transition ${
-                          selectedMode === GAME_MODE_TAKE_TURNS
-                            ? "border-violet-400 bg-violet-950/50"
-                            : "border-white/10 bg-black/30 hover:border-violet-400/40"
-                        }`}
-                      >
-                        <p className="text-sm font-semibold text-violet-200">Play separate</p>
-                        <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                          Answer 25 different questions each. Take turns answering. Compare scores at the end.
-                        </p>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedMode(GAME_MODE_PLAY_TOGETHER)}
-                        className={`rounded-2xl border p-4 text-left transition ${
-                          selectedMode === GAME_MODE_PLAY_TOGETHER
-                            ? "border-violet-400 bg-violet-950/50"
-                            : "border-white/10 bg-black/30 hover:border-violet-400/40"
-                        }`}
-                      >
-                        <p className="text-sm font-semibold text-violet-200">Play together</p>
-                        <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                          Answer 50 shared questions together. The room creator submits the agreed answer.
-                        </p>
-                      </button>
-                    </div>
-                  ) : null}
-                </>
+              {selectedDifficulty ? (
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedMode(GAME_MODE_TAKE_TURNS)}
+                    className={`rounded-2xl border p-4 text-left transition ${
+                      selectedMode === GAME_MODE_TAKE_TURNS
+                        ? "border-violet-400 bg-violet-950/50"
+                        : "border-white/10 bg-black/30 hover:border-violet-400/40"
+                    }`}
+                  >
+                    <p className="text-sm font-semibold text-violet-200">Play separate</p>
+                    <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                      Answer 25 different questions each. Take turns answering. Compare scores at the end.
+                    </p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedMode(GAME_MODE_PLAY_TOGETHER)}
+                    className={`rounded-2xl border p-4 text-left transition ${
+                      selectedMode === GAME_MODE_PLAY_TOGETHER
+                        ? "border-violet-400 bg-violet-950/50"
+                        : "border-white/10 bg-black/30 hover:border-violet-400/40"
+                    }`}
+                  >
+                    <p className="text-sm font-semibold text-violet-200">Play together</p>
+                    <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                      Answer 50 shared questions together. The room creator submits the agreed answer.
+                    </p>
+                  </button>
+                </div>
               ) : null}
             </>
           ) : null}
