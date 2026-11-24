@@ -137,9 +137,7 @@ function readPlayerId(): string {
 
 type FunQuizTile = { id: string; title: string; href?: string };
 
-const HOME_TILE = "flex min-h-14 items-center justify-center border border-[#0e5570] bg-[#1b7596] px-2 py-2 text-center text-xs font-medium leading-tight text-white transition hover:bg-[#2188ad] sm:min-h-16 sm:text-sm";
-
-const HOME_LABEL = `${HOME_TILE} font-semibold uppercase tracking-wide`;
+const HOME_TILE = "flex min-h-[4.5rem] items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-3 py-2 text-center text-sm font-semibold leading-tight text-white transition hover:border-sky-300/70 hover:bg-sky-950/50";
 
 const QUIZ_HOME: { id: QuizCategoryId; title: string }[] = [
   { id: QUIZ_CATEGORY_GENERAL_KNOWLEDGE, title: "General Knowledge" },
@@ -177,32 +175,7 @@ const DRAW_THAT_TILES: FunQuizTile[] = [
 ];
 
 function homeTileClass(selected = false): string {
-  return `${HOME_TILE} ${selected ? "outline outline-2 outline-offset-2 outline-[#0e5570]" : ""}`;
-}
-
-function chooseFunQuizGame(id: string, setPickedGame: (id: string) => void, setSelectedMode: (mode: GameMode | null) => void, selectedMode: GameMode | null) {
-  setPickedGame(id);
-  if (id === "quiz") {
-    setSelectedMode(null);
-    return;
-  }
-  if (id === "millionaire") {
-    setSelectedMode(isMillionaireGameMode(selectedMode) ? selectedMode : null);
-    return;
-  }
-  if (id === "holdem") {
-    setSelectedMode(GAME_MODE_TEXAS_HOLDEM);
-    return;
-  }
-  if (id === "catchphrase") {
-    setSelectedMode(GAME_MODE_CATCHPHRASE);
-    return;
-  }
-  if (id === "blockbusters") {
-    setSelectedMode(GAME_MODE_BLOCKBUSTERS);
-    return;
-  }
-  setSelectedMode(null);
+  return `${HOME_TILE} ${selected ? "border-sky-200 bg-sky-900/80 ring-2 ring-sky-200" : ""}`;
 }
 
 export function FunQuizClient() {
@@ -301,22 +274,29 @@ export function FunQuizClient() {
 
   const resolvePlayerId = () => playerId || getOrCreatePlayerId();
 
-  const createRoom = async () => {
+  const createRoom = async (choice?: {
+    mode: GameMode;
+    difficulty?: QuizDifficulty | null;
+    category?: QuizCategoryId | null;
+  }) => {
+    const mode = choice?.mode ?? selectedMode;
+    const difficulty = choice ? (choice.difficulty ?? QUIZ_DIFFICULTY_INTERMEDIATE) : selectedDifficulty;
+    const category = choice ? (choice.category ?? QUIZ_CATEGORY_GENERAL_KNOWLEDGE) : selectedCategory;
     setError(null);
     if (!name.trim()) {
       setError("Enter your name first.");
       return;
     }
-    if (!selectedMode) {
+    if (!mode) {
       setError("Select a game mode before creating a room.");
       return;
     }
-    const isStandalone = isStandaloneGameMode(selectedMode);
-    if (!isStandalone && !selectedDifficulty) {
+    const isStandalone = isStandaloneGameMode(mode);
+    if (!isStandalone && !difficulty) {
       setError("Select a difficulty before creating a room.");
       return;
     }
-    if (!isStandalone && !selectedCategory) {
+    if (!isStandalone && !category) {
       setError("Choose a quiz category before creating a room.");
       return;
     }
@@ -331,9 +311,9 @@ export function FunQuizClient() {
         body: JSON.stringify({
           playerId: activePlayerId,
           playerName: name.trim(),
-          gameMode: selectedMode,
-          quizDifficulty: isStandalone ? QUIZ_DIFFICULTY_INTERMEDIATE : selectedDifficulty,
-          quizCategory: isStandalone ? QUIZ_CATEGORY_GENERAL_KNOWLEDGE : selectedCategory,
+          gameMode: mode,
+          quizDifficulty: isStandalone ? QUIZ_DIFFICULTY_INTERMEDIATE : difficulty,
+          quizCategory: isStandalone ? QUIZ_CATEGORY_GENERAL_KNOWLEDGE : category,
         }),
       });
       const state = await parseState(res);
@@ -576,224 +556,153 @@ export function FunQuizClient() {
             />
           </label>
 
-          <div className="mt-6 bg-white p-4 sm:p-5">
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-6 sm:gap-3">
-              <div className={`${HOME_LABEL} col-span-2 sm:col-span-1`}>Quiz</div>
-              {QUIZ_HOME.slice(0, 5).map((cat) => (
-                <button
-                  key={cat.id}
-                  type="button"
-                  onClick={() => {
-                    setPickedGame("quiz");
-                    setSelectedCategory(cat.id);
-                    setSelectedMode(null);
-                    setSelectedDifficulty(null);
-                  }}
-                  className={homeTileClass(selectedCategory === cat.id)}
-                >
-                  {cat.title}
-                </button>
-              ))}
-              <div className="hidden sm:block" />
-              {QUIZ_HOME.slice(5).map((cat) => (
-                <button
-                  key={cat.id}
-                  type="button"
-                  onClick={() => {
-                    setPickedGame("quiz");
-                    setSelectedCategory(cat.id);
-                    setSelectedMode(null);
-                    setSelectedDifficulty(null);
-                  }}
-                  className={homeTileClass(selectedCategory === cat.id)}
-                >
-                  {cat.title}
-                </button>
-              ))}
-            </div>
-
-            <div className="mt-8 grid grid-cols-2 gap-2 sm:grid-cols-6 sm:gap-3">
-              <div className={`${HOME_LABEL} col-span-2 sm:col-span-1`}>Games</div>
-              {GAME_TILES.map((tile) => (
-                <button
-                  key={tile.id}
-                  type="button"
-                  onClick={() => {
-                    chooseFunQuizGame(tile.id, setPickedGame, setSelectedMode, selectedMode);
-                    setSelectedCategory(null);
-                    setSelectedDifficulty(null);
-                  }}
-                  className={homeTileClass(pickedGame === tile.id)}
-                >
-                  {tile.title}
-                </button>
-              ))}
-            </div>
-
-            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-6 sm:gap-3">
-              <div className={`${HOME_LABEL} col-span-2 sm:col-span-1`}>Name That</div>
-              {NAME_THAT_TILES.map((tile) => (
-                <Link key={tile.id} href={tile.href ?? "/funquiz"} className={homeTileClass()}>
-                  {tile.title}
-                </Link>
-              ))}
-            </div>
-
-            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-6 sm:gap-3">
-              <div className={`${HOME_LABEL} col-span-2 sm:col-span-1`}>Draw That</div>
-              {DRAW_THAT_TILES.map((tile) => (
-                <Link key={tile.id} href={tile.href ?? "/funquiz"} className={homeTileClass()}>
-                  {tile.title}
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          {selectedCategory ? (
-            <>
-              <div className="mt-3 grid grid-cols-3 gap-2 sm:gap-3">
-                {QUIZ_DIFFICULTIES.map((d) => (
-                  <button
-                    key={d.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedDifficulty(d.id);
-                      setSelectedMode(null);
-                    }}
-                    className={`flex min-h-16 items-center justify-center rounded-xl border bg-black/30 p-2 text-center text-xs font-semibold transition sm:min-h-20 sm:text-sm ${
-                      selectedDifficulty === d.id
-                        ? "border-violet-300 text-violet-100 ring-2 ring-white"
-                        : "border-violet-400/40 text-violet-100 hover:bg-violet-950/40"
-                    }`}
-                  >
-                    {d.title}
-                  </button>
-                ))}
-              </div>
-              {selectedDifficulty ? (
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedMode(GAME_MODE_TAKE_TURNS)}
-                    className={`rounded-2xl border p-4 text-left transition ${
-                      selectedMode === GAME_MODE_TAKE_TURNS
-                        ? "border-violet-400 bg-violet-950/50"
-                        : "border-white/10 bg-black/30 hover:border-violet-400/40"
-                    }`}
-                  >
-                    <p className="text-sm font-semibold text-violet-200">Play separate</p>
-                    <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                      Answer 25 different questions each. Take turns answering. Compare scores at the end.
-                    </p>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedMode(GAME_MODE_PLAY_TOGETHER)}
-                    className={`rounded-2xl border p-4 text-left transition ${
-                      selectedMode === GAME_MODE_PLAY_TOGETHER
-                        ? "border-violet-400 bg-violet-950/50"
-                        : "border-white/10 bg-black/30 hover:border-violet-400/40"
-                    }`}
-                  >
-                    <p className="text-sm font-semibold text-violet-200">Play together</p>
-                    <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                      Answer 50 shared questions together. The room creator submits the agreed answer.
-                    </p>
-                  </button>
-                </div>
-              ) : null}
-            </>
-          ) : null}
-
-          {pickedGame === "millionaire" ? (
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <button
-                type="button"
-                onClick={() => setSelectedMode(GAME_MODE_SHARED_MILLIONAIRE)}
-                className={`rounded-2xl border p-4 text-left transition ${
-                  selectedMode === GAME_MODE_SHARED_MILLIONAIRE
-                    ? "border-amber-400 bg-amber-950/50"
-                    : "border-white/10 bg-black/30 hover:border-amber-400/40"
-                }`}
-              >
-                <p className="text-sm font-semibold text-amber-100">1 — Play together</p>
-                <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                  One shared question, one team ladder, lock in together, shared lifelines.
-                </p>
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedMode(GAME_MODE_PARALLEL_MILLIONAIRE)}
-                className={`rounded-2xl border p-4 text-left transition ${
-                  selectedMode === GAME_MODE_PARALLEL_MILLIONAIRE
-                    ? "border-amber-400 bg-amber-950/50"
-                    : "border-white/10 bg-black/30 hover:border-amber-400/40"
-                }`}
-              >
-                <p className="text-sm font-semibold text-amber-100">2 — Same room, separate ladders</p>
-                <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                  Your own questions and prize bar. Your friend&apos;s question stays read-only.
-                </p>
-              </button>
-            </div>
-          ) : null}
-
-          {pickedGame !== "quiz" && selectedMode && !isStandaloneGameMode(selectedMode) ? (
-            <>
-              <p className="mt-6 text-sm font-medium text-slate-200">Difficulty</p>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                {QUIZ_DIFFICULTIES.map((d) => (
-                  <button
-                    key={d.id}
-                    type="button"
-                    onClick={() => setSelectedDifficulty(d.id)}
-                    className={`rounded-xl border p-3 text-left transition ${
-                      selectedDifficulty === d.id
-                        ? "border-violet-400 bg-violet-950/50 ring-1 ring-violet-400/40"
-                        : "border-white/10 bg-black/30 hover:border-violet-400/40"
-                    }`}
-                  >
-                    <p className="text-xs font-semibold text-violet-200">{d.title}</p>
-                    <p className="mt-1 text-[11px] leading-snug text-slate-400">{d.description}</p>
-                  </button>
-                ))}
-              </div>
-            </>
-          ) : null}
-
-          {selectedMode && !isStandaloneGameMode(selectedMode) && selectedDifficulty && pickedGame !== "quiz" ? (
-            <>
-              <p className="mt-6 text-sm font-medium text-slate-200">Choose your quiz</p>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                {QUIZ_CATEGORIES.map((cat) => (
+          <div className="mt-8 space-y-8">
+            <section>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-200">Quiz</p>
+              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5 sm:gap-3">
+                {QUIZ_HOME.map((cat) => (
                   <button
                     key={cat.id}
                     type="button"
-                    onClick={() => setSelectedCategory(cat.id)}
-                    className={`rounded-xl border p-3 text-left transition ${
-                      selectedCategory === cat.id
-                        ? "border-violet-400 bg-violet-950/50 ring-1 ring-violet-400/40"
-                        : "border-white/10 bg-black/30 hover:border-violet-400/40"
-                    }`}
+                    onClick={() => {
+                      setPickedGame("quiz");
+                      setSelectedCategory(cat.id);
+                      setSelectedMode(null);
+                      setSelectedDifficulty(null);
+                    }}
+                    className={homeTileClass(selectedCategory === cat.id)}
                   >
-                    <p className="text-xs font-semibold text-violet-200">{cat.title}</p>
-                    <p className="mt-1 text-[11px] leading-snug text-slate-400">{cat.description}</p>
+                    {cat.title}
                   </button>
                 ))}
               </div>
-            </>
-          ) : null}
+              {selectedCategory ? (
+                <div className="mt-3 grid grid-cols-3 gap-2 sm:gap-3">
+                  {QUIZ_DIFFICULTIES.map((d) => (
+                    <button
+                      key={d.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedDifficulty(d.id);
+                        setSelectedMode(null);
+                      }}
+                      className={homeTileClass(selectedDifficulty === d.id)}
+                    >
+                      {d.title}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+              {selectedCategory && selectedDifficulty ? (
+                <div className="mt-3 grid gap-2 sm:grid-cols-2 sm:gap-3">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void createRoom({
+                        mode: GAME_MODE_TAKE_TURNS,
+                        difficulty: selectedDifficulty,
+                        category: selectedCategory,
+                      })
+                    }
+                    className={homeTileClass(false)}
+                  >
+                    Play separate
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void createRoom({
+                        mode: GAME_MODE_PLAY_TOGETHER,
+                        difficulty: selectedDifficulty,
+                        category: selectedCategory,
+                      })
+                    }
+                    className={homeTileClass(false)}
+                  >
+                    Play together
+                  </button>
+                </div>
+              ) : null}
+            </section>
+
+            <section>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-200">Games</p>
+              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+                {GAME_TILES.map((tile) => (
+                  <button
+                    key={tile.id}
+                    type="button"
+                    onClick={() => {
+                      if (tile.id === "millionaire") {
+                        setPickedGame("millionaire");
+                        setSelectedMode(null);
+                        setSelectedCategory(null);
+                        setSelectedDifficulty(null);
+                        return;
+                      }
+                      const mode =
+                        tile.id === "holdem"
+                          ? GAME_MODE_TEXAS_HOLDEM
+                          : tile.id === "catchphrase"
+                            ? GAME_MODE_CATCHPHRASE
+                            : GAME_MODE_BLOCKBUSTERS;
+                      setPickedGame(tile.id);
+                      setSelectedMode(mode);
+                      void createRoom({ mode });
+                    }}
+                    className={homeTileClass(pickedGame === tile.id)}
+                  >
+                    {tile.title}
+                  </button>
+                ))}
+              </div>
+              {pickedGame === "millionaire" ? (
+                <div className="mt-3 grid gap-2 sm:grid-cols-2 sm:gap-3">
+                  <button
+                    type="button"
+                    onClick={() => void createRoom({ mode: GAME_MODE_SHARED_MILLIONAIRE })}
+                    className={homeTileClass(false)}
+                  >
+                    Play together
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void createRoom({ mode: GAME_MODE_PARALLEL_MILLIONAIRE })}
+                    className={homeTileClass(false)}
+                  >
+                    Play separate
+                  </button>
+                </div>
+              ) : null}
+            </section>
+
+            <section>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-200">Name That</p>
+              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+                {NAME_THAT_TILES.map((tile) => (
+                  <Link key={tile.id} href={tile.href ?? "/funquiz"} className={homeTileClass()}>
+                    {tile.title}
+                  </Link>
+                ))}
+              </div>
+            </section>
+
+            <section>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-200">Draw That</p>
+              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5 sm:gap-3">
+                {DRAW_THAT_TILES.map((tile) => (
+                  <Link key={tile.id} href={tile.href ?? "/funquiz"} className={homeTileClass()}>
+                    {tile.title}
+                  </Link>
+                ))}
+              </div>
+            </section>
+          </div>
 
           <button
             type="button"
-            disabled={
-              busy ||
-              !selectedMode ||
-              (isStandaloneGameMode(selectedMode)
-                ? false
-                : !selectedDifficulty || !selectedCategory)
-            }
-            onClick={createRoom}
+            disabled={busy || !selectedMode}
+            onClick={() => void createRoom()}
             className="mt-6 w-full rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 py-3.5 text-sm font-semibold text-white shadow-lg shadow-violet-700/30 transition hover:brightness-110 disabled:opacity-60"
           >
             Create room
