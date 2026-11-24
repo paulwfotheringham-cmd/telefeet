@@ -53,7 +53,13 @@ import type { QuizCategoryId } from "./categories";
 import { categoryTitle } from "./categories";
 import type { QuizDifficulty } from "./difficulties";
 import { difficultyTitle } from "./difficulties";
-import { gradeAnswer, normalizeChoiceIndex } from "./answer-validation";
+import {
+  choiceFromSubmission,
+  describeScoredAnswer,
+  gradeAnswer,
+  normalizeChoiceIndex,
+  persistedPlayerAnswer,
+} from "./answer-validation";
 import {
   emptyPlayedBankIdsByTopic,
   playedIdsForTopic,
@@ -360,7 +366,7 @@ function expectedPlayerForTurn(room: QuizRoom, turnIndex: number): string {
   return turnIndex % 2 === 0 ? room.hostId : guestId;
 }
 
-function submitTakeTurns(room: QuizRoom, playerId: string, choiceIndex: number): QuizRoom {
+function submitTakeTurns(room: QuizRoom, playerId: string, choiceRaw: unknown): QuizRoom {
   if (room.phase !== "question") {
     throw new Error("Not accepting answers right now");
   }
@@ -377,7 +383,7 @@ function submitTakeTurns(room: QuizRoom, playerId: string, choiceIndex: number):
   }
 
   const bankId = bankIdForTakeTurn(room, room.turnIndex);
-  const graded = gradeAnswer(bankId, choiceIndex);
+  const graded = gradeAnswer(bankId, choiceFromSubmission(bankId, choiceRaw));
   const entry: AnswerLogEntry = {
     sessionId: room.sessionId,
     turnIndex: room.turnIndex,
@@ -391,7 +397,7 @@ function submitTakeTurns(room: QuizRoom, playerId: string, choiceIndex: number):
     if (p.id !== playerId) return { ...p, answer: null };
     return {
       ...p,
-      answer: graded.choiceIndex,
+      answer: persistedPlayerAnswer(graded.question, graded.choiceIndex),
       score: graded.correct ? p.score + 1 : p.score,
     };
   });
@@ -406,7 +412,7 @@ function submitTakeTurns(room: QuizRoom, playerId: string, choiceIndex: number):
   };
 }
 
-function submitPlayTogether(room: QuizRoom, playerId: string, choiceIndex: number): QuizRoom {
+function submitPlayTogether(room: QuizRoom, playerId: string, choiceRaw: unknown): QuizRoom {
   if (playerId !== room.hostId) {
     throw new Error("Only the room creator can submit answers in Play Together");
   }
@@ -423,7 +429,7 @@ function submitPlayTogether(room: QuizRoom, playerId: string, choiceIndex: numbe
   }
 
   const bankId = room.questionOrder[room.questionIndex]!;
-  const graded = gradeAnswer(bankId, choiceIndex);
+  const graded = gradeAnswer(bankId, choiceFromSubmission(bankId, choiceRaw));
   const entry: AnswerLogEntry = {
     sessionId: room.sessionId,
     turnIndex: room.questionIndex,
@@ -435,7 +441,7 @@ function submitPlayTogether(room: QuizRoom, playerId: string, choiceIndex: numbe
   const jointScore = room.jointScore + (graded.correct ? 1 : 0);
   const players = room.players.map((p) => ({
     ...p,
-    answer: p.id === room.hostId ? graded.choiceIndex : null,
+    answer: p.id === room.hostId ? persistedPlayerAnswer(graded.question, graded.choiceIndex) : null,
     score: jointScore,
   }));
 
@@ -451,17 +457,16 @@ function submitPlayTogether(room: QuizRoom, playerId: string, choiceIndex: numbe
 }
 
 export function submitAnswer(room: QuizRoom, playerId: string, choiceIndexRaw: unknown): QuizRoom {
-  const choiceIndex = normalizeChoiceIndex(choiceIndexRaw);
   if (
     room.gameMode === GAME_MODE_SHARED_MILLIONAIRE ||
     room.gameMode === GAME_MODE_PARALLEL_MILLIONAIRE
   ) {
-    return millionaireSelectAnswer(room, playerId, choiceIndex);
+    return millionaireSelectAnswer(room, playerId, normalizeChoiceIndex(choiceIndexRaw));
   }
   if (room.gameMode === GAME_MODE_TAKE_TURNS) {
-    return submitTakeTurns(room, playerId, choiceIndex);
+    return submitTakeTurns(room, playerId, choiceIndexRaw);
   }
-  return submitPlayTogether(room, playerId, choiceIndex);
+  return submitPlayTogether(room, playerId, choiceIndexRaw);
 }
 
 function advanceFromRevealTakeTurns(room: QuizRoom): QuizRoom {
@@ -552,22 +557,24 @@ export function buildResultRows(room: QuizRoom): ResultRow[] {
 
   return sorted.map((e) => {
     const q = getQuestionByBankId(e.bankId);
-    const chosenLabel =
-      e.choiceIndex === null || e.choiceIndex === undefined
+    const labels = describeScoredAnswer(q, e.choiceIndex);
+    const chosenLabel = q.estimate
+      ? labels.chosenLabel
+      : e.choiceIndex === null || e.choiceIndex === undefined
         ? null
-        : q.options[e.choiceIndex] ?? null;
+        : labels.chosenLabel || null;
     return {
       turnIndex: e.turnIndex,
       bankId: e.bankId,
       playerId: e.playerId,
       playerName: nameById.get(e.playerId) ?? "Player",
       choiceIndex: e.choiceIndex,
-      correctIndex: q.correctIndex,
+      correctIndex: q.estimate ? 0 : q.correctIndex,
       correct: e.correct,
       prompt: q.prompt,
-      options: q.options,
+      options: q.estimate ? [] : q.options,
       chosenLabel,
-      correctLabel: q.options[q.correctIndex],
+      correctLabel: labels.correctLabel,
     };
   });
 }
@@ -832,13 +839,15 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
 
   if (room.phase === "reveal" && revealEntry) {
     const q = getQuestionByBankId(revealEntry.bankId);
-    correctIndex = q.correctIndex;
+    const labels = describeScoredAnswer(q, revealEntry.choiceIndex);
+    correctIndex = q.estimate ? null : q.correctIndex;
     answerFeedback = {
       correct: revealEntry.correct,
       choiceIndex: revealEntry.choiceIndex,
-      correctIndex: q.correctIndex,
-      chosenLabel: q.options[revealEntry.choiceIndex] ?? "",
-      correctLabel: q.options[q.correctIndex] ?? "",
+      correctIndex: q.estimate ? 0 : q.correctIndex,
+      chosenLabel: labels.chosenLabel,
+      correctLabel: labels.correctLabel,
+      distance: labels.distance,
     };
   }
 

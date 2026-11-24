@@ -26,5 +26,7 @@ export type QuizQuestionBankItem = {
   outlineAssetId?: string;
   /** ISO 3166-1 alpha-2 for world flag image (/api/funquiz/flag/{iso2}). */
   flagIso2?: string;
+  /** Numeric guess. A guess within `tolerance` of `value` is correct. Options are unused. */
+  estimate?: { value: number; tolerance: number };
   difficulty: QuizDifficulty;
 };

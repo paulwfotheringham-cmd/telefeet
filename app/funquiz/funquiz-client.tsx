@@ -10,6 +10,7 @@ import { openRoomByCode } from "@/lib/room-directory";
 import {
   QUIZ_CATEGORIES,
   QUIZ_CATEGORY_CAPITAL_CITIES,
+  QUIZ_CATEGORY_CAPITAL_POPULATIONS,
   QUIZ_CATEGORY_COUNTRY_OUTLINES,
   QUIZ_CATEGORY_GENERAL_KNOWLEDGE,
   QUIZ_CATEGORY_GENERAL_MILITARY,
@@ -18,6 +19,8 @@ import {
   QUIZ_CATEGORY_MILITARY_BATTLES,
   QUIZ_CATEGORY_MOVIES_POP_CULTURE,
   QUIZ_CATEGORY_SPACE,
+  QUIZ_CATEGORY_SPORTS,
+  QUIZ_CATEGORY_STAR_TREK,
   QUIZ_CATEGORY_WORLD_FLAGS,
 } from "@/lib/funquiz/categories";
 import type { QuizCategoryId } from "@/lib/funquiz/categories";
@@ -43,6 +46,7 @@ import {
   isValidRoomCode,
   normalizeRoomCode,
 } from "@/lib/funquiz/room-code";
+import { formatPopulation, formatPopulationInput, parsePopulationGuess } from "@/lib/funquiz/population";
 import type { ClientRoomState, GameMode } from "@/lib/funquiz/types";
 
 const PLAYER_ID_KEY = "funquiz-player-id";
@@ -150,6 +154,9 @@ const QUIZ_HOME: { id: QuizCategoryId; title: string; image: string }[] = [
   { id: QUIZ_CATEGORY_GEOGRAPHY, title: "Geography", image: "/funquiz/covers/cover-geography.jpg" },
   { id: QUIZ_CATEGORY_MOVIES_POP_CULTURE, title: "Movies", image: "/funquiz/covers/cover-movies.jpg" },
   { id: QUIZ_CATEGORY_WORLD_FLAGS, title: "Flags of the world", image: "/funquiz/covers/cover-flags.jpg" },
+  { id: QUIZ_CATEGORY_CAPITAL_POPULATIONS, title: "Capital populations", image: "/funquiz/covers/cover-capital-populations.jpg" },
+  { id: QUIZ_CATEGORY_SPORTS, title: "Sports", image: "/funquiz/covers/cover-sports.jpg" },
+  { id: QUIZ_CATEGORY_STAR_TREK, title: "Star Trek", image: "/funquiz/covers/cover-star-trek.jpg" },
 ];
 
 const GAME_TILES: FunQuizTile[] = [
@@ -259,10 +266,15 @@ export function FunQuizClient() {
   const [error, setError] = useState<string | null>(null);
   const [storeWarning, setStoreWarning] = useState<string | null>(null);
   const [account, setAccount] = useState<ClubSession | null>(null);
+  const [populationGuess, setPopulationGuess] = useState("");
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [boardStep]);
+
+  useEffect(() => {
+    setPopulationGuess("");
+  }, [roomState?.question?.id, roomState?.phase]);
 
   useEffect(() => {
     const id = getOrCreatePlayerId();
@@ -1099,6 +1111,39 @@ export function FunQuizClient() {
           <h2 className="mt-6 text-xl font-semibold leading-snug text-white sm:text-2xl">
             {question.prompt}
           </h2>
+          {question.input === "population" ? (
+            <form
+              className="mx-auto mt-6 w-full max-w-md"
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (!roomState.canSubmitAnswer || busy) return;
+                try {
+                  void submitAnswer(parsePopulationGuess(populationGuess));
+                } catch (e) {
+                  setError(e instanceof Error ? e.message : "Enter a whole number, like 1,000,000");
+                }
+              }}
+            >
+              <p className="text-center text-sm text-slate-300">
+                Type a number. Within 2,000,000 of the population wins.
+              </p>
+              <input
+                value={populationGuess}
+                onChange={(event) => setPopulationGuess(formatPopulationInput(event.target.value))}
+                inputMode="numeric"
+                placeholder="1,000,000"
+                aria-label="Population"
+                className="mt-3 w-full rounded-2xl border border-white/15 bg-slate-950/80 px-4 py-4 text-center text-2xl font-semibold tracking-wide text-white outline-none placeholder:text-slate-500 focus:border-amber-300/70"
+              />
+              <button
+                type="submit"
+                disabled={!roomState.canSubmitAnswer || busy || populationGuess.trim() === ""}
+                className="mt-3 w-full rounded-full bg-amber-300 px-4 py-3 text-sm font-semibold text-slate-950 disabled:opacity-60"
+              >
+                Submit guess
+              </button>
+            </form>
+          ) : (
           <div className="mt-6 flex flex-col gap-3">
             {question.options.map((opt, idx) => {
               const selected = you.answer === idx;
@@ -1123,6 +1168,7 @@ export function FunQuizClient() {
               );
             })}
           </div>
+          )}
         </section>
       ) : null}
 
@@ -1167,6 +1213,22 @@ export function FunQuizClient() {
                 ? "Correct!"
                 : "Incorrect"}
           </p>
+          {roomState.answerFeedback.distance !== undefined ? (
+            <>
+              <p className="mt-3 rounded-xl border border-white/10 bg-slate-900/60 px-4 py-3 text-sm text-slate-200">
+                Your guess: <strong>{roomState.answerFeedback.chosenLabel}</strong>
+              </p>
+              <p className="mt-3 rounded-xl bg-emerald-900/40 px-4 py-3 text-emerald-100">
+                Population: <strong>{roomState.answerFeedback.correctLabel}</strong>
+              </p>
+              <p className="mt-3 text-sm text-slate-200">
+                {roomState.answerFeedback.correct
+                  ? "Within 2 million."
+                  : `Off by ${formatPopulation(roomState.answerFeedback.distance)}.`}
+              </p>
+            </>
+          ) : (
+            <>
           <p className="mt-3 rounded-xl border border-white/10 bg-slate-900/60 px-4 py-3 text-sm text-slate-200">
             Choice:{" "}
             <strong>
@@ -1183,6 +1245,8 @@ export function FunQuizClient() {
               </strong>
             </p>
           ) : null}
+            </>
+          )}
           {gameMode === GAME_MODE_PLAY_TOGETHER || gameMode === GAME_MODE_SINGLE ? (
             <p className="mt-4 text-sm text-slate-200">
               {gameMode === GAME_MODE_SINGLE ? "Score" : "Team score"}: {roomState.jointScore ?? 0} out of {roomState.questionIndex + 1}{" "}

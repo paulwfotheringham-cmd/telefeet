@@ -8,6 +8,9 @@ export const QUIZ_CATEGORY_COUNTRY_OUTLINES = "country_outlines" as const;
 export const QUIZ_CATEGORY_GEOGRAPHY = "geography" as const;
 export const QUIZ_CATEGORY_MOVIES_POP_CULTURE = "movies_pop_culture" as const;
 export const QUIZ_CATEGORY_WORLD_FLAGS = "world_flags" as const;
+export const QUIZ_CATEGORY_CAPITAL_POPULATIONS = "capital_populations" as const;
+export const QUIZ_CATEGORY_SPORTS = "sports" as const;
+export const QUIZ_CATEGORY_STAR_TREK = "star_trek" as const;
 
 export type QuizCategoryId =
   | typeof QUIZ_CATEGORY_GENERAL_KNOWLEDGE
@@ -19,7 +22,10 @@ export type QuizCategoryId =
   | typeof QUIZ_CATEGORY_COUNTRY_OUTLINES
   | typeof QUIZ_CATEGORY_GEOGRAPHY
   | typeof QUIZ_CATEGORY_MOVIES_POP_CULTURE
-  | typeof QUIZ_CATEGORY_WORLD_FLAGS;
+  | typeof QUIZ_CATEGORY_WORLD_FLAGS
+  | typeof QUIZ_CATEGORY_CAPITAL_POPULATIONS
+  | typeof QUIZ_CATEGORY_SPORTS
+  | typeof QUIZ_CATEGORY_STAR_TREK;
 
 export const QUIZ_CATEGORIES: {
   id: QuizCategoryId;
@@ -82,6 +88,21 @@ export const QUIZ_CATEGORIES: {
     id: QUIZ_CATEGORY_WORLD_FLAGS,
     title: "Flags of the World",
     description: "Identify countries from their national flags — from familiar banners to trickier ones.",
+  },
+  {
+    id: QUIZ_CATEGORY_CAPITAL_POPULATIONS,
+    title: "Capital populations",
+    description: "Type the population of the city. A guess within 2 million wins. There are no choices.",
+  },
+  {
+    id: QUIZ_CATEGORY_SPORTS,
+    title: "Sports",
+    description: "Football, cricket, rugby, tennis, cycling, the Olympics, and other sports from around the world.",
+  },
+  {
+    id: QUIZ_CATEGORY_STAR_TREK,
+    title: "Star Trek",
+    description: "Starships, captains, and alien worlds from the original series through Voyager and the films.",
   },
 ];
 
