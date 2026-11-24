@@ -23,8 +23,11 @@ async function main() {
   assert.ok(!("error" in home));
   if ("error" in home) return;
   assert.equal(home.board[0]?.name, created.account.name);
+  assert.equal(home.board[0]?.email, "paul@example.com");
   assert.equal(home.board[0]?.points, 8);
+  assert.equal(home.board[0]?.best, 8);
   assert.equal(home.board[0]?.games, 1);
+  assert.equal(home.board.find((row) => row.email === "sam@example.com")?.points, 3);
   assert.equal(home.recent.length, 2);
   assert.equal(home.board.length, 2);
 

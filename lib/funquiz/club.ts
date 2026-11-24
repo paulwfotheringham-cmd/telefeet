@@ -436,16 +436,19 @@ export async function clubHome(token: string) {
       roomCode: item.roomCode,
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
-  const totals = new Map<string, { id: string; name: string; points: number; wins: number; games: number }>();
-  for (const item of accounts) totals.set(item.id, { id: item.id, name: item.name, points: 0, wins: 0, games: 0 });
+  const totals = new Map<string, { id: string; name: string; email: string; points: number; wins: number; games: number; best: number }>();
+  for (const item of accounts) {
+    totals.set(item.id, { id: item.id, name: item.name, email: item.email, points: 0, wins: 0, games: 0, best: 0 });
+  }
   for (const row of scores) {
     const total = totals.get(row.accountId);
     if (!total) continue;
     total.points += row.score;
     total.games += 1;
     if (row.won) total.wins += 1;
+    total.best = Math.max(total.best, row.score);
   }
-  const board = [...totals.values()].sort((a, b) => b.points - a.points || b.wins - a.wins || a.name.localeCompare(b.name));
+  const board = [...totals.values()].sort((a, b) => b.points - a.points || b.wins - a.wins || a.email.localeCompare(b.email));
   const recent = [...scores].sort((a, b) => b.playedAt.localeCompare(a.playedAt)).slice(0, 12).map((row) => ({
     name: names.get(row.accountId) ?? "Player",
     game: row.game,

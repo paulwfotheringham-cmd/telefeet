@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { FriendsClub } from "@/components/funquiz/friends-club";
 import { CoverTile, WideChoice } from "@/components/funquiz/picture-board";
 import { LoginScreen } from "@/components/funquiz/login-screen";
-import { clubToken, type ClubSession } from "@/lib/funquiz/club-browser";
+import { clearClubSession, clubToken, type ClubSession } from "@/lib/funquiz/club-browser";
 import { useMatchScore } from "@/lib/funquiz/use-match-score";
 import { createClient } from "@/lib/supabase/client";
 import { openRoomByCode } from "@/lib/room-directory";
@@ -624,6 +624,21 @@ export function FunQuizClient() {
         <h1 className="text-center text-4xl font-bold tracking-tight text-white sm:text-5xl">
           A Selection of Games
         </h1>
+        {account ? (
+          <p className="mt-3 text-center text-sm text-slate-300">
+            <span className="font-medium text-white">{account.email}</span>
+            <button
+              type="button"
+              onClick={() => {
+                clearClubSession();
+                setAccount(null);
+              }}
+              className="ml-3 text-xs font-semibold uppercase tracking-wide text-slate-400 hover:text-white"
+            >
+              Log out
+            </button>
+          </p>
+        ) : null}
 
         {storeWarning ? (
           <p className="mx-auto mt-4 max-w-3xl rounded-xl border border-amber-500/40 bg-amber-950/40 px-3 py-2 text-xs text-amber-100">
@@ -632,7 +647,8 @@ export function FunQuizClient() {
         ) : null}
 
         {boardStep === "board" ? (
-          <div className="mt-8 space-y-10">
+          <div className="space-y-10">
+            {account ? <FriendsClub meEmail={account.email} onLogout={() => { clearClubSession(); setAccount(null); }} /> : null}
             <section>
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-200/90">Quiz</p>
               <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
@@ -790,7 +806,6 @@ export function FunQuizClient() {
             {error}
           </p>
         ) : null}
-        {boardStep === "board" && account ? <FriendsClub onLogout={() => setAccount(null)} /> : null}
       </div>
     );
   }
