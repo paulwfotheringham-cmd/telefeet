@@ -253,6 +253,16 @@ export function MillionaireStage({
                   />
                 </div>
               ) : null}
+              {question.pictureImageUrl ? (
+                <div className="mt-4 flex justify-center rounded-2xl border border-white/10 bg-slate-950/80 p-4">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={question.pictureImageUrl}
+                    alt=""
+                    className="max-h-56 w-full max-w-md rounded-md object-contain"
+                  />
+                </div>
+              ) : null}
               {question.outlineImageUrl ? (
                 <div className="mt-4 flex justify-center rounded-2xl border border-white/10 bg-slate-950/80 p-4">
                   {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -14,6 +14,12 @@ export const QUIZ_CATEGORY_STAR_TREK = "star_trek" as const;
 export const QUIZ_CATEGORY_WORLD_LEADERS = "world_leaders" as const;
 export const QUIZ_CATEGORY_TRUE_OR_FALSE = "true_or_false" as const;
 export const QUIZ_CATEGORY_CLOSEST = "closest_wins" as const;
+export const QUIZ_CATEGORY_INVENTIONS = "inventions" as const;
+export const QUIZ_CATEGORY_WILDLIFE = "wildlife" as const;
+export const QUIZ_CATEGORY_MEDICAL = "medical" as const;
+export const QUIZ_CATEGORY_WONDERS = "wonders" as const;
+export const QUIZ_CATEGORY_CURRENCIES = "currencies" as const;
+export const QUIZ_CATEGORY_COUNTRY_POPULATIONS = "country_populations" as const;
 
 export type QuizCategoryId =
   | typeof QUIZ_CATEGORY_GENERAL_KNOWLEDGE
@@ -31,7 +37,13 @@ export type QuizCategoryId =
   | typeof QUIZ_CATEGORY_STAR_TREK
   | typeof QUIZ_CATEGORY_WORLD_LEADERS
   | typeof QUIZ_CATEGORY_TRUE_OR_FALSE
-  | typeof QUIZ_CATEGORY_CLOSEST;
+  | typeof QUIZ_CATEGORY_CLOSEST
+  | typeof QUIZ_CATEGORY_INVENTIONS
+  | typeof QUIZ_CATEGORY_WILDLIFE
+  | typeof QUIZ_CATEGORY_MEDICAL
+  | typeof QUIZ_CATEGORY_WONDERS
+  | typeof QUIZ_CATEGORY_CURRENCIES
+  | typeof QUIZ_CATEGORY_COUNTRY_POPULATIONS;
 
 export const QUIZ_CATEGORIES: {
   id: QuizCategoryId;
@@ -125,6 +137,36 @@ export const QUIZ_CATEGORIES: {
     id: QUIZ_CATEGORY_CLOSEST,
     title: "Closest wins",
     description: "Type a number. With two players, the closest guess scores. On your own, within 10% scores.",
+  },
+  {
+    id: QUIZ_CATEGORY_INVENTIONS,
+    title: "Inventions",
+    description: "Who is credited with inventing it? Four choices, from the telephone to the harder patents.",
+  },
+  {
+    id: QUIZ_CATEGORY_WILDLIFE,
+    title: "Wildlife",
+    description: "Name the animal in the picture. No elephants, dogs, or the usual easy ones.",
+  },
+  {
+    id: QUIZ_CATEGORY_MEDICAL,
+    title: "Medical",
+    description: "Name the organ or bone in the picture.",
+  },
+  {
+    id: QUIZ_CATEGORY_WONDERS,
+    title: "Wonders of the world",
+    description: "Ancient wonders and famous monuments. Four choices.",
+  },
+  {
+    id: QUIZ_CATEGORY_CURRENCIES,
+    title: "Currencies",
+    description: "Name the currency of the country. Four choices.",
+  },
+  {
+    id: QUIZ_CATEGORY_COUNTRY_POPULATIONS,
+    title: "Country populations",
+    description: "Type the population. Within about 10% scores.",
   },
 ];
 

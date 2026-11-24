@@ -25,6 +25,12 @@ import {
   QUIZ_CATEGORY_WORLD_LEADERS,
   QUIZ_CATEGORY_TRUE_OR_FALSE,
   QUIZ_CATEGORY_CLOSEST,
+  QUIZ_CATEGORY_INVENTIONS,
+  QUIZ_CATEGORY_WILDLIFE,
+  QUIZ_CATEGORY_MEDICAL,
+  QUIZ_CATEGORY_WONDERS,
+  QUIZ_CATEGORY_CURRENCIES,
+  QUIZ_CATEGORY_COUNTRY_POPULATIONS,
 } from "@/lib/funquiz/categories";
 import type { QuizCategoryId } from "@/lib/funquiz/categories";
 import { QUIZ_DIFFICULTIES, QUIZ_DIFFICULTY_INTERMEDIATE } from "@/lib/funquiz/difficulties";
@@ -164,6 +170,12 @@ const QUIZ_HOME: { id: QuizCategoryId; title: string; image: string }[] = [
   { id: QUIZ_CATEGORY_WORLD_LEADERS, title: "Presidents & PMs", image: "/funquiz/covers/cover-world-leaders.jpg" },
   { id: QUIZ_CATEGORY_TRUE_OR_FALSE, title: "True or false", image: "/funquiz/covers/cover-true-or-false.jpg" },
   { id: QUIZ_CATEGORY_CLOSEST, title: "Closest wins", image: "/funquiz/covers/cover-closest-wins.jpg" },
+  { id: QUIZ_CATEGORY_INVENTIONS, title: "Inventions", image: "/funquiz/covers/cover-inventions.jpg" },
+  { id: QUIZ_CATEGORY_WILDLIFE, title: "Wildlife", image: "/funquiz/covers/cover-wildlife.jpg" },
+  { id: QUIZ_CATEGORY_MEDICAL, title: "Medical", image: "/funquiz/covers/cover-medical.jpg" },
+  { id: QUIZ_CATEGORY_WONDERS, title: "Wonders of the world", image: "/funquiz/covers/cover-wonders.jpg" },
+  { id: QUIZ_CATEGORY_CURRENCIES, title: "Currencies", image: "/funquiz/covers/cover-currency.jpg" },
+  { id: QUIZ_CATEGORY_COUNTRY_POPULATIONS, title: "Country populations", image: "/funquiz/covers/cover-country-population.jpg" },
 ];
 
 const GAME_TILES: FunQuizTile[] = [
@@ -178,6 +190,7 @@ const NAME_THAT_TILES: FunQuizTile[] = [
   { id: "show", title: "UK Game show", href: "/name-that-show", image: "/funquiz/covers/cover-name-show.jpg" },
   { id: "computer", title: "Computer game", href: "/name-that-game", image: "/funquiz/covers/cover-name-game.jpg" },
   { id: "tune", title: "80-90's tunes", href: "/name-that-tune", image: "/funquiz/covers/cover-name-tune.jpg" },
+  { id: "star", title: "Hollywood faces", href: "/name-that-star", image: "/funquiz/covers/cover-name-star.jpg" },
 ];
 
 const DRAW_THAT_TILES: FunQuizTile[] = [
@@ -186,6 +199,8 @@ const DRAW_THAT_TILES: FunQuizTile[] = [
   { id: "country", title: "Country", href: "/draw-the-country", image: "/funquiz/covers/cover-draw-country.jpg" },
   { id: "myth", title: "Myth", href: "/draw-the-myth", image: "/funquiz/covers/cover-draw-myth.jpg" },
   { id: "landmark", title: "Landmark", href: "/draw-the-landmark", image: "/funquiz/covers/cover-draw-landmark.jpg" },
+  { id: "appliance", title: "Household appliances", href: "/draw-the-appliance", image: "/funquiz/covers/cover-draw-appliance.jpg" },
+  { id: "instrument", title: "Musical instruments", href: "/draw-the-instrument", image: "/funquiz/covers/cover-draw-instrument.jpg" },
 ];
 
 const DIFFICULTY_ART: Record<QuizDifficulty, { image: string; detail: string }> = {
@@ -685,6 +700,11 @@ export function FunQuizClient() {
                     onClick={() => openQuiz(cat.id, cat.title)}
                   />
                 ))}
+                <CoverTile
+                  image="/funquiz/covers/cover-gdp.jpg"
+                  title="European GDP"
+                  href="/funquiz/gdp"
+                />
               </div>
             </section>
 
@@ -1161,6 +1181,16 @@ export function FunQuizClient() {
               />
             </div>
           ) : null}
+          {question.pictureImageUrl ? (
+            <div className="mt-6 flex justify-center rounded-2xl border border-white/10 bg-slate-950/80 p-4">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={question.pictureImageUrl}
+                alt=""
+                className="max-h-72 w-full max-w-lg rounded-md object-contain"
+              />
+            </div>
+          ) : null}
           {question.outlineImageUrl ? (
             <div className="mt-6 flex justify-center rounded-2xl border border-white/10 bg-slate-950/80 p-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1198,7 +1228,9 @@ export function FunQuizClient() {
                     : roomState.gameMode === GAME_MODE_PLAY_TOGETHER
                       ? "Everyone types a number. The closest scores if it is within 10%."
                       : "Type a number. Within 10% of the answer scores."
-                  : "Type a number. Within 2,000,000 of the population wins."}
+                  : question.category === "Country populations"
+                    ? "Type a number. Within about 10% of the population scores."
+                    : "Type a number. Within 2,000,000 of the population wins."}
               </p>
               <input
                 value={populationGuess}
@@ -1264,6 +1296,16 @@ export function FunQuizClient() {
               />
             </div>
           ) : null}
+          {question?.pictureImageUrl ? (
+            <div className="mt-3 flex justify-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={question.pictureImageUrl}
+                alt=""
+                className="max-h-48 max-w-sm rounded object-contain"
+              />
+            </div>
+          ) : null}
           {question?.outlineImageUrl ? (
             <div className="mt-3 flex justify-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1320,7 +1362,9 @@ export function FunQuizClient() {
               </p>
               <p className="mt-3 text-sm text-slate-200">
                 {roomState.answerFeedback.correct
-                  ? "Within 2 million."
+                  ? question?.category === "Country populations"
+                    ? "Within about 10%."
+                    : "Within 2 million."
                   : `Off by ${formatPopulation(roomState.answerFeedback.distance)}.`}
               </p>
             </>

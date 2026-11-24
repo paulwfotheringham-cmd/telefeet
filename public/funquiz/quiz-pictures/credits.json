@@ -1,0 +1,1578 @@
+[
+  {
+    "slug": "okapi",
+    "answer": "Okapi",
+    "wiki": "Okapi",
+    "file": "Okapi2.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/18/Okapi2.jpg/960px-Okapi2.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "pangolin",
+    "answer": "Pangolin",
+    "wiki": "Pangolin",
+    "file": "Eupholidota.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/2/28/Eupholidota.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "axolotl",
+    "answer": "Axolotl",
+    "wiki": "Axolotl",
+    "file": "AxolotlBE.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/f/f6/AxolotlBE.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "platypus",
+    "answer": "Platypus",
+    "wiki": "Platypus",
+    "file": "Duck-billed platypus (Ornithorhynchus anatinus) Scottsdale 4.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b3/Duck-billed_platypus_%28Ornithorhynchus_anatinus%29_Scottsdale_4.jpg/960px-Duck-billed_platypus_%28Ornithorhynchus_anatinus%29_Scottsdale_4.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "narwhal",
+    "answer": "Narwhal",
+    "wiki": "Narwhal",
+    "file": "A polar bear (Ursus maritimus) scavenging a narwhal whale (Monodon monoceros) carcass - journal.pone.0060797.g001-A.png",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/fb/A_polar_bear_%28Ursus_maritimus%29_scavenging_a_narwhal_whale_%28Monodon_monoceros%29_carcass_-_journal.pone.0060797.g001-A.png/960px-A_polar_bear_%28Ursus_maritimus%29_scavenging_a_narwhal_whale_%28Monodon_monoceros%29_carcass_-_journal.pone.0060797.g001-A.png",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "tapir",
+    "answer": "Tapir",
+    "wiki": "South American tapir",
+    "file": "Brazilian Tapir Skeleton D'Alton.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e1/Brazilian_Tapir_Skeleton_D%27Alton.jpg/960px-Brazilian_Tapir_Skeleton_D%27Alton.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "quokka",
+    "answer": "Quokka",
+    "wiki": "Quokka",
+    "file": "Quokka Selfie.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/98/Quokka_Selfie.jpg/960px-Quokka_Selfie.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "fossa",
+    "answer": "Fossa",
+    "wiki": "Fossa (animal)",
+    "file": "Cryptoprocta_Ferox.JPG",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a6/Cryptoprocta_Ferox.JPG/960px-Cryptoprocta_Ferox.JPG",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "aye-aye",
+    "answer": "Aye-aye",
+    "wiki": "Aye-aye",
+    "file": "Aye-Aye Daubentonia madagascariensis in Copenhagen (Left Hand).jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2e/Aye-Aye_Daubentonia_madagascariensis_in_Copenhagen_%28Left_Hand%29.jpg/960px-Aye-Aye_Daubentonia_madagascariensis_in_Copenhagen_%28Left_Hand%29.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "shoebill",
+    "answer": "Shoebill",
+    "wiki": "Shoebill",
+    "file": "Balaeniceps rex (Schuhschnabel - Shoebill) - Weltvogelpark Walsrode 2010-10.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/34/Balaeniceps_rex_%28Schuhschnabel_-_Shoebill%29_-_Weltvogelpark_Walsrode_2010-10.jpg/960px-Balaeniceps_rex_%28Schuhschnabel_-_Shoebill%29_-_Weltvogelpark_Walsrode_2010-10.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "kakapo",
+    "answer": "K\u0101k\u0101p\u014d",
+    "wiki": "Kakapo",
+    "file": "Caribou from Wagon Trails.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/44/Wapiti_from_Wagon_Trails.jpg/960px-Wapiti_from_Wagon_Trails.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "kiwi",
+    "answer": "Kiwi",
+    "wiki": "North Island brown kiwi",
+    "file": "Kiwi skull (cropped).jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/67/Kiwi_skull_%28cropped%29.jpg/960px-Kiwi_skull_%28cropped%29.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "tuatara",
+    "answer": "Tuatara",
+    "wiki": "Tuatara",
+    "file": "Juvenile tuatara (2026).jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c5/Juvenile_tuatara_%282026%29.jpg/960px-Juvenile_tuatara_%282026%29.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "echidna",
+    "answer": "Echidna",
+    "wiki": "Short-beaked echidna",
+    "file": "Echidna, Exmouth.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/08/Echidna%2C_Exmouth.jpg/960px-Echidna%2C_Exmouth.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "cassowary",
+    "answer": "Cassowary",
+    "wiki": "Southern cassowary",
+    "file": "Southern Cassowary.png",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c3/Southern_Cassowary.png/960px-Southern_Cassowary.png",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "markhor",
+    "answer": "Markhor",
+    "wiki": "Markhor",
+    "file": "Markhor Horns (5779055412).jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/03/Markhor_Horns_%285779055412%29.jpg/960px-Markhor_Horns_%285779055412%29.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "saiga",
+    "answer": "Saiga",
+    "wiki": "Saiga antelope",
+    "file": "Examples of Saiga Antelope Horn Products Seized by the Hong Kong Government - (37610620286).jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e1/Examples_of_Saiga_Antelope_Horn_Products_Seized_by_the_Hong_Kong_Government_-_%2837610620286%29.jpg/960px-Examples_of_Saiga_Antelope_Horn_Products_Seized_by_the_Hong_Kong_Government_-_%2837610620286%29.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "binturong",
+    "answer": "Binturong",
+    "wiki": "Binturong",
+    "file": "Binturong001.JPG",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/06/Binturong001.JPG/960px-Binturong001.JPG",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "tarsier",
+    "answer": "Tarsier",
+    "wiki": "Philippine tarsier",
+    "file": "Philippine_tarsier_(Carlito_syrichta_fraterculus)_Bohol.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b0/Philippine_tarsier_%28Carlito_syrichta_fraterculus%29_Bohol.jpg/960px-Philippine_tarsier_%28Carlito_syrichta_fraterculus%29_Bohol.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "slow-loris",
+    "answer": "Slow loris",
+    "wiki": "Sunda slow loris",
+    "file": "Nycticebus coucang 001.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/34/Nycticebus_coucang_001.jpg/960px-Nycticebus_coucang_001.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "proboscis-monkey",
+    "answer": "Proboscis monkey",
+    "wiki": "Proboscis monkey",
+    "file": "Proboscis Monkey in Borneo.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e5/Proboscis_Monkey_in_Borneo.jpg/960px-Proboscis_Monkey_in_Borneo.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "mandrill",
+    "answer": "Mandrill",
+    "wiki": "Mandrill",
+    "file": "Male Mandrill.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f9/Male_Mandrill.jpg/960px-Male_Mandrill.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "gelada",
+    "answer": "Gelada",
+    "wiki": "Gelada",
+    "file": "BabouinGeladaAuReveil.JPG",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/25/BabouinGeladaAuReveil.JPG/960px-BabouinGeladaAuReveil.JPG",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "maned-wolf",
+    "answer": "Maned wolf",
+    "wiki": "Maned wolf",
+    "file": "Lobo_Guar\u00e1_andando.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a3/Lobo_Guar%C3%A1_andando.jpg/960px-Lobo_Guar%C3%A1_andando.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "aardvark",
+    "answer": "Aardvark",
+    "wiki": "Aardvark",
+    "file": "Aardvark (Orycteropus afer).jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d4/Aardvark_%28Orycteropus_afer%29.jpg/960px-Aardvark_%28Orycteropus_afer%29.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "aardwolf",
+    "answer": "Aardwolf",
+    "wiki": "Aardwolf",
+    "file": "Aardwolf, Buffalo Springs National Park, Kenya 1 (cropped).jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2f/Aardwolf%2C_Buffalo_Springs_National_Park%2C_Kenya_1_%28cropped%29.jpg/960px-Aardwolf%2C_Buffalo_Springs_National_Park%2C_Kenya_1_%28cropped%29.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "honey-badger",
+    "answer": "Honey badger",
+    "wiki": "Honey badger",
+    "file": "Honey Badger.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/42/Honey_Badger.jpg/960px-Honey_Badger.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "wolverine",
+    "answer": "Wolverine",
+    "wiki": "Wolverine",
+    "file": "Mt. Forbes summit; wolverine tracks.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c4/Mt._Forbes_summit%3B_wolverine_tracks.jpg/960px-Mt._Forbes_summit%3B_wolverine_tracks.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "caracal",
+    "answer": "Caracal",
+    "wiki": "Caracal",
+    "file": "Caracal female and kitten playing.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b0/Caracal_female_and_kitten_playing.jpg/960px-Caracal_female_and_kitten_playing.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "serval",
+    "answer": "Serval",
+    "wiki": "Serval",
+    "file": "Servalcropped.png",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f6/Servalcropped.png/960px-Servalcropped.png",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "ocelot",
+    "answer": "Ocelot",
+    "wiki": "Ocelot",
+    "file": "Ocelot-shaped bottle-MEG ETHAM 014143-IMG 2372-gradient.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/ce/Ocelot-shaped_bottle-MEG_ETHAM_014143-IMG_2372-gradient.jpg/960px-Ocelot-shaped_bottle-MEG_ETHAM_014143-IMG_2372-gradient.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "clouded-leopard",
+    "answer": "Clouded leopard",
+    "wiki": "Clouded leopard",
+    "file": "Baby clouded leopard!.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/bd/Baby_clouded_leopard%21.jpg/960px-Baby_clouded_leopard%21.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "red-panda",
+    "answer": "Red panda",
+    "wiki": "Red panda",
+    "file": "Dortmund-Zoo-Kleiner Panda151930.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/61/Dortmund-Zoo-Kleiner_Panda151930.jpg/960px-Dortmund-Zoo-Kleiner_Panda151930.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "sun-bear",
+    "answer": "Sun bear",
+    "wiki": "Sun bear",
+    "file": "Sepilok Sabah BSBCC-photos-of-the bears-01.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ae/Sepilok_Sabah_BSBCC-photos-of-the_bears-01.jpg/960px-Sepilok_Sabah_BSBCC-photos-of-the_bears-01.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "spectacled-bear",
+    "answer": "Spectacled bear",
+    "wiki": "Spectacled bear",
+    "file": "Rare Spectacled or Andean Bear (31645919165).jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cd/Rare_Spectacled_or_Andean_Bear_%2831645919165%29.jpg/960px-Rare_Spectacled_or_Andean_Bear_%2831645919165%29.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "giant-anteater",
+    "answer": "Giant anteater",
+    "wiki": "Giant anteater",
+    "file": "Giant Anteater area.png",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/7/75/Giant_Anteater_area.png",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "armadillo",
+    "answer": "Armadillo",
+    "wiki": "Nine-banded armadillo",
+    "file": "9-banded armadillo skeleton.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/af/9-banded_armadillo_skeleton.jpg/960px-9-banded_armadillo_skeleton.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "coati",
+    "answer": "Coati",
+    "wiki": "White-nosed coati",
+    "file": "WNCoati Alajuela CR.png",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cb/WNCoati_Alajuela_CR.png/960px-WNCoati_Alajuela_CR.png",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "kinkajou",
+    "answer": "Kinkajou",
+    "wiki": "Kinkajou",
+    "file": "Kinkajou area.png",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/1/10/Kinkajou_area.png",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "numbat",
+    "answer": "Numbat",
+    "wiki": "Numbat",
+    "file": "Moore's numbat.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/0/02/Moore%27s_numbat.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "bilby",
+    "answer": "Bilby",
+    "wiki": "Greater bilby",
+    "file": "Bilby.png",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/de/Bilby.png/960px-Bilby.png",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "wombat",
+    "answer": "Wombat",
+    "wiki": "Common wombat",
+    "file": "Vombatus_ursinus_-Maria_Island_National_Park.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/18/Vombatus_ursinus_-Maria_Island_National_Park.jpg/960px-Vombatus_ursinus_-Maria_Island_National_Park.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "tasmanian-devil",
+    "answer": "Tasmanian devil",
+    "wiki": "Tasmanian devil",
+    "file": "Jenolan Caves Tasmanian Devil jaw.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a2/Jenolan_Caves_Tasmanian_Devil_jaw.jpg/960px-Jenolan_Caves_Tasmanian_Devil_jaw.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "kookaburra",
+    "answer": "Kookaburra",
+    "wiki": "Laughing kookaburra",
+    "file": "Kookaburra-003.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ab/Kookaburra-003.jpg/960px-Kookaburra-003.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "secretarybird",
+    "answer": "Secretarybird",
+    "wiki": "Secretarybird",
+    "file": "Secretarybird-pair.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/26/Secretarybird-pair.jpg/960px-Secretarybird-pair.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "gerenuk",
+    "answer": "Gerenuk",
+    "wiki": "Gerenuk",
+    "file": "San_diego_zoo_group_3_DSC_0908_(35305473932).jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a7/San_diego_zoo_group_3_DSC_0908_%2835305473932%29.jpg/960px-San_diego_zoo_group_3_DSC_0908_%2835305473932%29.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "bongo",
+    "answer": "Bongo",
+    "wiki": "Bongo (antelope)",
+    "file": "Tragelaphus_eurycerus_-Marwell_Wildlife,_Hampshire,_England-8a.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ab/Tragelaphus_eurycerus_-Marwell_Wildlife%2C_Hampshire%2C_England-8a.jpg/960px-Tragelaphus_eurycerus_-Marwell_Wildlife%2C_Hampshire%2C_England-8a.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "pronghorn",
+    "answer": "Pronghorn",
+    "wiki": "Pronghorn",
+    "file": "2015-06-10 Pronghorn in Yellowstone National Park, USA 7862.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/03/2015-06-10_Pronghorn_in_Yellowstone_National_Park%2C_USA_7862.jpg/960px-2015-06-10_Pronghorn_in_Yellowstone_National_Park%2C_USA_7862.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "komodo",
+    "answer": "Komodo dragon",
+    "wiki": "Komodo dragon",
+    "file": "At Chester Zoo 2023 019 - Komodo Dragon (cropped).jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/58/At_Chester_Zoo_2023_019_-_Komodo_Dragon_%28cropped%29.jpg/960px-At_Chester_Zoo_2023_019_-_Komodo_Dragon_%28cropped%29.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "harpy",
+    "answer": "Harpy eagle",
+    "wiki": "Harpy eagle",
+    "file": "Harpy Eagle, South America.jpeg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/dc/Harpy_Eagle%2C_South_America.jpeg/960px-Harpy_Eagle%2C_South_America.jpeg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "frigatebird",
+    "answer": "Frigatebird",
+    "wiki": "Magnificent frigatebird",
+    "file": "Avian hitchhikers on the top deck of Xavier III - famle juvenile Magnificent Frigatebird (Fregata magnificens) - (16472504597).jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3a/Avian_hitchhikers_on_the_top_deck_of_Xavier_III_-_famle_juvenile_Magnificent_Frigatebird_%28Fregata_magnificens%29_-_%2816472504597%29.jpg/960px-Avian_hitchhikers_on_the_top_deck_of_Xavier_III_-_famle_juvenile_Magnificent_Frigatebird_%28Fregata_magnificens%29_-_%2816472504597%29.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "takahe",
+    "answer": "Takah\u0113",
+    "wiki": "South Island takahe",
+    "file": "Female and male takahe standing in the grass.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/77/Female_and_male_takahe_standing_in_the_grass.jpg/960px-Female_and_male_takahe_standing_in_the_grass.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "solenodon",
+    "answer": "Solenodon",
+    "wiki": "Hispaniolan solenodon",
+    "file": "Hispaniolan Solenodon area.png",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/1/1a/Hispaniolan_Solenodon_area.png",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "tenrec",
+    "answer": "Lowland streaked tenrec",
+    "wiki": "Lowland streaked tenrec",
+    "file": "Lowland Streaked Tenrec, Mantadia, Madagascar.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7d/Lowland_Streaked_Tenrec%2C_Mantadia%2C_Madagascar.jpg/960px-Lowland_Streaked_Tenrec%2C_Mantadia%2C_Madagascar.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "star-nosed-mole",
+    "answer": "Star-nosed mole",
+    "wiki": "Star-nosed mole",
+    "file": "Star-nosed Mole area.png",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/8/8b/Star-nosed_Mole_area.png",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "naked-mole-rat",
+    "answer": "Naked mole-rat",
+    "wiki": "Naked mole-rat",
+    "file": "Model of naked mole-rat soldiers, workers, and queen.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a0/Model_of_naked_mole-rat_soldiers%2C_workers%2C_and_queen.jpg/960px-Model_of_naked_mole-rat_soldiers%2C_workers%2C_and_queen.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "dik-dik",
+    "answer": "Dik-dik",
+    "wiki": "Kirk's dik-dik",
+    "file": "175 Male Damara-Dikdik in Etosha National Park Photo by Giles Laurent.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cc/175_Male_Damara-Dikdik_in_Etosha_National_Park_Photo_by_Giles_Laurent.jpg/960px-175_Male_Damara-Dikdik_in_Etosha_National_Park_Photo_by_Giles_Laurent.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "klipspringer",
+    "answer": "Klipspringer",
+    "wiki": "Klipspringer",
+    "file": "Maasai_klipspringer_(Oreotragus_oreotragus_schillingsi)_male_Serengeti.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9a/Maasai_klipspringer_%28Oreotragus_oreotragus_schillingsi%29_male_Serengeti.jpg/960px-Maasai_klipspringer_%28Oreotragus_oreotragus_schillingsi%29_male_Serengeti.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "addax",
+    "answer": "Addax",
+    "wiki": "Addax",
+    "file": "Addax-1-Zachi-Evenor.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/31/Addax-1-Zachi-Evenor.jpg/960px-Addax-1-Zachi-Evenor.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "scimitar-oryx",
+    "answer": "Scimitar-horned oryx",
+    "wiki": "Scimitar-horned oryx",
+    "file": "Oryx_Dammah.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Oryx_Dammah.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "takin",
+    "answer": "Takin",
+    "wiki": "Takin",
+    "file": "Thimphu-Takin-Reservat-06-2015-gje.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a6/Thimphu-Takin-Reservat-06-2015-gje.jpg/960px-Thimphu-Takin-Reservat-06-2015-gje.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "muskox",
+    "answer": "Muskox",
+    "wiki": "Muskox",
+    "file": "MuskOxen.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/3/32/MuskOxen.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "potoo",
+    "answer": "Potoo",
+    "wiki": "Common potoo",
+    "file": "Urutau_na_cidade_03.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7b/Urutau_na_cidade_03.jpg/960px-Urutau_na_cidade_03.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "hoatzin",
+    "answer": "Hoatzin",
+    "wiki": "Hoatzin",
+    "file": "Hoatzin (Opisthocomus hoazin) Rio Napo 2.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b3/Hoatzin_%28Opisthocomus_hoazin%29_Rio_Napo_2.jpg/960px-Hoatzin_%28Opisthocomus_hoazin%29_Rio_Napo_2.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "oilbird",
+    "answer": "Oilbird",
+    "wiki": "Oilbird",
+    "file": "Oilbirds.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/37/Oilbirds.jpg/960px-Oilbirds.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "kagu",
+    "answer": "Kagu",
+    "wiki": "Kagu",
+    "file": "Kagu_0A2A2595.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/68/Kagu_0A2A2595.jpg/960px-Kagu_0A2A2595.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "thorny-devil",
+    "answer": "Thorny devil",
+    "wiki": "Thorny devil",
+    "file": "Thorny Devil crop.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/a/a1/Thorny_Devil_crop.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "mata-mata",
+    "answer": "Mata mata",
+    "wiki": "Mata mata",
+    "file": "Chelus fimbriata 332141024.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cb/Chelus_fimbriata_332141024.jpg/960px-Chelus_fimbriata_332141024.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "alligator-snapper",
+    "answer": "Alligator snapping turtle",
+    "wiki": "Alligator snapping turtle",
+    "file": "Alligator Snapping Turtle2.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/c/c5/Alligator_Snapping_Turtle2.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "gharial",
+    "answer": "Gharial",
+    "wiki": "Gharial",
+    "file": "Baby Gharial.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/9/92/Baby_Gharial.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "olm",
+    "answer": "Olm",
+    "wiki": "Olm",
+    "file": "P anguinus-head.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/6/65/P_anguinus-head.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "hellbender",
+    "answer": "Hellbender",
+    "wiki": "Hellbender",
+    "file": "Hellbender.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/87/Hellbender.jpg/960px-Hellbender.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "chinese-giant-salamander",
+    "answer": "Chinese giant salamander",
+    "wiki": "Chinese giant salamander",
+    "file": "Velemlok_\u010d\u00ednsk\u00fd_zoo_praha_1.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a0/Velemlok_%C4%8D%C3%ADnsk%C3%BD_zoo_praha_1.jpg/960px-Velemlok_%C4%8D%C3%ADnsk%C3%BD_zoo_praha_1.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "glass-frog",
+    "answer": "Glass frog",
+    "wiki": "Hyalinobatrachium fleischmanni",
+    "file": "Hyalinobatrachium_fleischmanni01a.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/6/62/Hyalinobatrachium_fleischmanni01a.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "surinam-toad",
+    "answer": "Surinam toad",
+    "wiki": "Surinam toad",
+    "file": "Pipa_pipa01.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/a/a2/Pipa_pipa01.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "purple-frog",
+    "answer": "Purple frog",
+    "wiki": "Purple frog",
+    "file": "Purple frog babies by Nihal jabin.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4f/Purple_frog_babies_by_Nihal_jabin.jpg/960px-Purple_frog_babies_by_Nihal_jabin.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "leaf-gecko",
+    "answer": "Satanic leaf-tailed gecko",
+    "wiki": "Uroplatus phantasticus",
+    "file": "Uroplatus_phantasticus_12893423.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/fe/Uroplatus_phantasticus_12893423.jpg/960px-Uroplatus_phantasticus_12893423.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "leafy-seadragon",
+    "answer": "Leafy seadragon",
+    "wiki": "Leafy seadragon",
+    "file": "Leafy_Seadragon_on_Kangaroo_Island.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e4/Leafy_Seadragon_on_Kangaroo_Island.jpg/960px-Leafy_Seadragon_on_Kangaroo_Island.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "weedy-seadragon",
+    "answer": "Weedy seadragon",
+    "wiki": "Weedy seadragon",
+    "file": "Phyllopteryx taeniolatus - Weedy seadragon.webm",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/15/Phyllopteryx_taeniolatus_-_Weedy_seadragon.webm/960px--Phyllopteryx_taeniolatus_-_Weedy_seadragon.webm.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "handfish",
+    "answer": "Spotted handfish",
+    "wiki": "Spotted handfish",
+    "file": "CSIRO ScienceImage 10 The Endangered Spotted Handfish.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/55/CSIRO_ScienceImage_10_The_Endangered_Spotted_Handfish.jpg/960px-CSIRO_ScienceImage_10_The_Endangered_Spotted_Handfish.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "blobfish",
+    "answer": "Blobfish",
+    "wiki": "Psychrolutes marcidus",
+    "file": "Psychrolutes_marcidus.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/15/Psychrolutes_marcidus.jpg/960px-Psychrolutes_marcidus.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "goblin-shark",
+    "answer": "Goblin shark",
+    "wiki": "Goblin shark",
+    "file": "Goblin shark (Mitsukurina owstoni).jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e4/Goblin_shark_%28Mitsukurina_owstoni%29.jpg/960px-Goblin_shark_%28Mitsukurina_owstoni%29.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "frilled-shark",
+    "answer": "Frilled shark",
+    "wiki": "Frilled shark",
+    "file": "Chlamydoselachus_anguineus1.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/bb/Chlamydoselachus_anguineus1.jpg/960px-Chlamydoselachus_anguineus1.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "coelacanth",
+    "answer": "Coelacanth",
+    "wiki": "West Indian Ocean coelacanth",
+    "file": "Coelacanth_off_Pumula_on_the_KwaZulu-Natal_South_Coast,_South_Africa,_on_22_November_2019.png",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b7/Coelacanth_off_Pumula_on_the_KwaZulu-Natal_South_Coast%2C_South_Africa%2C_on_22_November_2019.png/960px-Coelacanth_off_Pumula_on_the_KwaZulu-Natal_South_Coast%2C_South_Africa%2C_on_22_November_2019.png",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "lungfish",
+    "answer": "Lungfish",
+    "wiki": "Queensland lungfish",
+    "file": "Neoceratodus forsteri, 2014-09-19.JPG",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1f/Neoceratodus_forsteri%2C_2014-09-19.JPG/960px-Neoceratodus_forsteri%2C_2014-09-19.JPG",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "hagfish",
+    "answer": "Hagfish",
+    "wiki": "Pacific hagfish",
+    "file": "Pacific_hagfish_Myxine.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/1/12/Pacific_hagfish_Myxine.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "vampire-squid",
+    "answer": "Vampire squid",
+    "wiki": "Vampire squid",
+    "file": "MBNMS - Juvenile Vampire Squid (27667875204).jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8e/MBNMS_-_Juvenile_Vampire_Squid_%2827667875204%29.jpg/960px-MBNMS_-_Juvenile_Vampire_Squid_%2827667875204%29.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "dumbo-octopus",
+    "answer": "Dumbo octopus",
+    "wiki": "Grimpoteuthis",
+    "file": "Dumbo-hires (cropped).jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b0/Dumbo-hires_%28cropped%29.jpg/960px-Dumbo-hires_%28cropped%29.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "yeti-crab",
+    "answer": "Yeti crab",
+    "wiki": "Kiwa hirsuta",
+    "file": "Yeti_crab.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/a/aa/Yeti_crab.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "mantis-shrimp",
+    "answer": "Mantis shrimp",
+    "wiki": "Odontodactylus scyllarus",
+    "file": "Camar\u00f3n mantis (Odontodactylus scyllarus), Anilao, Filipinas, 2023-08-24, DD 167.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3d/Camar%C3%B3n_mantis_%28Odontodactylus_scyllarus%29%2C_Anilao%2C_Filipinas%2C_2023-08-24%2C_DD_167.jpg/960px-Camar%C3%B3n_mantis_%28Odontodactylus_scyllarus%29%2C_Anilao%2C_Filipinas%2C_2023-08-24%2C_DD_167.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "horseshoe-crab",
+    "answer": "Horseshoe crab",
+    "wiki": "Atlantic horseshoe crab",
+    "file": "Limulus_polyphemus_(aq.).jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c6/Limulus_polyphemus_%28aq.%29.jpg/960px-Limulus_polyphemus_%28aq.%29.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "coconut-crab",
+    "answer": "Coconut crab",
+    "wiki": "Coconut crab",
+    "file": "Coconut_Crab_Birgus_latro.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0a/Coconut_Crab_Birgus_latro.jpg/960px-Coconut_Crab_Birgus_latro.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "spider-crab",
+    "answer": "Japanese spider crab",
+    "wiki": "Japanese spider crab",
+    "file": "Macrocheira_kaempferi.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a7/Macrocheira_kaempferi.jpg/960px-Macrocheira_kaempferi.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "colugo",
+    "answer": "Colugo",
+    "wiki": "Sunda colugo",
+    "file": "Colugo (Galeopterus variegatus, adult female), Central Catchment Area, Singapore - 20060618.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cd/Colugo_%28Galeopterus_variegatus%2C_adult_female%29%2C_Central_Catchment_Area%2C_Singapore_-_20060618.jpg/960px-Colugo_%28Galeopterus_variegatus%2C_adult_female%29%2C_Central_Catchment_Area%2C_Singapore_-_20060618.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "indri",
+    "answer": "Indri",
+    "wiki": "Indri",
+    "file": "Indri_(Indri_indri).jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0d/Indri_%28Indri_indri%29.jpg/960px-Indri_%28Indri_indri%29.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "sifaka",
+    "answer": "Verreaux's sifaka",
+    "wiki": "Verreaux's sifaka",
+    "file": "Verreaux Sifaka (Propithecus verreauxi) juvenile (9616339486).jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cc/Verreaux_Sifaka_%28Propithecus_verreauxi%29_juvenile_%289616339486%29.jpg/960px-Verreaux_Sifaka_%28Propithecus_verreauxi%29_juvenile_%289616339486%29.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "potto",
+    "answer": "Potto",
+    "wiki": "Potto",
+    "file": "PottoCincyZoo.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/93/PottoCincyZoo.jpg/960px-PottoCincyZoo.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "emperor-tamarin",
+    "answer": "Emperor tamarin",
+    "wiki": "Emperor tamarin",
+    "file": "Tamarin_portrait.JPG",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/55/Tamarin_portrait.JPG/960px-Tamarin_portrait.JPG",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "bald-uakari",
+    "answer": "Bald uakari",
+    "wiki": "Bald uakari",
+    "file": "Cacajao_calvus_Solimoes_river.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/e/e8/Cacajao_calvus_Solimoes_river.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "douc",
+    "answer": "Red-shanked douc",
+    "wiki": "Red-shanked douc",
+    "file": "Red-shanked_douc_langur_(Pygathrix_nemaeus)_female_and_juvenile_Son_Tra.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3c/Red-shanked_douc_langur_%28Pygathrix_nemaeus%29_female_and_juvenile_Son_Tra.jpg/960px-Red-shanked_douc_langur_%28Pygathrix_nemaeus%29_female_and_juvenile_Son_Tra.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "snub-nosed",
+    "answer": "Golden snub-nosed monkey",
+    "wiki": "Golden snub-nosed monkey",
+    "file": "Golden_Snub-nosed_Monkeys,_Qinling_Mountains_-_China.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/c/c8/Golden_Snub-nosed_Monkeys%2C_Qinling_Mountains_-_China.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "babirusa",
+    "answer": "Babirusa",
+    "wiki": "North Sulawesi babirusa",
+    "file": "Hirscheber1a.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cd/Hirscheber1a.jpg/960px-Hirscheber1a.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "saola",
+    "answer": "Saola",
+    "wiki": "Saola",
+    "file": "Pseudoryx_nghetinhensis,_b.PNG",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/7/73/Pseudoryx_nghetinhensis%2C_b.PNG",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "visayan-warty-pig",
+    "answer": "Visayan warty pig",
+    "wiki": "Visayan warty pig",
+    "file": "Sus cebifrons pair resting in mud.JPG",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/ce/Sus_cebifrons_pair_resting_in_mud.JPG/960px-Sus_cebifrons_pair_resting_in_mud.JPG",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "pink-fairy-armadillo",
+    "answer": "Pink fairy armadillo",
+    "wiki": "Pink fairy armadillo",
+    "file": "Pink_Fairy_Armadillo_(Chlamyphorus_truncatus).jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/21/Pink_Fairy_Armadillo_%28Chlamyphorus_truncatus%29.jpg/960px-Pink_Fairy_Armadillo_%28Chlamyphorus_truncatus%29.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "silky-anteater",
+    "answer": "Silky anteater",
+    "wiki": "Silky anteater",
+    "file": "Silky_Anteater.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/54/Silky_Anteater.jpg/960px-Silky_Anteater.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "tamandua",
+    "answer": "Southern tamandua",
+    "wiki": "Southern tamandua",
+    "file": "T_tetradactyla_1.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/2/26/T_tetradactyla_1.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "falanouc",
+    "answer": "Falanouc",
+    "wiki": "Falanouc",
+    "file": "Falanouc.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a3/Falanouc.jpg/960px-Falanouc.jpg",
+    "kind": "wildlife"
+  },
+  {
+    "slug": "heart",
+    "answer": "Heart",
+    "wiki": "Heart",
+    "file": "Heart_anterior_exterior_view.png",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/1/1b/Heart_anterior_exterior_view.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "lungs",
+    "answer": "Lungs",
+    "wiki": "Lung",
+    "file": "COR-2-STND-CHEST-LUNGS.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9a/COR-2-STND-CHEST-LUNGS.jpg/960px-COR-2-STND-CHEST-LUNGS.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "brain",
+    "answer": "Brain",
+    "wiki": "Brain",
+    "file": "Chimp_Brain_in_a_jar.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/14/Chimp_Brain_in_a_jar.jpg/960px-Chimp_Brain_in_a_jar.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "liver",
+    "answer": "Liver",
+    "wiki": "Liver",
+    "file": "Anatomy_Abdomen_Tiesworks.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/1/15/Anatomy_Abdomen_Tiesworks.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "stomach",
+    "answer": "Stomach",
+    "wiki": "Stomach",
+    "file": "2414 Stomach.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6a/2414_Stomach.jpg/960px-2414_Stomach.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "kidney",
+    "answer": "Kidney",
+    "wiki": "Kidney",
+    "file": "CTscankidney.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/54/CTscankidney.jpg/960px-CTscankidney.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "large-intestine",
+    "answer": "Large intestine",
+    "wiki": "Large intestine",
+    "file": "3DPX-002736 Large intestine Nevit Dilmen.stl",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b4/3DPX-002736_Large_intestine_Nevit_Dilmen.stl/960px-3DPX-002736_Large_intestine_Nevit_Dilmen.stl.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "pancreas",
+    "answer": "Pancreas",
+    "wiki": "Pancreas",
+    "file": "1820 The Pancreas.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e0/1820_The_Pancreas.jpg/960px-1820_The_Pancreas.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "spleen",
+    "answer": "Spleen",
+    "wiki": "Spleen",
+    "file": "Horse spleen laparoscopic.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/0/06/Horse_spleen_laparoscopic.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "gallbladder",
+    "answer": "Gallbladder",
+    "wiki": "Gallbladder",
+    "file": "Gallbladder_(organ).png",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ed/Gallbladder_%28organ%29.png/960px-Gallbladder_%28organ%29.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "bladder",
+    "answer": "Urinary bladder",
+    "wiki": "Urinary bladder",
+    "file": "Urinary bladder.JPG",
+    "source": "https://thumb.wikimedia.org/wikipedia/en/thumb/4/4f/Urinary_bladder.JPG/960px-Urinary_bladder.JPG",
+    "kind": "medical"
+  },
+  {
+    "slug": "uterus",
+    "answer": "Uterus",
+    "wiki": "Uterus",
+    "file": "Positions of the human uterus 1.png",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7e/Positions_of_the_human_uterus_1.png/960px-Positions_of_the_human_uterus_1.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "testis",
+    "answer": "Testis",
+    "wiki": "Testicle",
+    "file": "Illu testis cross section.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/8/89/Illu_testis_cross_section.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "thyroid",
+    "answer": "Thyroid",
+    "wiki": "Thyroid",
+    "file": "Anterior_thyroid.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/e/e1/Anterior_thyroid.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "adrenal",
+    "answer": "Adrenal gland",
+    "wiki": "Adrenal gland",
+    "file": "Adrenal_Gland_detail_-_English.png",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/88/Adrenal_Gland_detail_-_English.png/960px-Adrenal_Gland_detail_-_English.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "prostate",
+    "answer": "Prostate",
+    "wiki": "Prostate",
+    "file": "Prostatelead.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/a/a1/Prostatelead.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "trachea",
+    "answer": "Trachea",
+    "wiki": "Trachea",
+    "file": "2308 The Trachea-b.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/64/2308_The_Trachea-b.jpg/960px-2308_The_Trachea-b.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "esophagus",
+    "answer": "Esophagus",
+    "wiki": "Esophagus",
+    "file": "Illu esophagus.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/8/8d/Illu_esophagus.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "diaphragm",
+    "answer": "Diaphragm",
+    "wiki": "Thoracic diaphragm",
+    "file": "1113 The Diaphragm.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/70/1113_The_Diaphragm.jpg/960px-1113_The_Diaphragm.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "spinal-cord",
+    "answer": "Spinal cord",
+    "wiki": "Spinal cord",
+    "file": "Human brain and spinal cord.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/28/Human_brain_and_spinal_cord.jpg/960px-Human_brain_and_spinal_cord.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "tongue",
+    "answer": "Tongue",
+    "wiki": "Tongue",
+    "file": "\u0632\u0628\u0627\u0646_tongue.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/b/b8/%D8%B2%D8%A8%D8%A7%D9%86_tongue.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "cerebellum",
+    "answer": "Cerebellum",
+    "wiki": "Cerebellum",
+    "file": "CerebellumDiv.png",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/4/43/CerebellumDiv.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "larynx",
+    "answer": "Larynx",
+    "wiki": "Larynx",
+    "file": "Illu07 larynx02.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/4/4c/Illu07_larynx02.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "duodenum",
+    "answer": "Duodenum",
+    "wiki": "Duodenum",
+    "file": "Dogduodenum100x3.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/75/Dogduodenum100x3.jpg/960px-Dogduodenum100x3.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "pituitary",
+    "answer": "Pituitary gland",
+    "wiki": "Pituitary gland",
+    "file": "Hypophyse.png",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a5/Hypophyse.png/960px-Hypophyse.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "thymus",
+    "answer": "Thymus",
+    "wiki": "Thymus",
+    "file": "Illu_thymus.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/c/cf/Illu_thymus.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "skull",
+    "answer": "Skull",
+    "wiki": "Skull",
+    "file": "African elephant skull - Cleveland Museum of Natural History - 2014-12-26 (21054840471).jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/eb/African_elephant_skull_-_Cleveland_Museum_of_Natural_History_-_2014-12-26_%2821054840471%29.jpg/960px-African_elephant_skull_-_Cleveland_Museum_of_Natural_History_-_2014-12-26_%2821054840471%29.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "clavicle",
+    "answer": "Clavicle",
+    "wiki": "Clavicle",
+    "file": "Clavicle_-_anterior_view.png",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/82/Clavicle_-_anterior_view.png/960px-Clavicle_-_anterior_view.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "scapula",
+    "answer": "Scapula",
+    "wiki": "Scapula",
+    "file": "Eptesicus fuscus scapulae ribs.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/76/Eptesicus_fuscus_scapulae_ribs.jpg/960px-Eptesicus_fuscus_scapulae_ribs.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "sternum",
+    "answer": "Sternum",
+    "wiki": "Sternum",
+    "file": "Sternum_composition.png",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/af/Sternum_composition.png/960px-Sternum_composition.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "rib",
+    "answer": "Rib",
+    "wiki": "Rib",
+    "file": "Costae_-_collection.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/30/Costae_-_collection.jpg/960px-Costae_-_collection.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "humerus",
+    "answer": "Humerus",
+    "wiki": "Humerus",
+    "file": "Humerus_-_anterior_view.png",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e4/Humerus_-_anterior_view.png/960px-Humerus_-_anterior_view.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "radius",
+    "answer": "Radius",
+    "wiki": "Radius (bone)",
+    "file": "Radius_-_anterior_view2.png",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/94/Radius_-_anterior_view2.png/960px-Radius_-_anterior_view2.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "ulna",
+    "answer": "Ulna",
+    "wiki": "Ulna",
+    "file": "Ulna_-_anterior_view.png",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c0/Ulna_-_anterior_view.png/960px-Ulna_-_anterior_view.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "pelvis",
+    "answer": "Pelvis",
+    "wiki": "Pelvis",
+    "file": "Falcarius pelvis.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/fb/Falcarius_pelvis.jpg/960px-Falcarius_pelvis.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "sacrum",
+    "answer": "Sacrum",
+    "wiki": "Sacrum",
+    "file": "Sacrum_-_anterior_view04.png",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/13/Sacrum_-_anterior_view04.png/960px-Sacrum_-_anterior_view04.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "femur",
+    "answer": "Femur",
+    "wiki": "Femur",
+    "file": "Femur_-_anterior_view2.png",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8f/Femur_-_anterior_view2.png/960px-Femur_-_anterior_view2.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "tibia",
+    "answer": "Tibia",
+    "wiki": "Tibia",
+    "file": "Tibia_-_frontal_view.png",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4f/Tibia_-_frontal_view.png/960px-Tibia_-_frontal_view.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "fibula",
+    "answer": "Fibula",
+    "wiki": "Fibula",
+    "file": "Fibula_-_anterior_view.png",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/14/Fibula_-_anterior_view.png/960px-Fibula_-_anterior_view.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "spine",
+    "answer": "Vertebral column",
+    "wiki": "Vertebral column",
+    "file": "Gray 111 - Vertebral column-coloured.png",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/5/54/Gray_111_-_Vertebral_column-coloured.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "coccyx",
+    "answer": "Coccyx",
+    "wiki": "Coccyx",
+    "file": "Coccyx_-_anterior_view02.png",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4c/Coccyx_-_anterior_view02.png/960px-Coccyx_-_anterior_view02.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "maxilla",
+    "answer": "Maxilla",
+    "wiki": "Maxilla",
+    "file": "Maxilla_anterior.png",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/7/7f/Maxilla_anterior.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "zygomatic",
+    "answer": "Zygomatic bone",
+    "wiki": "Zygomatic bone",
+    "file": "Zygomatic_bone_anterior.png",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/0/0b/Zygomatic_bone_anterior.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "frontal-bone",
+    "answer": "Frontal bone",
+    "wiki": "Frontal bone",
+    "file": "Frontal_bone_lateral3.png",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9f/Frontal_bone_lateral3.png/960px-Frontal_bone_lateral3.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "parietal-bone",
+    "answer": "Parietal bone",
+    "wiki": "Parietal bone",
+    "file": "Parietal_bone_posterior2.png",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/e/e5/Parietal_bone_posterior2.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "scaphoid",
+    "answer": "Scaphoid",
+    "wiki": "Scaphoid bone",
+    "file": "AnteriorViewOfRightScaphoid.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/5/51/AnteriorViewOfRightScaphoid.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "lunate",
+    "answer": "Lunate",
+    "wiki": "Lunate bone",
+    "file": "TwoAspectsOfRightLunate.png",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/4/4b/TwoAspectsOfRightLunate.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "triquetrum",
+    "answer": "Triquetrum",
+    "wiki": "Triquetral bone",
+    "file": "HandSkeletonWithTriqueterumHighlighted.png",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/16/HandSkeletonWithTriqueterumHighlighted.png/960px-HandSkeletonWithTriqueterumHighlighted.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "pisiform",
+    "answer": "Pisiform",
+    "wiki": "Pisiform bone",
+    "file": "Right-sidedPisiform.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/e/e6/Right-sidedPisiform.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "hamate",
+    "answer": "Hamate",
+    "wiki": "Hamate bone",
+    "file": "OsCrochuDroit.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/7/70/OsCrochuDroit.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "capitate",
+    "answer": "Capitate",
+    "wiki": "Capitate bone",
+    "file": "Right-sidedCapitate.png",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/a/a0/Right-sidedCapitate.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "trapezoid",
+    "answer": "Trapezoid",
+    "wiki": "Trapezoid bone",
+    "file": "RightTrapezoid.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/1/17/RightTrapezoid.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "cuboid",
+    "answer": "Cuboid",
+    "wiki": "Cuboid bone",
+    "file": "CuboidOfRightFoot.png",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/1/12/CuboidOfRightFoot.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "ethmoid",
+    "answer": "Ethmoid bone",
+    "wiki": "Ethmoid bone",
+    "file": "Orbital_bones.png",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/8/8d/Orbital_bones.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "sphenoid",
+    "answer": "Sphenoid bone",
+    "wiki": "Sphenoid bone",
+    "file": "Sphenoid_bone_-_lateral_view.png",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/a/af/Sphenoid_bone_-_lateral_view.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "vomer",
+    "answer": "Vomer",
+    "wiki": "Vomer",
+    "file": "Illu_facial_bones.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/7/77/Illu_facial_bones.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "lacrimal",
+    "answer": "Lacrimal bone",
+    "wiki": "Lacrimal bone",
+    "file": "Lacrimal_bone_-_lateral_view6.png",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/c/c6/Lacrimal_bone_-_lateral_view6.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "nasal-bone",
+    "answer": "Nasal bone",
+    "wiki": "Nasal bone",
+    "file": "Illu_facial_bones.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/7/77/Illu_facial_bones.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "palatine",
+    "answer": "Palatine bone",
+    "wiki": "Palatine bone",
+    "file": "Milleretta rubidgei (skull and reconstruction).png",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f3/Milleretta_rubidgei_%28skull_and_reconstruction%29.png/960px-Milleretta_rubidgei_%28skull_and_reconstruction%29.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "occipital",
+    "answer": "Occipital bone",
+    "wiki": "Occipital bone",
+    "file": "Occipital_bone_lateral2.png",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/1/19/Occipital_bone_lateral2.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "temporal",
+    "answer": "Temporal bone",
+    "wiki": "Temporal bone",
+    "file": "Temporal_bone_lateral5.png",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/20/Temporal_bone_lateral5.png/960px-Temporal_bone_lateral5.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "malleus",
+    "answer": "Malleus",
+    "wiki": "Malleus",
+    "file": "Malleus-Coronal Section of right Tempoporal bone.png",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/a/a6/Malleus-Coronal_Section_of_right_Tempoporal_bone.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "incus",
+    "answer": "Incus",
+    "wiki": "Incus",
+    "file": "1871 Descent F937.1 fig03.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/c/ca/1871_Descent_F937.1_fig03.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "stapes",
+    "answer": "Stapes",
+    "wiki": "Stapes",
+    "file": "Ingrassia stapes noback.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/3/39/Ingrassia_stapes_noback.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "atlas",
+    "answer": "Atlas",
+    "wiki": "Atlas (anatomy)",
+    "file": "C1_lateral.png",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d4/C1_lateral.png/960px-C1_lateral.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "axis",
+    "answer": "Axis",
+    "wiki": "Axis (anatomy)",
+    "file": "C2_lateral.png",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/8/8b/C2_lateral.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "manubrium",
+    "answer": "Manubrium",
+    "wiki": "Manubrium",
+    "file": "Sternum_composition.png",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/af/Sternum_composition.png/960px-Sternum_composition.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "xiphoid",
+    "answer": "Xiphoid process",
+    "wiki": "Xiphoid process",
+    "file": "Xiphoid_process_frontal.png",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3c/Xiphoid_process_frontal.png/960px-Xiphoid_process_frontal.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "hyoid",
+    "answer": "Hyoid",
+    "wiki": "Hyoid bone",
+    "file": "712_Hyoid_Bone.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/8/83/712_Hyoid_Bone.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "metacarpal",
+    "answer": "Metacarpal",
+    "wiki": "Metacarpal bones",
+    "file": "814 Radiograph of Hand.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b6/814_Radiograph_of_Hand.jpg/960px-814_Radiograph_of_Hand.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "metatarsal",
+    "answer": "Metatarsal",
+    "wiki": "Metatarsal bones",
+    "file": "Metatarsal_bones01_-_superior_view.png",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a2/Metatarsal_bones01_-_superior_view.png/960px-Metatarsal_bones01_-_superior_view.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "pineal",
+    "answer": "Pineal gland",
+    "wiki": "Pineal gland",
+    "file": "Pineal_gland.png",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/a/ab/Pineal_gland.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "parathyroid",
+    "answer": "Parathyroid gland",
+    "wiki": "Parathyroid gland",
+    "file": "Illu_thyroid_parathyroid.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/a/a3/Illu_thyroid_parathyroid.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "epididymis",
+    "answer": "Epididymis",
+    "wiki": "Epididymis",
+    "file": "Epididymis-KDS.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c0/Epididymis-KDS.jpg/960px-Epididymis-KDS.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "seminal-vesicle",
+    "answer": "Seminal vesicle",
+    "wiki": "Seminal vesicles",
+    "file": "Male_anatomy_1.png",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/14/Male_anatomy_1.png/960px-Male_anatomy_1.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "ureter",
+    "answer": "Ureter",
+    "wiki": "Ureter",
+    "file": "2607 Ureter.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/17/2607_Ureter.jpg/960px-2607_Ureter.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "urethra",
+    "answer": "Urethra",
+    "wiki": "Urethra",
+    "file": "Female_and_Male_Urethra.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7d/Female_and_Male_Urethra.jpg/960px-Female_and_Male_Urethra.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "epiglottis",
+    "answer": "Epiglottis",
+    "wiki": "Epiglottis",
+    "file": "High rising epiglottis.JPG",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ec/High_rising_epiglottis.JPG/960px-High_rising_epiglottis.JPG",
+    "kind": "medical"
+  },
+  {
+    "slug": "bronchus",
+    "answer": "Bronchus",
+    "wiki": "Bronchus",
+    "file": "Bronchi.JPG",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ae/Bronchi.JPG/960px-Bronchi.JPG",
+    "kind": "medical"
+  },
+  {
+    "slug": "pleura",
+    "answer": "Pleura",
+    "wiki": "Pleura",
+    "file": "2313_The_Lung_Pleurea.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0d/2313_The_Lung_Pleurea.jpg/960px-2313_The_Lung_Pleurea.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "pericardium",
+    "answer": "Pericardium",
+    "wiki": "Pericardium",
+    "file": "3D still showing the pericardium layer.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/32/3D_still_showing_the_pericardium_layer.jpg/960px-3D_still_showing_the_pericardium_layer.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "meninges",
+    "answer": "Meninges",
+    "wiki": "Meninges",
+    "file": "3D_Medical_Illustration_Meninges_Details.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/13/3D_Medical_Illustration_Meninges_Details.jpg/960px-3D_Medical_Illustration_Meninges_Details.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "jejunum",
+    "answer": "Jejunum",
+    "wiki": "Jejunum",
+    "file": "Illu_small_intestine.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Illu_small_intestine.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "ileum",
+    "answer": "Ileum",
+    "wiki": "Ileum",
+    "file": "Illu_small_intestine.jpg",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/3/3d/Illu_small_intestine.jpg",
+    "kind": "medical"
+  },
+  {
+    "slug": "sigmoid",
+    "answer": "Sigmoid colon",
+    "wiki": "Sigmoid colon",
+    "file": "ColonSigmoideo.png",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/e/eb/ColonSigmoideo.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "cochlea",
+    "answer": "Cochlea",
+    "wiki": "Cochlea",
+    "file": "3DPX-002432 Cochlea and semicircular canals Nevit Dilmen.stl",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e2/3DPX-002432_Cochlea_and_semicircular_canals_Nevit_Dilmen.stl/960px-3DPX-002432_Cochlea_and_semicircular_canals_Nevit_Dilmen.stl.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "retina",
+    "answer": "Retina",
+    "wiki": "Retina",
+    "file": "Human_eye_cross-sectional_view_grayscale.png",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/e/ed/Human_eye_cross-sectional_view_grayscale.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "cornea",
+    "answer": "Cornea",
+    "wiki": "Cornea",
+    "file": "Cornea.png",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/6/61/Cornea.png",
+    "kind": "medical"
+  },
+  {
+    "slug": "iris",
+    "answer": "Iris",
+    "wiki": "Iris (anatomy)",
+    "file": "Human_eye_close_up,_anterior_view.jpg",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/ce/Human_eye_close_up%2C_anterior_view.jpg/960px-Human_eye_close_up%2C_anterior_view.jpg",
+    "kind": "medical"
+  }
+]

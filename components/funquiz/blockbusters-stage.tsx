@@ -210,6 +210,14 @@ export function BlockbustersStage({
               className="mx-auto mt-3 max-h-24 rounded-lg border border-white/20"
             />
           ) : null}
+          {q.pictureImageUrl ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={q.pictureImageUrl}
+              alt=""
+              className="mx-auto mt-3 max-h-40 rounded-lg border border-white/20 object-contain"
+            />
+          ) : null}
           {q.outlineImageUrl ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img

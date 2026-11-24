@@ -3,6 +3,7 @@ import { isValidRoomCode, normalizeRoomCode } from "@/lib/funquiz/room-code";
 import { loadRoom } from "@/lib/funquiz/store";
 import { loadDrawRoom as loadAnimalRoom } from "@/lib/draw-the-animal/store";
 import { loadDrawRoom as loadApplianceRoom } from "@/lib/draw-the-appliance/store";
+import { loadDrawRoom as loadInstrumentRoom } from "@/lib/draw-the-instrument/store";
 import { loadDrawRoom as loadFlowerRoom } from "@/lib/draw-the-flower/store";
 import { loadDrawRoom as loadFastFoodRoom } from "@/lib/draw-the-fast-food/store";
 import { loadDrawRoom as loadMythRoom } from "@/lib/draw-the-myth/store";
@@ -14,6 +15,7 @@ import { loadDrawRoom as loadCountryRoom } from "@/lib/draw-the-country/store";
 import { loadDrawRoom } from "@/lib/draw-the-organ/store";
 import { loadGameRoom } from "@/lib/name-that-game/store";
 import { loadMovieRoom } from "@/lib/name-that-movie/store";
+import { loadMovieRoom as loadStarRoom } from "@/lib/name-that-star/store";
 import { loadShowRoom } from "@/lib/name-that-show/store";
 import { loadTuneRoom } from "@/lib/name-that-tune/store";
 import { ROOM_DIRECTORIES } from "@/lib/room-directory";
@@ -25,6 +27,7 @@ type Params = { params: { code: string } };
 const LOADERS = {
   funquiz: loadRoom,
   movie: loadMovieRoom,
+  star: loadStarRoom,
   tune: loadTuneRoom,
   show: loadShowRoom,
   game: loadGameRoom,
@@ -33,6 +36,7 @@ const LOADERS = {
   country: loadCountryRoom,
   continent: loadContinentRoom,
   appliance: loadApplianceRoom,
+  instrument: loadInstrumentRoom,
   landmark: loadLandmarkRoom,
   flower: loadFlowerRoom,
   weapon: loadWeaponRoom,

@@ -1,6 +1,6 @@
 /** A guess this close to the city population wins. */
 export const POPULATION_TOLERANCE = 2_000_000;
-export const POPULATION_GUESS_MAX = 100_000_000;
+export const POPULATION_GUESS_MAX = 2_000_000_000;
 
 export function formatPopulation(value: number): string {
   return Math.round(value).toLocaleString("en-US");
@@ -8,7 +8,7 @@ export function formatPopulation(value: number): string {
 
 /** Keep digits and insert thousands separators while the player types. */
 export function formatPopulationInput(raw: string): string {
-  const digits = raw.replace(/\D/g, "").replace(/^0+(?=\d)/, "").slice(0, 9);
+  const digits = raw.replace(/\D/g, "").replace(/^0+(?=\d)/, "").slice(0, 10);
   if (!digits) return "";
   return Number(digits).toLocaleString("en-US");
 }
@@ -29,12 +29,12 @@ export function parsePopulationGuess(raw: unknown): number {
   } else {
     throw new Error("Enter a whole number, like 1,000,000");
   }
-  if (digits.length > 9) {
-    throw new Error("Enter a population up to 100,000,000");
+  if (digits.length > 10) {
+    throw new Error("Enter a population up to 2,000,000,000");
   }
   const value = Number(digits);
   if (!Number.isInteger(value) || value > POPULATION_GUESS_MAX) {
-    throw new Error("Enter a population up to 100,000,000");
+    throw new Error("Enter a population up to 2,000,000,000");
   }
   return value;
 }
