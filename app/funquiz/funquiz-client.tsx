@@ -489,6 +489,25 @@ export function FunQuizClient() {
     }
   };
 
+  const continueReveal = async () => {
+    if (!roomState?.code || roomState.hostId !== playerId) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/funquiz/room/${roomState.code}/continue`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ playerId }),
+      });
+      const state = await parseState(res);
+      if (state) setRoomState(state);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not continue");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const submitAnswer = async (choiceIndex: number) => {
     if (!roomState?.code || !roomState.canSubmitAnswer) return;
     setBusy(true);
@@ -500,7 +519,24 @@ export function FunQuizClient() {
         body: JSON.stringify({ playerId, choiceIndex }),
       });
       const state = await parseState(res);
-      if (state) setRoomState(state);
+      if (!state) return;
+      // If the server left us on a locked question, heal immediately instead of waiting on poll.
+      if (
+        state.phase === "question" &&
+        state.you.answer !== null &&
+        !state.canSubmitAnswer &&
+        state.hostId === playerId
+      ) {
+        const cont = await fetch(`/api/funquiz/room/${state.code}/continue`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ playerId }),
+        });
+        const healed = await parseState(cont);
+        setRoomState(healed ?? state);
+        return;
+      }
+      setRoomState(state);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not submit answer");
     } finally {
@@ -1283,6 +1319,21 @@ export function FunQuizClient() {
                 </button>
               );
             })}
+            {you.answer !== null && !roomState.canSubmitAnswer ? (
+              <div className="mt-2 rounded-2xl border border-amber-300/40 bg-amber-950/30 px-4 py-3 text-center">
+                <p className="text-sm text-amber-100">Answer locked. Tap continue if the next screen does not open.</p>
+                {isHost ? (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void continueReveal()}
+                    className="mt-3 w-full rounded-full bg-amber-300 py-3 text-sm font-semibold text-slate-950 disabled:opacity-60"
+                  >
+                    Continue
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
           </div>
           )}
         </section>
@@ -1407,9 +1458,20 @@ export function FunQuizClient() {
                 : `You chose ${roomState.answerFeedback.chosenLabel}. Next turn in a moment.`}
             </p>
           )}
-          <p className="mt-auto pt-6 text-center text-xs text-slate-500">
-            Next question in a moment…
-          </p>
+          {isHost ? (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void continueReveal()}
+              className="mt-6 w-full rounded-full bg-amber-300 py-3 text-sm font-semibold text-slate-950 disabled:opacity-60"
+            >
+              Next question
+            </button>
+          ) : (
+            <p className="mt-auto pt-6 text-center text-xs text-slate-500">
+              Next question in a moment…
+            </p>
+          )}
         </section>
       ) : null}
 
