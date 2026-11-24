@@ -283,7 +283,8 @@ export function FunQuizClient() {
     const difficulty = choice ? (choice.difficulty ?? QUIZ_DIFFICULTY_INTERMEDIATE) : selectedDifficulty;
     const category = choice ? (choice.category ?? QUIZ_CATEGORY_GENERAL_KNOWLEDGE) : selectedCategory;
     setError(null);
-    if (!name.trim()) {
+    const playerName = (account?.name || name).trim();
+    if (!playerName) {
       setError("Enter your name first.");
       return;
     }
@@ -302,7 +303,7 @@ export function FunQuizClient() {
     }
     const activePlayerId = resolvePlayerId();
     if (!playerId) setPlayerId(activePlayerId);
-    persistName(name.trim());
+    persistName(playerName);
     setBusy(true);
     try {
       const res = await fetch("/api/funquiz/room", {
@@ -310,7 +311,7 @@ export function FunQuizClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           playerId: activePlayerId,
-          playerName: name.trim(),
+          playerName,
           gameMode: mode,
           quizDifficulty: isStandalone ? QUIZ_DIFFICULTY_INTERMEDIATE : difficulty,
           quizCategory: isStandalone ? QUIZ_CATEGORY_GENERAL_KNOWLEDGE : category,
@@ -331,7 +332,8 @@ export function FunQuizClient() {
 
   const joinRoom = async () => {
     setError(null);
-    if (!name.trim()) {
+    const playerName = (account?.name || name).trim();
+    if (!playerName) {
       setError("Enter your name first.");
       return;
     }
@@ -346,7 +348,7 @@ export function FunQuizClient() {
     }
     const activePlayerId = resolvePlayerId();
     if (!playerId) setPlayerId(activePlayerId);
-    persistName(name.trim());
+    persistName(playerName);
     setBusy(true);
     try {
       const res = await fetch("/api/funquiz/room/join", {
@@ -355,7 +357,7 @@ export function FunQuizClient() {
         body: JSON.stringify({
           code: normalizedJoin,
           playerId: activePlayerId,
-          playerName: name.trim(),
+          playerName,
         }),
       });
       const state = await parseState(res);
@@ -365,7 +367,7 @@ export function FunQuizClient() {
       }
     } catch (e) {
       const message = e instanceof Error ? e.message : "Could not join room";
-      if (await openRoomByCode(normalizedJoin, name, "/funquiz")) return;
+      if (await openRoomByCode(normalizedJoin, playerName, "/funquiz")) return;
       setError(message);
     } finally {
       setBusy(false);
@@ -543,18 +545,6 @@ export function FunQuizClient() {
               {storeWarning}
             </p>
           ) : null}
-
-          <label className="mt-6 block text-sm font-medium text-slate-200">
-            Your name
-            <input
-              className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none ring-violet-400/0 transition focus:ring-2 focus:ring-violet-400/60"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Enter your name"
-              maxLength={24}
-              autoComplete="nickname"
-            />
-          </label>
 
           <div className="mt-8 space-y-8">
             <section>

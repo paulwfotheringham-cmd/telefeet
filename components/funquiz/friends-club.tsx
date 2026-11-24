@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { clearClubSession, clubAuthHeaders, type ClubSession } from "@/lib/funquiz/club-browser";
+import { clubAuthHeaders, type ClubSession } from "@/lib/funquiz/club-browser";
 
 type Home = {
   online: { id: string; name: string; game: string; path: string; roomCode: string }[];
@@ -82,20 +82,6 @@ export function FriendsClub({ account, onLogout }: { account: ClubSession; onLog
 
   return (
     <div className="mt-6 space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-slate-300">Signed in as <span className="font-semibold text-white">{account.name}</span></p>
-        <button
-          type="button"
-          onClick={() => {
-            clearClubSession();
-            onLogout();
-          }}
-          className="rounded-lg border border-white/15 px-3 py-1 text-xs text-slate-300"
-        >
-          Log out
-        </button>
-      </div>
-
       {home?.challenges.length ? (
         <div className="rounded-2xl border border-violet-400/40 bg-violet-950/40 p-4">
           <p className="text-sm font-semibold text-violet-100">Challenges</p>
@@ -158,16 +144,6 @@ export function FriendsClub({ account, onLogout }: { account: ClubSession; onLog
           {home ? `${home.board.length} registered players. Scores for each game.` : "All registered players and scores for each game."}
         </p>
       </a>
-
-      <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-        <p className="text-sm font-semibold text-slate-200">Recent games</p>
-        <ul className="mt-2 space-y-1 text-sm text-slate-300">
-          {home?.recent.map((row, index) => (
-            <li key={`${row.playedAt}-${index}`}>{row.name} · {row.game} · {row.score}</li>
-          ))}
-          {home && home.recent.length === 0 ? <li className="text-xs text-slate-400">No games saved yet.</li> : null}
-        </ul>
-      </div>
     </div>
   );
 }
