@@ -66,4 +66,27 @@ const trace = {
 };
 assert.ok(scoreDrawing("Cat", [trace]) > scoreDrawing("Cat", [stroke]));
 
+
+{
+  let four = createDrawRoom("host", "Alex", "FOUR01", "separate", 1_000);
+  four = addDrawPlayer(four, "p2", "Sam");
+  four = addDrawPlayer(four, "p3", "Jo");
+  four = addDrawPlayer(four, "p4", "Kim");
+  assert.equal(four.players.length, 4);
+  assert.throws(() => addDrawPlayer(four, "p5", "Extra"), /full/i);
+  four = startDrawGame(four, "host", mulberry32(9), 2_000);
+  assert.equal(four.phase, "draw");
+  const mark = { color: "#0f172a", size: 8, points: [10, 10, 40, 80] };
+  four = submitDrawing(four, "host", [mark], 3_000);
+  four = submitDrawing(four, "p2", [mark], 3_100);
+  four = submitDrawing(four, "p3", [mark], 3_200);
+  assert.equal(four.phase, "draw");
+  four = submitDrawing(four, "p4", [mark], 3_300);
+  const view = toDrawClientState(four, "host");
+  assert.equal(view.phase, "reveal");
+  assert.equal(view.boards.length, 4);
+  assert.equal(view.roundScores.length, 4);
+  console.log("draw-the-animal four-player OK");
+}
+
 console.log("draw-the-animal.test.ts OK");

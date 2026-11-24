@@ -2,7 +2,7 @@ import { cleanStrokes, type Stroke } from "./drawing";
 import { compareDrawings } from "./judge";
 import { COUNTRY_ROUNDS, COUNTRIES } from "./countries";
 
-export const MAX_PLAYERS = 2;
+export const MAX_PLAYERS = 4;
 export const REVEAL_MS = 8000;
 export const ROOM_TTL_MS = 4 * 60 * 60 * 1000;
 
@@ -149,7 +149,7 @@ export function addDrawPlayer(room: DrawRoom, playerId: string, playerName: stri
 export function startDrawGame(room: DrawRoom, playerId: string, rng: () => number = Math.random, now = Date.now()): DrawRoom {
   if (playerId !== room.hostId) throw new Error("Only the host can start");
   if (room.phase !== "lobby") throw new Error("Game already started");
-  if (drawMode(room) !== "single" && room.players.length < MAX_PLAYERS) throw new Error("Waiting for a second player");
+  if (drawMode(room) !== "single" && room.players.length < 2) throw new Error("Need at least two players");
   const organs = shuffle(COUNTRIES, rng).slice(0, COUNTRY_ROUNDS).map((organ) => organ.title);
   return touch(
     room,
@@ -324,23 +324,37 @@ export function toDrawClientState(room: DrawRoom, viewerId: string): DrawClientS
       error: "You are not in this room",
     };
   }
-  const opponent = room.players.find((player) => player.id !== viewerId);
+  const others = room.players.filter((player) => player.id !== viewerId);
+  const waitingToDraw = others.filter((player) => !room.submitted.includes(player.id));
+  const waitingToVote = others.filter(
+    (player) => !room.votes.some((vote) => vote.playerId === player.id),
+  );
   let statusMessage: string | null = null;
-  if (room.phase === "draw" && room.submitted.includes(viewerId) && opponent) {
-    statusMessage = `Waiting for ${opponent.name} to finish drawing.`;
-  } else if (room.phase === "vote" && room.votes.some((vote) => vote.playerId === viewerId) && opponent) {
-    statusMessage = `Waiting for ${opponent.name} to choose the closer drawing.`;
+  if (room.phase === "draw" && room.submitted.includes(viewerId) && waitingToDraw.length > 0) {
+    statusMessage =
+      waitingToDraw.length === 1
+        ? `Waiting for ${waitingToDraw[0]!.name} to finish drawing.`
+        : `Waiting for ${waitingToDraw.length} players to finish drawing.`;
+  } else if (
+    room.phase === "vote" &&
+    room.votes.some((vote) => vote.playerId === viewerId) &&
+    waitingToVote.length > 0
+  ) {
+    statusMessage =
+      waitingToVote.length === 1
+        ? `Waiting for ${waitingToVote[0]!.name} to choose the closer drawing.`
+        : `Waiting for ${waitingToVote.length} players to choose.`;
   } else if (room.phase === "draw") {
     statusMessage = drawMode(room) === "single"
       ? "Draw on your board, then press Done."
-      : "Draw on your board. Your friend cannot see it until you both press Done.";
+      : "Draw on your board. Others cannot see it until everyone presses Done.";
   }
   const currentRound = room.rounds[room.turnIndex];
   if (room.phase === "reveal" && currentRound) {
     if (currentRound.winnerIds.length === 0) {
-      statusMessage = "Neither drawing was close.";
+      statusMessage = "No drawing was close enough.";
     } else if (currentRound.winnerIds.length > 1) {
-      statusMessage = "Too close to call. You both score.";
+      statusMessage = "Too close to call. Tied players score.";
     } else {
       const winner = room.players.find((player) => player.id === currentRound.winnerIds[0]);
       statusMessage = `${winner?.name ?? "One drawing"} is closer.`;
