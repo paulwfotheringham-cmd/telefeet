@@ -7,7 +7,6 @@ type Home = {
   online: { id: string; name: string; game: string; path: string; roomCode: string }[];
   board: { id: string; name: string; points: number; wins: number; games: number }[];
   recent: { name: string; game: string; score: number; playedAt: string }[];
-  weekly: { title: string; path: string; ends: string; leaders: { name: string; score: number }[] };
   challenges: { id: string; fromName: string; game: string; path: string; roomCode: string }[];
 };
 
@@ -81,8 +80,6 @@ export function FriendsClub({ account, onLogout }: { account: ClubSession; onLog
     window.location.assign(`${game.path}?room=${roomCode}`);
   }
 
-  const ends = home ? new Date(`${home.weekly.ends}T00:00:00Z`).toLocaleDateString(undefined, { day: "numeric", month: "short", timeZone: "UTC" }) : "";
-
   return (
     <div className="mt-6 space-y-4">
       <div className="flex items-center justify-between gap-3">
@@ -145,22 +142,6 @@ export function FriendsClub({ account, onLogout }: { account: ClubSession; onLog
           <button type="button" onClick={() => void challenge()} className="rounded-xl bg-violet-500 px-3 py-2 text-sm font-semibold text-white">Send</button>
         </div>
         {notice ? <p className="mt-2 text-xs text-red-300">{notice}</p> : null}
-      </div>
-
-      <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-        <p className="text-sm font-semibold text-yellow-200">This week: {home?.weekly.title ?? "…"}</p>
-        <p className="mt-1 text-xs text-slate-400">Same 20 prompts for everyone. Highest score by Sunday {ends} wins.</p>
-        {home ? (
-          <a href={`${home.weekly.path}?weekly=1`} className="mt-3 inline-block rounded-lg bg-yellow-400 px-3 py-1.5 text-xs font-semibold text-slate-950">
-            Play this week
-          </a>
-        ) : null}
-        <ul className="mt-3 space-y-1 text-sm text-slate-200">
-          {home?.weekly.leaders.slice(0, 5).map((row, index) => (
-            <li key={row.name}>{index + 1}. {row.name} · {row.score}</li>
-          ))}
-          {home && home.weekly.leaders.length === 0 ? <li className="text-xs text-slate-400">No scores yet this week.</li> : null}
-        </ul>
       </div>
 
       <a href="/funquiz/board" className="block rounded-2xl border border-white/10 bg-black/30 p-4 transition hover:border-violet-400/50">
