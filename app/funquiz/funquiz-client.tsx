@@ -705,6 +705,11 @@ export function FunQuizClient() {
                   title="European GDP"
                   href="/funquiz/gdp"
                 />
+                <CoverTile
+                  image="/funquiz/covers/cover-after-dark.jpg"
+                  title="After dark"
+                  href="/funquiz/after-dark"
+                />
               </div>
             </section>
 
@@ -746,11 +751,6 @@ export function FunQuizClient() {
                 ))}
               </div>
             </section>
-            <p className="pt-6 text-center">
-              <Link href="/funquiz/after-dark" className="text-xs tracking-wide text-slate-500 hover:text-slate-300">
-                After dark
-              </Link>
-            </p>
           </div>
         ) : (
           <div className="mx-auto mt-8 w-full max-w-3xl">
