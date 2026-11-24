@@ -22,6 +22,7 @@ import {
   QUIZ_CATEGORY_SPORTS,
   QUIZ_CATEGORY_STAR_TREK,
   QUIZ_CATEGORY_WORLD_FLAGS,
+  QUIZ_CATEGORY_WORLD_LEADERS,
 } from "@/lib/funquiz/categories";
 import type { QuizCategoryId } from "@/lib/funquiz/categories";
 import { QUIZ_DIFFICULTIES, QUIZ_DIFFICULTY_INTERMEDIATE } from "@/lib/funquiz/difficulties";
@@ -157,6 +158,7 @@ const QUIZ_HOME: { id: QuizCategoryId; title: string; image: string }[] = [
   { id: QUIZ_CATEGORY_CAPITAL_POPULATIONS, title: "Capital populations", image: "/funquiz/covers/cover-capital-populations.jpg" },
   { id: QUIZ_CATEGORY_SPORTS, title: "Sports", image: "/funquiz/covers/cover-sports.jpg" },
   { id: QUIZ_CATEGORY_STAR_TREK, title: "Star Trek", image: "/funquiz/covers/cover-star-trek.jpg" },
+  { id: QUIZ_CATEGORY_WORLD_LEADERS, title: "Presidents & PMs", image: "/funquiz/covers/cover-world-leaders.jpg" },
 ];
 
 const GAME_TILES: FunQuizTile[] = [
