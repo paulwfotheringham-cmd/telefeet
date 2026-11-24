@@ -103,6 +103,14 @@ async function main() {
   assert.ok(!("error" in shows));
   if ("error" in shows) return;
   assert.equal(shows.items[0]?.name, "Harbor");
+  const noUrl = await addLink("", {
+    kind: "tv",
+    name: "Mobland",
+    url: "",
+    description: "Tom Hardy in an amazing gangster series",
+    savedBy: "",
+  });
+  assert.ok("item" in noUrl && noUrl.item.name === "Mobland" && noUrl.item.url === "" && noUrl.item.email === "");
 
   const week = weeklyGame();
   const first = mulberry32(weekSeed(week.path));

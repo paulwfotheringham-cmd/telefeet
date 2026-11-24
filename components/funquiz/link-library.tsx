@@ -114,41 +114,49 @@ export function LinkLibrary({
         {loaded && items.length === 0 ? <p className="mt-4 text-sm text-slate-400">Nothing saved yet.</p> : null}
         {items.length > 0 ? (
         <ul className="mt-4 divide-y divide-white/10 overflow-hidden rounded-2xl border border-white/10 bg-slate-950/70">
-          {items.map((item) => (
+          {items.map((item) => {
+            const label = item.name || item.description || item.url || "Untitled";
+            const href = /^https?:\/\//i.test(item.url) ? item.url : "";
+            return (
             <li key={item.id} className="px-4 py-4 sm:px-5">
               <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                <a href={item.url} target="_blank" rel="noreferrer" className="text-lg font-semibold text-white underline decoration-white/30 underline-offset-4 hover:decoration-white">
-                  {item.name}
-                </a>
-                <p className="text-sm text-amber-100">
-                  Saved by <span className="font-medium">{item.email}</span>
-                </p>
+                {href ? (
+                  <a href={href} target="_blank" rel="noreferrer" className="text-lg font-semibold text-white underline decoration-white/30 underline-offset-4 hover:decoration-white">
+                    {label}
+                  </a>
+                ) : (
+                  <p className="text-lg font-semibold text-white">{label}</p>
+                )}
+                {item.email ? (
+                  <p className="text-sm text-amber-100">
+                    Saved by <span className="font-medium">{item.email}</span>
+                  </p>
+                ) : null}
               </div>
-              {item.description ? <p className="mt-2 text-sm leading-relaxed text-slate-200">{item.description}</p> : null}
-              <p className="mt-2 break-all text-xs text-slate-500">{item.url}</p>
+              {item.description && item.description !== label ? <p className="mt-2 text-sm leading-relaxed text-slate-200">{item.description}</p> : null}
+              {item.url && item.url !== label ? <p className="mt-2 break-all text-xs text-slate-500">{item.url}</p> : null}
             </li>
-          ))}
+            );
+          })}
         </ul>
         ) : null}
       </section>
 
       {adding ? (
-      <form onSubmit={(event) => void submit(event)} className="mt-8 rounded-3xl border border-white/10 bg-slate-900/70 p-5 sm:p-6">
+      <form noValidate onSubmit={(event) => void submit(event)} className="mt-8 rounded-3xl border border-white/10 bg-slate-900/70 p-5 sm:p-6">
         <label className="block text-sm font-medium text-slate-200">
           Your name
           <input
-            required
             value={savedBy}
             maxLength={80}
             onChange={(event) => setSavedBy(event.target.value)}
             className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-violet-400/60"
-            placeholder="Alex"
+            placeholder="Optional"
           />
         </label>
         <label className="mt-4 block text-sm font-medium text-slate-200">
           Name
           <input
-            required
             value={name}
             maxLength={80}
             onChange={(event) => setName(event.target.value)}
@@ -159,13 +167,12 @@ export function LinkLibrary({
         <label className="mt-4 block text-sm font-medium text-slate-200">
           Internet URL
           <input
-            required
-            type="url"
+            type="text"
             inputMode="url"
             value={url}
             onChange={(event) => setUrl(event.target.value)}
             className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-violet-400/60"
-            placeholder="https://"
+            placeholder="Optional"
           />
         </label>
         <label className="mt-4 block text-sm font-medium text-slate-200">
