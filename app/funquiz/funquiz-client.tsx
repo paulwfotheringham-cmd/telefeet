@@ -179,6 +179,66 @@ const DIFFICULTY_ART: Record<QuizDifficulty, { image: string; detail: string }> 
   hard: { image: "/funquiz/covers/cover-hard.jpg", detail: "Specialist knowledge and less familiar facts." },
 };
 
+const INSTANT_GAME_MODES: Record<string, GameMode> = {
+  holdem: GAME_MODE_TEXAS_HOLDEM,
+  catchphrase: GAME_MODE_CATCHPHRASE,
+  blockbusters: GAME_MODE_BLOCKBUSTERS,
+};
+
+function JoinByCode({
+  code,
+  busy,
+  onChange,
+  onJoin,
+}: {
+  code: string;
+  busy: boolean;
+  onChange: (value: string) => void;
+  onJoin: () => void;
+}) {
+  return (
+    <div className="mx-auto mt-10 w-full max-w-xl pb-6">
+      <div className="my-2 flex items-center gap-3 text-xs uppercase tracking-[0.18em] text-slate-500">
+        <span className="h-px flex-1 bg-white/10" />
+        or join with a code
+        <span className="h-px flex-1 bg-white/10" />
+      </div>
+      <label className="mt-4 block text-sm font-medium text-slate-200">
+        Room code
+        <input
+          className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-center font-mono text-lg tracking-[0.35em] text-white uppercase outline-none focus:ring-2 focus:ring-amber-200/70"
+          value={code}
+          onChange={(e) => onChange(normalizeRoomCode(e.target.value))}
+          onPaste={(e) => {
+            e.preventDefault();
+            onChange(normalizeRoomCode(e.clipboardData.getData("text")));
+          }}
+          placeholder="ABC123"
+          maxLength={18}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              onJoin();
+            }
+          }}
+          inputMode="text"
+          autoCapitalize="characters"
+          autoCorrect="off"
+          spellCheck={false}
+        />
+      </label>
+      <button
+        type="button"
+        disabled={busy}
+        onClick={onJoin}
+        className="mt-4 w-full rounded-2xl bg-white/10 py-3.5 text-sm font-semibold text-white ring-1 ring-white/15 transition hover:bg-white/15 disabled:opacity-60"
+      >
+        Join room
+      </button>
+    </div>
+  );
+}
+
 export function FunQuizClient() {
   const [screen, setScreen] = useState<Screen>("home");
   const [playerId, setPlayerId] = useState(readPlayerId);
@@ -557,6 +617,8 @@ export function FunQuizClient() {
 
   if (screen === "home") {
     const difficultyTitle = QUIZ_DIFFICULTIES.find((item) => item.id === selectedDifficulty)?.title;
+    const instantMode = pickedGame ? INSTANT_GAME_MODES[pickedGame] : undefined;
+    const instantCover = GAME_TILES.find((tile) => tile.id === pickedGame)?.image;
     return (
       <div className="mx-auto flex min-h-[100dvh] max-w-6xl flex-col px-4 py-8 sm:py-10">
         <h1 className="text-center text-4xl font-bold tracking-tight text-white sm:text-5xl">
@@ -594,23 +656,12 @@ export function FunQuizClient() {
                     image={tile.image}
                     title={tile.title}
                     onClick={() => {
-                      if (tile.id === "millionaire") {
-                        setPickedGame("millionaire");
-                        setPickedTitle(tile.title);
-                        setSelectedCategory(null);
-                        setSelectedDifficulty(null);
-                        setBoardStep("play");
-                        setError(null);
-                        return;
-                      }
-                      const mode =
-                        tile.id === "holdem"
-                          ? GAME_MODE_TEXAS_HOLDEM
-                          : tile.id === "catchphrase"
-                            ? GAME_MODE_CATCHPHRASE
-                            : GAME_MODE_BLOCKBUSTERS;
                       setPickedGame(tile.id);
-                      void createRoom({ mode });
+                      setPickedTitle(tile.title);
+                      setSelectedCategory(null);
+                      setSelectedDifficulty(null);
+                      setBoardStep("play");
+                      setError(null);
                     }}
                   />
                 ))}
@@ -634,46 +685,6 @@ export function FunQuizClient() {
                 ))}
               </div>
             </section>
-
-            <div className="mx-auto w-full max-w-xl pb-6">
-              <div className="my-2 flex items-center gap-3 text-xs uppercase tracking-[0.18em] text-slate-500">
-                <span className="h-px flex-1 bg-white/10" />
-                or join with a code
-                <span className="h-px flex-1 bg-white/10" />
-              </div>
-              <label className="mt-4 block text-sm font-medium text-slate-200">
-                Room code
-                <input
-                  className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-center font-mono text-lg tracking-[0.35em] text-white uppercase outline-none focus:ring-2 focus:ring-amber-200/70"
-                  value={joinCode}
-                  onChange={(e) => setJoinCode(normalizeRoomCode(e.target.value))}
-                  onPaste={(e) => {
-                    e.preventDefault();
-                    setJoinCode(normalizeRoomCode(e.clipboardData.getData("text")));
-                  }}
-                  placeholder="ABC123"
-                  maxLength={18}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                      void joinRoom();
-                    }
-                  }}
-                  inputMode="text"
-                  autoCapitalize="characters"
-                  autoCorrect="off"
-                  spellCheck={false}
-                />
-              </label>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={joinRoom}
-                className="mt-4 w-full rounded-2xl bg-white/10 py-3.5 text-sm font-semibold text-white ring-1 ring-white/15 transition hover:bg-white/15 disabled:opacity-60"
-              >
-                Join room
-              </button>
-            </div>
           </div>
         ) : (
           <div className="mx-auto mt-8 w-full max-w-3xl">
@@ -689,9 +700,9 @@ export function FunQuizClient() {
               {boardStep === "play" && difficultyTitle ? ` · ${difficultyTitle}` : ""}
             </p>
             <h2 className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-              {boardStep === "difficulty" ? "Choose a difficulty" : "Choose how to play"}
+              {boardStep === "difficulty" ? "Choose a difficulty" : instantMode ? "Play" : "Choose how to play"}
             </h2>
-            <div className={`mt-6 grid gap-4 ${boardStep === "difficulty" ? "" : "sm:grid-cols-2"}`}>
+            <div className={`mt-6 grid gap-4 ${boardStep === "difficulty" || instantMode ? "" : "sm:grid-cols-2"}`}>
               {boardStep === "difficulty"
                 ? QUIZ_DIFFICULTIES.map((item) => (
                     <WideChoice
@@ -755,7 +766,22 @@ export function FunQuizClient() {
                   />
                 </>
               ) : null}
+              {boardStep === "play" && instantMode && instantCover ? (
+                <WideChoice
+                  image={instantCover}
+                  title="Play"
+                  detail="Start a new room."
+                  disabled={busy}
+                  onClick={() => void createRoom({ mode: instantMode })}
+                />
+              ) : null}
             </div>
+            <JoinByCode
+              code={joinCode}
+              busy={busy}
+              onChange={setJoinCode}
+              onJoin={() => void joinRoom()}
+            />
           </div>
         )}
 
