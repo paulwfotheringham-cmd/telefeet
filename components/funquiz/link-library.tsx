@@ -2,9 +2,17 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { clubAuthHeaders, clubToken } from "@/lib/funquiz/club-browser";
+import { clubAuthHeaders } from "@/lib/funquiz/club-browser";
 
-type LinkKind = "podcast" | "music";
+type LinkKind = "podcast" | "music" | "book" | "movie" | "tv";
+
+const NAME_PLACEHOLDER: Record<LinkKind, string> = {
+  podcast: "Show name",
+  music: "Track or artist",
+  book: "Book title",
+  movie: "Film title",
+  tv: "Series title",
+};
 
 type SavedLink = {
   id: string;
@@ -25,6 +33,7 @@ export function LinkLibrary({
   intro: string;
 }) {
   const [items, setItems] = useState<SavedLink[]>([]);
+  const [savedBy, setSavedBy] = useState("");
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
   const [description, setDescription] = useState("");
@@ -34,11 +43,7 @@ export function LinkLibrary({
   const [adding, setAdding] = useState(false);
 
   const load = useCallback(async () => {
-    const res = await fetch(`/api/club/links?kind=${kind}`, { headers: clubAuthHeaders() });
-    if (res.status === 401) {
-      window.location.replace(`/funquiz?next=${encodeURIComponent(`/funquiz/${kind === "podcast" ? "podcasts" : "music"}`)}`);
-      return;
-    }
+    const res = await fetch(`/api/club/links?kind=${kind}`, { cache: "no-store" });
     const data = (await res.json()) as { items?: SavedLink[]; error?: string };
     if (!res.ok) {
       setError(data.error ?? "Could not load this list.");
@@ -50,7 +55,6 @@ export function LinkLibrary({
   }, [kind]);
 
   useEffect(() => {
-    if (!clubToken()) return;
     void load();
   }, [load]);
 
@@ -62,13 +66,14 @@ export function LinkLibrary({
       const res = await fetch("/api/club/links", {
         method: "POST",
         headers: clubAuthHeaders(),
-        body: JSON.stringify({ kind, name, url, description }),
+        body: JSON.stringify({ kind, name, url, description, savedBy }),
       });
       const data = (await res.json()) as { error?: string; item?: SavedLink };
       if (!res.ok || !data.item) {
         setError(data.error ?? "Could not save that.");
         return;
       }
+      setSavedBy("");
       setName("");
       setUrl("");
       setDescription("");
@@ -130,6 +135,17 @@ export function LinkLibrary({
       {adding ? (
       <form onSubmit={(event) => void submit(event)} className="mt-8 rounded-3xl border border-white/10 bg-slate-900/70 p-5 sm:p-6">
         <label className="block text-sm font-medium text-slate-200">
+          Your name
+          <input
+            required
+            value={savedBy}
+            maxLength={80}
+            onChange={(event) => setSavedBy(event.target.value)}
+            className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-violet-400/60"
+            placeholder="Alex"
+          />
+        </label>
+        <label className="mt-4 block text-sm font-medium text-slate-200">
           Name
           <input
             required
@@ -137,7 +153,7 @@ export function LinkLibrary({
             maxLength={80}
             onChange={(event) => setName(event.target.value)}
             className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:ring-2 focus:ring-violet-400/60"
-            placeholder={kind === "podcast" ? "Show name" : "Track or artist"}
+            placeholder={NAME_PLACEHOLDER[kind]}
           />
         </label>
         <label className="mt-4 block text-sm font-medium text-slate-200">

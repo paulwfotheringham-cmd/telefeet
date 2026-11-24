@@ -237,7 +237,7 @@ export function NameThatShowClient() {
       return;
     }
     if (!mode) {
-      showSetupError("show-mode", "Choose take turns or play together.");
+      showSetupError("show-mode", "Choose single player, play together, or play separate.");
       return;
     }
     if (!era) {
@@ -418,7 +418,7 @@ export function NameThatShowClient() {
           </label>
           <div
             id="show-mode"
-            className={`mt-6 rounded-2xl p-1 ${error === "Choose take turns or play together." ? "ring-2 ring-red-400" : ""}`}
+            className={`mt-6 rounded-2xl p-1 ${error === "Choose single player, play together, or play separate." ? "ring-2 ring-red-400" : ""}`}
           >
             <p className="text-sm font-medium text-slate-200">How to play</p>
             <div className="mt-3 grid gap-3">
@@ -444,7 +444,7 @@ export function NameThatShowClient() {
                 );
               })}
             </div>
-            {error === "Choose take turns or play together." ? (
+            {error === "Choose single player, play together, or play separate." ? (
               <p className="mt-3 text-center text-sm text-red-300">{error}</p>
             ) : null}
           </div>
@@ -547,7 +547,7 @@ export function NameThatShowClient() {
   }
 
   const opponent = roomState.players.find((player) => player.id !== playerId);
-  const bothIn = roomState.players.length >= 2;
+  const bothIn = roomState.mode === "single" || roomState.players.length >= 2;
   const isHost = roomState.hostId === playerId;
   const progressPct =
     roomState.phase === "finished"

@@ -1,6 +1,8 @@
 import { plannedGameLength, questionsForLevel, selectGameQuestions, visiblePlatform } from "./game";
 import {
   GAME_MODE_PLAY_TOGETHER,
+  GAME_MODE_SINGLE,
+  sharesGameRound,
   GAME_MODE_TAKE_TURNS,
   gameEraTitle,
   gameLevelTitle,
@@ -129,7 +131,8 @@ function touch(room: GameRoom, patch: Partial<GameRoom>, now: number): GameRoom 
 }
 
 export function roomMode(room: Pick<GameRoom, "mode">): GamePlayMode {
-  return room.mode === GAME_MODE_PLAY_TOGETHER ? GAME_MODE_PLAY_TOGETHER : GAME_MODE_TAKE_TURNS;
+  if (room.mode === GAME_MODE_PLAY_TOGETHER || room.mode === GAME_MODE_SINGLE) return room.mode;
+  return GAME_MODE_TAKE_TURNS;
 }
 
 export function roomLevel(room: Pick<GameRoom, "level">): GameLevel {
@@ -232,7 +235,7 @@ export function startGameGame(
   if (room.phase !== "lobby") {
     throw new Error("Game already started");
   }
-  if (room.players.length < MAX_PLAYERS) {
+  if (room.mode !== "single" && room.players.length < MAX_PLAYERS) {
     throw new Error("Waiting for a second player");
   }
   const dealt = dealMatchQuestions(room.era, roomLevel(room), room.seenIds, rng, matchLength(room));
@@ -262,7 +265,7 @@ export function submitGameAnswer(
   if (room.phase !== "question") {
     throw new Error("Not accepting answers right now");
   }
-  const together = roomMode(room) === GAME_MODE_PLAY_TOGETHER;
+  const together = sharesGameRound(roomMode(room));
   if (together && playerId !== room.hostId) {
     throw new Error("Only the room creator can submit answers in Play together");
   }
@@ -328,7 +331,7 @@ function advanceFromReveal(room: GameRoom, now: number): GameRoom {
       phase: "question",
       turnIndex: nextTurn,
       activePlayerId:
-        roomMode(room) === GAME_MODE_PLAY_TOGETHER ? room.hostId : playerForTurn(room, nextTurn),
+        sharesGameRound(roomMode(room)) ? room.hostId : playerForTurn(room, nextTurn),
       revealStartedAt: null,
     },
     now,
@@ -412,7 +415,7 @@ export function toGameClientState(room: GameRoom, viewerId: string): GameClientS
       phase: room.phase,
       turnIndex: room.turnIndex,
       totalTurns: matchLength(room),
-      questionsPerPlayer: roomMode(room) === GAME_MODE_PLAY_TOGETHER ? matchLength(room) : matchLength(room) / 2,
+      questionsPerPlayer: sharesGameRound(roomMode(room)) ? matchLength(room) : matchLength(room) / 2,
       activePlayerId: room.activePlayerId,
       isYourTurn: false,
       canSubmitAnswer: false,
@@ -438,7 +441,7 @@ export function toGameClientState(room: GameRoom, viewerId: string): GameClientS
     room.phase === "reveal"
       ? room.answers.find((answer) => answer.turnIndex === room.turnIndex)
       : undefined;
-  const together = mode === GAME_MODE_PLAY_TOGETHER;
+  const together = sharesGameRound(mode);
   const active = room.players.find((player) => player.id === room.activePlayerId);
   const isYourTurn =
     room.phase === "question" &&
@@ -471,7 +474,7 @@ export function toGameClientState(room: GameRoom, viewerId: string): GameClientS
     phase: room.phase,
     turnIndex: room.turnIndex,
     totalTurns: matchLength(room),
-    questionsPerPlayer: roomMode(room) === GAME_MODE_PLAY_TOGETHER ? matchLength(room) : matchLength(room) / 2,
+    questionsPerPlayer: sharesGameRound(roomMode(room)) ? matchLength(room) : matchLength(room) / 2,
     activePlayerId: room.activePlayerId,
     isYourTurn,
     canSubmitAnswer: isYourTurn,

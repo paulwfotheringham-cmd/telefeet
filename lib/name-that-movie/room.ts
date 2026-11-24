@@ -1,6 +1,8 @@
 import { questionsForDifficulty, selectGameQuestions } from "./game";
 import {
   MOVIE_MODE_PLAY_TOGETHER,
+  MOVIE_MODE_SINGLE,
+  sharesMovieRound,
   MOVIE_MODE_TAKE_TURNS,
   QUESTIONS_PER_GAME,
   difficultyTitle,
@@ -127,11 +129,12 @@ function touch(room: MovieRoom, patch: Partial<MovieRoom>, now: number): MovieRo
 }
 
 export function roomMode(room: Pick<MovieRoom, "mode">): MoviePlayMode {
-  return room.mode === MOVIE_MODE_PLAY_TOGETHER ? MOVIE_MODE_PLAY_TOGETHER : MOVIE_MODE_TAKE_TURNS;
+  if (room.mode === MOVIE_MODE_PLAY_TOGETHER || room.mode === MOVIE_MODE_SINGLE) return room.mode;
+  return MOVIE_MODE_TAKE_TURNS;
 }
 
 export function matchLength(room: Pick<MovieRoom, "mode">): number {
-  return roomMode(room) === MOVIE_MODE_PLAY_TOGETHER ? QUESTIONS_PER_GAME : TURNS_PER_MATCH;
+  return sharesMovieRound(roomMode(room)) ? QUESTIONS_PER_GAME : TURNS_PER_MATCH;
 }
 
 export function createMovieRoom(
@@ -226,7 +229,7 @@ export function startMovieGame(
   if (room.phase !== "lobby") {
     throw new Error("Game already started");
   }
-  if (room.players.length < MAX_PLAYERS) {
+  if (room.mode !== "single" && room.players.length < MAX_PLAYERS) {
     throw new Error("Waiting for a second player");
   }
   const dealt = dealMatchQuestions(room.difficulty, room.seenIds, rng, matchLength(room));
@@ -256,7 +259,7 @@ export function submitMovieAnswer(
   if (room.phase !== "question") {
     throw new Error("Not accepting answers right now");
   }
-  const together = roomMode(room) === MOVIE_MODE_PLAY_TOGETHER;
+  const together = sharesMovieRound(roomMode(room));
   if (together && playerId !== room.hostId) {
     throw new Error("Only the room creator can submit answers in Play together");
   }
@@ -322,7 +325,7 @@ function advanceFromReveal(room: MovieRoom, now: number): MovieRoom {
       phase: "question",
       turnIndex: nextTurn,
       activePlayerId:
-        roomMode(room) === MOVIE_MODE_PLAY_TOGETHER ? room.hostId : playerForTurn(room, nextTurn),
+        sharesMovieRound(roomMode(room)) ? room.hostId : playerForTurn(room, nextTurn),
       revealStartedAt: null,
     },
     now,
@@ -423,7 +426,7 @@ export function toMovieClientState(room: MovieRoom, viewerId: string): MovieClie
     room.phase === "reveal"
       ? room.answers.find((answer) => answer.turnIndex === room.turnIndex)
       : undefined;
-  const together = roomMode(room) === MOVIE_MODE_PLAY_TOGETHER;
+  const together = sharesMovieRound(roomMode(room));
   const active = room.players.find((player) => player.id === room.activePlayerId);
   const isYourTurn =
     room.phase === "question" &&

@@ -19,6 +19,7 @@ import {
 import {
   GAME_MODE_PARALLEL_MILLIONAIRE,
   GAME_MODE_PLAY_TOGETHER,
+  GAME_MODE_SINGLE,
   GAME_MODE_SHARED_MILLIONAIRE,
   GAME_MODE_TAKE_TURNS,
   GAME_MODE_CATCHPHRASE,
@@ -310,6 +311,7 @@ export function dbRowsToRoom(roomRow: FunquizRoomRow, playerRows: FunquizPlayerR
       roomRow.game_mode === GAME_MODE_PARALLEL_MILLIONAIRE ||
       roomRow.game_mode === GAME_MODE_TAKE_TURNS ||
       roomRow.game_mode === GAME_MODE_PLAY_TOGETHER ||
+      roomRow.game_mode === GAME_MODE_SINGLE ||
       roomRow.game_mode === GAME_MODE_TEXAS_HOLDEM ||
       roomRow.game_mode === GAME_MODE_CATCHPHRASE ||
       roomRow.game_mode === GAME_MODE_BLOCKBUSTERS

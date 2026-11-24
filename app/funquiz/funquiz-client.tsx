@@ -2,10 +2,8 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { FriendsClub } from "@/components/funquiz/friends-club";
 import { CoverTile, WideChoice } from "@/components/funquiz/picture-board";
-import { LoginScreen } from "@/components/funquiz/login-screen";
-import { clearClubSession, clubToken, type ClubSession } from "@/lib/funquiz/club-browser";
+import { clubToken, type ClubSession } from "@/lib/funquiz/club-browser";
 import { useMatchScore } from "@/lib/funquiz/use-match-score";
 import { createClient } from "@/lib/supabase/client";
 import { openRoomByCode } from "@/lib/room-directory";
@@ -32,6 +30,7 @@ import { MillionaireStage } from "@/components/funquiz/millionaire-stage";
 import { FunQuizScorecardGraph } from "@/components/funquiz/scorecard-graph";
 import {
   GAME_MODE_PLAY_TOGETHER,
+  GAME_MODE_SINGLE,
   GAME_MODE_PARALLEL_MILLIONAIRE,
   GAME_MODE_SHARED_MILLIONAIRE,
   GAME_MODE_CATCHPHRASE,
@@ -62,7 +61,8 @@ function getOrCreatePlayerId(): string {
 type Screen = "home" | "game";
 
 function gameModeLabel(mode: GameMode): string {
-  if (mode === GAME_MODE_TAKE_TURNS) return "Take turns";
+  if (mode === GAME_MODE_SINGLE) return "Single player";
+  if (mode === GAME_MODE_TAKE_TURNS) return "Play separate";
   if (mode === GAME_MODE_SHARED_MILLIONAIRE) return "Shared Millionaire";
   if (mode === GAME_MODE_PARALLEL_MILLIONAIRE) return "Dual Millionaire";
   if (mode === GAME_MODE_TEXAS_HOLDEM) return "Texas Hold'em";
@@ -259,7 +259,6 @@ export function FunQuizClient() {
   const [error, setError] = useState<string | null>(null);
   const [storeWarning, setStoreWarning] = useState<string | null>(null);
   const [account, setAccount] = useState<ClubSession | null>(null);
-  const [accountReady, setAccountReady] = useState(false);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -351,11 +350,7 @@ export function FunQuizClient() {
     const difficulty = choice ? (choice.difficulty ?? QUIZ_DIFFICULTY_INTERMEDIATE) : selectedDifficulty;
     const category = choice ? (choice.category ?? QUIZ_CATEGORY_GENERAL_KNOWLEDGE) : selectedCategory;
     setError(null);
-    const playerName = (account?.name || name).trim();
-    if (!playerName) {
-      setError("Enter your name first.");
-      return;
-    }
+    const playerName = (account?.name || name).trim() || "Player";
     if (!mode) {
       setError("Select a game mode before creating a room.");
       return;
@@ -400,11 +395,7 @@ export function FunQuizClient() {
 
   const joinRoom = async () => {
     setError(null);
-    const playerName = (account?.name || name).trim();
-    if (!playerName) {
-      setError("Enter your name first.");
-      return;
-    }
+    const playerName = (account?.name || name).trim() || "Player";
     const normalizedJoin = normalizeRoomCode(joinCode);
     if (!normalizedJoin) {
       setError("Enter a room code.");
@@ -535,10 +526,7 @@ export function FunQuizClient() {
 
   useEffect(() => {
     const token = clubToken();
-    if (!token) {
-      setAccountReady(true);
-      return;
-    }
+    if (!token) return;
     void fetch("/api/club/session", { headers: { Authorization: `Bearer ${token}` } })
       .then(async (res) => {
         if (!res.ok) {
@@ -550,8 +538,7 @@ export function FunQuizClient() {
         const session = { ...data.account, token };
         setAccount(session);
         setName(data.account.name);
-      })
-      .finally(() => setAccountReady(true));
+      });
   }, []);
 
   useMatchScore({
@@ -576,23 +563,6 @@ export function FunQuizClient() {
     setNewGameCategory(null);
     setNewGameDifficulty(null);
   };
-
-  if (screen === "home" && !accountReady) {
-    return <div className="flex min-h-[100dvh] items-center justify-center text-slate-300">Loading…</div>;
-  }
-
-  if (screen === "home" && !account) {
-    return (
-      <LoginScreen
-        onSuccess={(session) => {
-          setAccount(session);
-          setName(session.name);
-          const next = new URLSearchParams(window.location.search).get("next");
-          if (next && next.startsWith("/") && !next.startsWith("//") && !next.includes("://")) window.location.assign(next);
-        }}
-      />
-    );
-  }
 
   const goBack = () => {
     setError(null);
@@ -625,22 +595,8 @@ export function FunQuizClient() {
         <h1 className="text-center text-4xl font-bold tracking-tight text-white sm:text-5xl">
           A Selection of Games
         </h1>
-        {account ? (
-          <div className="mx-auto mt-3 flex w-full max-w-xl flex-col items-end gap-2">
-            <p className="w-full text-center text-sm text-slate-300">
-              <span className="font-medium text-white">{account.email}</span>
-              <button
-                type="button"
-                onClick={() => {
-                  clearClubSession();
-                  setAccount(null);
-                }}
-                className="ml-3 text-xs font-semibold uppercase tracking-wide text-slate-400 hover:text-white"
-              >
-                Log out
-              </button>
-            </p>
-            <div className="flex gap-2">
+        <div className="mx-auto mt-3 flex w-full max-w-3xl flex-col items-end gap-2">
+            <div className="flex flex-wrap justify-end gap-2">
               <Link
                 href="/funquiz/podcasts"
                 className="rounded-full border border-amber-300/40 bg-amber-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-100 hover:bg-amber-400/20"
@@ -653,9 +609,26 @@ export function FunQuizClient() {
               >
                 Music
               </Link>
+              <Link
+                href="/funquiz/books"
+                className="rounded-full border border-amber-300/40 bg-amber-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-100 hover:bg-amber-400/20"
+              >
+                Books
+              </Link>
+              <Link
+                href="/funquiz/movies"
+                className="rounded-full border border-amber-300/40 bg-amber-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-100 hover:bg-amber-400/20"
+              >
+                Movies
+              </Link>
+              <Link
+                href="/funquiz/tv"
+                className="rounded-full border border-amber-300/40 bg-amber-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-100 hover:bg-amber-400/20"
+              >
+                TV series
+              </Link>
             </div>
-          </div>
-        ) : null}
+        </div>
 
         {storeWarning ? (
           <p className="mx-auto mt-4 max-w-3xl rounded-xl border border-amber-500/40 bg-amber-950/40 px-3 py-2 text-xs text-amber-100">
@@ -665,7 +638,6 @@ export function FunQuizClient() {
 
         {boardStep === "board" ? (
           <div className="space-y-10">
-            {account ? <FriendsClub meEmail={account.email} onLogout={() => { clearClubSession(); setAccount(null); }} /> : null}
             <section>
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-200/90">Quiz</p>
               <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
@@ -733,9 +705,9 @@ export function FunQuizClient() {
               {boardStep === "play" && difficultyTitle ? ` · ${difficultyTitle}` : ""}
             </p>
             <h2 className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-              {boardStep === "difficulty" ? "Choose a difficulty" : instantMode ? "Play" : "Choose how to play"}
+              {boardStep === "difficulty" ? "Choose a difficulty" : "Choose how to play"}
             </h2>
-            <div className={`mt-6 grid gap-4 ${boardStep === "difficulty" || instantMode ? "" : "sm:grid-cols-2"}`}>
+            <div className={`mt-6 grid gap-4 ${boardStep === "difficulty" ? "" : "sm:grid-cols-3"}`}>
               {boardStep === "difficulty"
                 ? QUIZ_DIFFICULTIES.map((item) => (
                     <WideChoice
@@ -754,13 +726,13 @@ export function FunQuizClient() {
               {boardStep === "play" && pickedGame === "quiz" && selectedDifficulty && selectedCategory ? (
                 <>
                   <WideChoice
-                    image="/funquiz/covers/cover-separate.jpg"
-                    title="Play separate"
-                    detail="Take turns and keep your own score."
+                    image="/funquiz/covers/cover-together.jpg"
+                    title="Single player"
+                    detail="Answer on your own. No second player."
                     disabled={busy}
                     onClick={() =>
                       void createRoom({
-                        mode: GAME_MODE_TAKE_TURNS,
+                        mode: GAME_MODE_SINGLE,
                         difficulty: selectedDifficulty,
                         category: selectedCategory,
                       })
@@ -779,10 +751,30 @@ export function FunQuizClient() {
                       })
                     }
                   />
+                  <WideChoice
+                    image="/funquiz/covers/cover-separate.jpg"
+                    title="Play separate"
+                    detail="Take turns and keep your own score."
+                    disabled={busy}
+                    onClick={() =>
+                      void createRoom({
+                        mode: GAME_MODE_TAKE_TURNS,
+                        difficulty: selectedDifficulty,
+                        category: selectedCategory,
+                      })
+                    }
+                  />
                 </>
               ) : null}
               {boardStep === "play" && pickedGame === "millionaire" ? (
                 <>
+                  <WideChoice
+                    image="/funquiz/covers/cover-together.jpg"
+                    title="Single player"
+                    detail="Climb the prize ladder on your own."
+                    disabled={busy}
+                    onClick={() => void createRoom({ mode: GAME_MODE_SHARED_MILLIONAIRE })}
+                  />
                   <WideChoice
                     image="/funquiz/covers/cover-together.jpg"
                     title="Play together"
@@ -800,13 +792,29 @@ export function FunQuizClient() {
                 </>
               ) : null}
               {boardStep === "play" && instantMode && instantCover ? (
-                <WideChoice
-                  image={instantCover}
-                  title="Play"
-                  detail="Start a new room."
-                  disabled={busy}
-                  onClick={() => void createRoom({ mode: instantMode })}
-                />
+                <>
+                  <WideChoice
+                    image={instantCover}
+                    title="Single player"
+                    detail="Open a table. A second player still joins before it starts."
+                    disabled={busy}
+                    onClick={() => void createRoom({ mode: instantMode })}
+                  />
+                  <WideChoice
+                    image={instantCover}
+                    title="Play together"
+                    detail="Share one table."
+                    disabled={busy}
+                    onClick={() => void createRoom({ mode: instantMode })}
+                  />
+                  <WideChoice
+                    image={instantCover}
+                    title="Play separate"
+                    detail="Each of you plays your own hand."
+                    disabled={busy}
+                    onClick={() => void createRoom({ mode: instantMode })}
+                  />
+                </>
               ) : null}
             </div>
             <JoinByCode
@@ -839,7 +847,7 @@ export function FunQuizClient() {
   const opponent = players.find((p) => p.id !== playerId);
   const bothIn = players.length >= 2;
   const canStartGame =
-    gameMode === GAME_MODE_SHARED_MILLIONAIRE
+    gameMode === GAME_MODE_SHARED_MILLIONAIRE || gameMode === GAME_MODE_SINGLE
       ? players.length >= 1
       : bothIn;
   const isMillionaire = isMillionaireGameMode(gameMode);
@@ -922,7 +930,7 @@ export function FunQuizClient() {
         />
       ) : null}
 
-      {!isMillionaire && !isHoldem && !isCatchphrase && !isBlockbusters && gameMode === GAME_MODE_PLAY_TOGETHER ? (
+      {!isMillionaire && !isHoldem && !isCatchphrase && !isBlockbusters && (gameMode === GAME_MODE_PLAY_TOGETHER || gameMode === GAME_MODE_SINGLE) ? (
         <div className="mt-4 rounded-2xl border border-violet-400/50 bg-violet-950/40 px-5 py-4">
           <p className="text-sm font-semibold text-violet-200">Team score</p>
           <p className="mt-1 text-3xl font-bold tabular-nums text-white">
@@ -930,7 +938,9 @@ export function FunQuizClient() {
             <span className="text-lg font-medium text-violet-300/90">/ 50</span>
           </p>
           <p className="mt-2 text-xs text-slate-400">
-            {you.name} & {opponent?.name ?? "Partner"} · play together
+            {gameMode === GAME_MODE_SINGLE
+              ? `${you.name} · single player`
+              : `${you.name} & ${opponent?.name ?? "Partner"} · play together`}
           </p>
         </div>
       ) : !isMillionaire && !isCatchphrase && !isBlockbusters ? (
@@ -1021,7 +1031,7 @@ export function FunQuizClient() {
                 {p.name}
               </li>
             ))}
-            {!bothIn ? <li className="text-slate-500">Waiting for player 2…</li> : null}
+            {!canStartGame ? <li className="text-slate-500">Waiting for player 2…</li> : null}
           </ul>
           {isHost ? (
             <button
@@ -1175,9 +1185,9 @@ export function FunQuizClient() {
               </strong>
             </p>
           ) : null}
-          {gameMode === GAME_MODE_PLAY_TOGETHER ? (
+          {gameMode === GAME_MODE_PLAY_TOGETHER || gameMode === GAME_MODE_SINGLE ? (
             <p className="mt-4 text-sm text-slate-200">
-              Team score: {roomState.jointScore ?? 0} out of {roomState.questionIndex + 1}{" "}
+              {gameMode === GAME_MODE_SINGLE ? "Score" : "Team score"}: {roomState.jointScore ?? 0} out of {roomState.questionIndex + 1}{" "}
               answered.
             </p>
           ) : gameMode === GAME_MODE_TAKE_TURNS ? (
@@ -1201,9 +1211,9 @@ export function FunQuizClient() {
           <p className="mt-1 text-sm text-slate-400">
             {roomState.quizDifficultyTitle} · {roomState.quizCategoryTitle}
           </p>
-          {gameMode === GAME_MODE_PLAY_TOGETHER ? (
+          {gameMode === GAME_MODE_PLAY_TOGETHER || gameMode === GAME_MODE_SINGLE ? (
             <p className="mt-2 text-violet-100">
-              Joint score: {roomState.jointScore ?? 0} / 50 (
+              {gameMode === GAME_MODE_SINGLE ? "Score" : "Joint score"}: {roomState.jointScore ?? 0} / 50 (
               {Math.round(((roomState.jointScore ?? 0) / 50) * 100)}% correct)
             </p>
           ) : (
@@ -1245,7 +1255,18 @@ export function FunQuizClient() {
           {isHost ? (
             <div className="mt-6 space-y-3">
               <p className="text-sm text-slate-300">Start a new game (pick mode, difficulty and quiz):</p>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setNewGameMode(GAME_MODE_SINGLE)}
+                  className={`rounded-lg border px-2 py-2 text-xs ${
+                    newGameMode === GAME_MODE_SINGLE
+                      ? "border-violet-400 bg-violet-950/50"
+                      : "border-white/10"
+                  }`}
+                >
+                  Single player
+                </button>
                 <button
                   type="button"
                   onClick={() => setNewGameMode(GAME_MODE_TAKE_TURNS)}
@@ -1255,7 +1276,7 @@ export function FunQuizClient() {
                       : "border-white/10"
                   }`}
                 >
-                  Take turns
+                  Play separate
                 </button>
                 <button
                   type="button"

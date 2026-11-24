@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { handleStoreError } from "@/lib/funquiz/api";
 import {
   GAME_MODE_PLAY_TOGETHER,
+  GAME_MODE_SINGLE,
   GAME_MODE_PARALLEL_MILLIONAIRE,
   GAME_MODE_SHARED_MILLIONAIRE,
   GAME_MODE_TAKE_TURNS,
@@ -39,6 +40,7 @@ export async function POST(request: Request, { params }: Params) {
     if (
       gameModeRaw !== GAME_MODE_TAKE_TURNS &&
       gameModeRaw !== GAME_MODE_PLAY_TOGETHER &&
+      gameModeRaw !== GAME_MODE_SINGLE &&
       gameModeRaw !== GAME_MODE_SHARED_MILLIONAIRE &&
       gameModeRaw !== GAME_MODE_PARALLEL_MILLIONAIRE &&
       gameModeRaw !== GAME_MODE_TEXAS_HOLDEM &&

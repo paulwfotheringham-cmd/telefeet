@@ -38,11 +38,12 @@ export type ClubChallenge = {
   createdAt: string;
 };
 
-export type LinkKind = "podcast" | "music";
+export type LinkKind = "podcast" | "music" | "book" | "movie" | "tv";
 
 export type ClubLink = {
   id: string;
   accountId: string;
+  savedBy: string;
   email: string;
   kind: LinkKind;
   name: string;
@@ -656,7 +657,7 @@ export async function clubBoard(token: string) {
 }
 
 function isLinkKind(value: string): value is LinkKind {
-  return value === "podcast" || value === "music";
+  return value === "podcast" || value === "music" || value === "book" || value === "movie" || value === "tv";
 }
 
 function cleanLinkUrl(raw: string): string | null {
@@ -675,12 +676,14 @@ function cleanLinkUrl(raw: string): string | null {
 
 function withEmails(rows: StoredLink[], accounts: ClubAccount[]): ClubLink[] {
   const emails = new Map(accounts.map((item) => [item.id, item.email]));
-  return rows.map((row) => ({ ...row, email: emails.get(row.accountId) ?? "Player" }));
+  return rows.map((row) => ({
+    ...row,
+    savedBy: row.savedBy || "",
+    email: row.savedBy || emails.get(row.accountId) || "Guest",
+  }));
 }
 
-export async function listLinks(token: string, kindRaw: string) {
-  const account = await accountFromToken(token);
-  if (!account) return { error: "Sign in again.", status: 401 as const };
+export async function listLinks(_token: string, kindRaw: string) {
   if (!isLinkKind(kindRaw)) return { error: "Unknown section.", status: 400 as const };
   if (!usesSupabase()) {
     const rows = memory()
@@ -691,7 +694,7 @@ export async function listLinks(token: string, kindRaw: string) {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("funquiz_links")
-    .select("id, account_id, kind, name, url, description, created_at")
+    .select("id, account_id, saved_by, kind, name, url, description, created_at")
     .eq("kind", kindRaw)
     .order("created_at", { ascending: false })
     .limit(200);
@@ -699,7 +702,8 @@ export async function listLinks(token: string, kindRaw: string) {
   const accounts = await allAccounts();
   const rows: StoredLink[] = (data ?? []).map((row) => ({
     id: String(row.id),
-    accountId: String(row.account_id),
+    accountId: row.account_id ? String(row.account_id) : "",
+    savedBy: String(row.saved_by ?? ""),
     kind: kindRaw,
     name: String(row.name),
     url: String(row.url),
@@ -711,20 +715,22 @@ export async function listLinks(token: string, kindRaw: string) {
 
 export async function addLink(
   token: string,
-  input: { kind?: string; name?: string; url?: string; description?: string },
+  input: { kind?: string; name?: string; url?: string; description?: string; savedBy?: string },
 ) {
-  const account = await accountFromToken(token);
-  if (!account) return { error: "Sign in again.", status: 401 as const };
+  const account = token ? await accountFromToken(token) : null;
   const kind = (input.kind ?? "").trim();
   const name = (input.name ?? "").trim().replace(/\s+/g, " ");
   const description = (input.description ?? "").trim().slice(0, 600);
+  const savedBy = (input.savedBy ?? "").trim().replace(/\s+/g, " ").slice(0, 80) || account?.email || "";
   const url = cleanLinkUrl(input.url ?? "");
   if (!isLinkKind(kind)) return { error: "Unknown section.", status: 400 as const };
+  if (!savedBy) return { error: "Enter your name.", status: 400 as const };
   if (name.length < 1 || name.length > 80) return { error: "Enter a name.", status: 400 as const };
   if (!url) return { error: "Enter a web address starting with https://", status: 400 as const };
   const row: StoredLink = {
     id: crypto.randomUUID(),
-    accountId: account.id,
+    accountId: account?.id ?? "",
+    savedBy,
     kind,
     name,
     url,
@@ -733,12 +739,13 @@ export async function addLink(
   };
   if (!usesSupabase()) {
     memory().links.push(row);
-    return { item: { ...row, email: account.email } };
+    return { item: { ...row, email: savedBy } };
   }
   const supabase = createAdminClient();
   const { error } = await supabase.from("funquiz_links").insert({
     id: row.id,
-    account_id: row.accountId,
+    account_id: row.accountId || null,
+    saved_by: savedBy,
     kind: row.kind,
     name: row.name,
     url: row.url,
@@ -746,5 +753,5 @@ export async function addLink(
     created_at: row.createdAt,
   });
   if (error) return { error: error.message, status: 500 as const };
-  return { item: { ...row, email: account.email } };
+  return { item: { ...row, email: savedBy } };
 }

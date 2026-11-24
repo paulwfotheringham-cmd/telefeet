@@ -3,22 +3,10 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { clubAuthHeaders, clubToken } from "@/lib/funquiz/club-browser";
 
-function needsLogin(path: string) {
-  return path === "/funquiz" || path.startsWith("/funquiz/") || path.startsWith("/draw-the-") || path.startsWith("/name-that-");
-}
-
 export function ClubGate({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
-  const [blocked, setBlocked] = useState(false);
 
   useEffect(() => {
-    const path = window.location.pathname;
-    if (needsLogin(path) && path !== "/funquiz" && !clubToken()) {
-      const next = `${path}${window.location.search}`;
-      setBlocked(true);
-      window.location.replace(`/funquiz?next=${encodeURIComponent(next)}`);
-      return;
-    }
     setReady(true);
   }, []);
 
@@ -40,6 +28,5 @@ export function ClubGate({ children }: { children: ReactNode }) {
     return () => window.clearInterval(id);
   }, [ready]);
 
-  if (blocked) return null;
   return children;
 }
