@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { FriendsClub } from "@/components/funquiz/friends-club";
+import { CoverTile, WideChoice } from "@/components/funquiz/picture-board";
 import { LoginScreen } from "@/components/funquiz/login-screen";
 import { clubToken, type ClubSession } from "@/lib/funquiz/club-browser";
 import { useMatchScore } from "@/lib/funquiz/use-match-score";
@@ -135,58 +135,61 @@ function readPlayerId(): string {
 }
 
 
-type FunQuizTile = { id: string; title: string; href?: string };
+type FunQuizTile = { id: string; title: string; href?: string; image: string };
+type BoardStep = "board" | "difficulty" | "play";
 
-const HOME_TILE = "flex min-h-[4.5rem] items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-3 py-2 text-center text-sm font-semibold leading-tight text-white transition hover:border-sky-300/70 hover:bg-sky-950/50";
-
-const QUIZ_HOME: { id: QuizCategoryId; title: string }[] = [
-  { id: QUIZ_CATEGORY_GENERAL_KNOWLEDGE, title: "General Knowledge" },
-  { id: QUIZ_CATEGORY_SPACE, title: "Space" },
-  { id: QUIZ_CATEGORY_HISTORY, title: "History" },
-  { id: QUIZ_CATEGORY_MILITARY_BATTLES, title: "Military Battles" },
-  { id: QUIZ_CATEGORY_GENERAL_MILITARY, title: "General Military" },
-  { id: QUIZ_CATEGORY_CAPITAL_CITIES, title: "Capital Cities" },
-  { id: QUIZ_CATEGORY_COUNTRY_OUTLINES, title: "Country Outlines" },
-  { id: QUIZ_CATEGORY_GEOGRAPHY, title: "Geography" },
-  { id: QUIZ_CATEGORY_MOVIES_POP_CULTURE, title: "Movies" },
-  { id: QUIZ_CATEGORY_WORLD_FLAGS, title: "Flags of the world" },
+const QUIZ_HOME: { id: QuizCategoryId; title: string; image: string }[] = [
+  { id: QUIZ_CATEGORY_GENERAL_KNOWLEDGE, title: "General Knowledge", image: "/funquiz/covers/cover-general-knowledge.jpg" },
+  { id: QUIZ_CATEGORY_SPACE, title: "Space", image: "/funquiz/covers/cover-space.jpg" },
+  { id: QUIZ_CATEGORY_HISTORY, title: "History", image: "/funquiz/covers/cover-history.jpg" },
+  { id: QUIZ_CATEGORY_MILITARY_BATTLES, title: "Military Battles", image: "/funquiz/covers/cover-military-battles.jpg" },
+  { id: QUIZ_CATEGORY_GENERAL_MILITARY, title: "General Military", image: "/funquiz/covers/cover-general-military.jpg" },
+  { id: QUIZ_CATEGORY_CAPITAL_CITIES, title: "Capital Cities", image: "/funquiz/covers/cover-capital-cities.jpg" },
+  { id: QUIZ_CATEGORY_COUNTRY_OUTLINES, title: "Country Outlines", image: "/funquiz/covers/cover-country-outlines.jpg" },
+  { id: QUIZ_CATEGORY_GEOGRAPHY, title: "Geography", image: "/funquiz/covers/cover-geography.jpg" },
+  { id: QUIZ_CATEGORY_MOVIES_POP_CULTURE, title: "Movies", image: "/funquiz/covers/cover-movies.jpg" },
+  { id: QUIZ_CATEGORY_WORLD_FLAGS, title: "Flags of the world", image: "/funquiz/covers/cover-flags.jpg" },
 ];
 
 const GAME_TILES: FunQuizTile[] = [
-  { id: "millionaire", title: "Who wants to be a Millionaire" },
-  { id: "holdem", title: "Texas Hold-em" },
-  { id: "catchphrase", title: "Catchphrase" },
-  { id: "blockbusters", title: "Blockbusters" },
+  { id: "millionaire", title: "Who wants to be a Millionaire", image: "/funquiz/covers/cover-millionaire.jpg" },
+  { id: "holdem", title: "Texas Hold-em", image: "/funquiz/covers/cover-holdem.jpg" },
+  { id: "catchphrase", title: "Catchphrase", image: "/funquiz/covers/cover-catchphrase.jpg" },
+  { id: "blockbusters", title: "Blockbusters", image: "/funquiz/covers/cover-blockbusters.jpg" },
 ];
 
 const NAME_THAT_TILES: FunQuizTile[] = [
-  { id: "movie", title: "Movie", href: "/name-that-movie" },
-  { id: "show", title: "UK Game show", href: "/name-that-show" },
-  { id: "computer", title: "Computer game", href: "/name-that-game" },
-  { id: "tune", title: "80-90's tunes", href: "/name-that-tune" },
+  { id: "movie", title: "Movie", href: "/name-that-movie", image: "/funquiz/covers/cover-name-movie.jpg" },
+  { id: "show", title: "UK Game show", href: "/name-that-show", image: "/funquiz/covers/cover-name-show.jpg" },
+  { id: "computer", title: "Computer game", href: "/name-that-game", image: "/funquiz/covers/cover-name-game.jpg" },
+  { id: "tune", title: "80-90's tunes", href: "/name-that-tune", image: "/funquiz/covers/cover-name-tune.jpg" },
 ];
 
 const DRAW_THAT_TILES: FunQuizTile[] = [
-  { id: "organ", title: "Human Body", href: "/draw-the-organ" },
-  { id: "animal", title: "Animals", href: "/draw-the-animal" },
-  { id: "country", title: "Country", href: "/draw-the-country" },
-  { id: "myth", title: "Myth", href: "/draw-the-myth" },
-  { id: "landmark", title: "Landmark", href: "/draw-the-landmark" },
+  { id: "organ", title: "Human Body", href: "/draw-the-organ", image: "/funquiz/covers/cover-draw-organ.jpg" },
+  { id: "animal", title: "Animals", href: "/draw-the-animal", image: "/funquiz/covers/cover-draw-animal.jpg" },
+  { id: "country", title: "Country", href: "/draw-the-country", image: "/funquiz/covers/cover-draw-country.jpg" },
+  { id: "myth", title: "Myth", href: "/draw-the-myth", image: "/funquiz/covers/cover-draw-myth.jpg" },
+  { id: "landmark", title: "Landmark", href: "/draw-the-landmark", image: "/funquiz/covers/cover-draw-landmark.jpg" },
 ];
 
-function homeTileClass(selected = false): string {
-  return `${HOME_TILE} ${selected ? "border-sky-200 bg-sky-900/80 ring-2 ring-sky-200" : ""}`;
-}
+const DIFFICULTY_ART: Record<QuizDifficulty, { image: string; detail: string }> = {
+  easy: { image: "/funquiz/covers/cover-easy.jpg", detail: "Familiar facts and well-known answers." },
+  intermediate: { image: "/funquiz/covers/cover-intermediate.jpg", detail: "A balanced mix of known facts and harder ones." },
+  hard: { image: "/funquiz/covers/cover-hard.jpg", detail: "Specialist knowledge and less familiar facts." },
+};
 
 export function FunQuizClient() {
   const [screen, setScreen] = useState<Screen>("home");
   const [playerId, setPlayerId] = useState(readPlayerId);
   const [name, setName] = useState("");
   const [joinCode, setJoinCode] = useState("");
-  const [selectedMode, setSelectedMode] = useState<GameMode | null>(null);
+  const [selectedMode] = useState<GameMode | null>(null);
   const [pickedGame, setPickedGame] = useState<string | null>(null);
   const [selectedDifficulty, setSelectedDifficulty] = useState<QuizDifficulty | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<QuizCategoryId | null>(null);
+  const [boardStep, setBoardStep] = useState<BoardStep>("board");
+  const [pickedTitle, setPickedTitle] = useState("");
   const [newGameMode, setNewGameMode] = useState<GameMode | null>(null);
   const [newGameDifficulty, setNewGameDifficulty] = useState<QuizDifficulty | null>(null);
   const [newGameCategory, setNewGameCategory] = useState<QuizCategoryId | null>(null);
@@ -196,6 +199,10 @@ export function FunQuizClient() {
   const [storeWarning, setStoreWarning] = useState<string | null>(null);
   const [account, setAccount] = useState<ClubSession | null>(null);
   const [accountReady, setAccountReady] = useState(false);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [boardStep]);
 
   useEffect(() => {
     const id = getOrCreatePlayerId();
@@ -526,102 +533,74 @@ export function FunQuizClient() {
     );
   }
 
+  const goBack = () => {
+    setError(null);
+    if (boardStep === "play" && pickedGame === "quiz") {
+      setBoardStep("difficulty");
+      return;
+    }
+    setBoardStep("board");
+    setPickedGame(null);
+    setSelectedCategory(null);
+    setSelectedDifficulty(null);
+    setPickedTitle("");
+  };
+
+  const openQuiz = (id: QuizCategoryId, title: string) => {
+    setPickedGame("quiz");
+    setSelectedCategory(id);
+    setPickedTitle(title);
+    setSelectedDifficulty(null);
+    setBoardStep("difficulty");
+    setError(null);
+  };
+
   if (screen === "home") {
+    const difficultyTitle = QUIZ_DIFFICULTIES.find((item) => item.id === selectedDifficulty)?.title;
     return (
-      <div className="mx-auto flex min-h-[100dvh] max-w-5xl flex-col justify-center px-4 py-10">
-        <div className="rounded-3xl border border-violet-400/25 bg-gradient-to-b from-slate-900/95 to-indigo-950/90 p-8 shadow-2xl shadow-violet-900/40">
-          <h1 className="text-center text-4xl font-bold tracking-tight text-white">
-            International Games
-          </h1>
+      <div className="mx-auto flex min-h-[100dvh] max-w-6xl flex-col px-4 py-8 sm:py-10">
+        <h1 className="text-center text-4xl font-bold tracking-tight text-white sm:text-5xl">
+          International Games
+        </h1>
 
-          {storeWarning ? (
-            <p className="mt-4 rounded-xl border border-amber-500/40 bg-amber-950/40 px-3 py-2 text-xs text-amber-100">
-              {storeWarning}
-            </p>
-          ) : null}
+        {storeWarning ? (
+          <p className="mx-auto mt-4 max-w-3xl rounded-xl border border-amber-500/40 bg-amber-950/40 px-3 py-2 text-xs text-amber-100">
+            {storeWarning}
+          </p>
+        ) : null}
 
-          <div className="mt-8 space-y-8">
+        {boardStep === "board" ? (
+          <div className="mt-8 space-y-10">
             <section>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-200">Quiz</p>
-              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5 sm:gap-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-200/90">Quiz</p>
+              <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
                 {QUIZ_HOME.map((cat) => (
-                  <button
+                  <CoverTile
                     key={cat.id}
-                    type="button"
-                    onClick={() => {
-                      setPickedGame("quiz");
-                      setSelectedCategory(cat.id);
-                      setSelectedMode(null);
-                      setSelectedDifficulty(null);
-                    }}
-                    className={homeTileClass(selectedCategory === cat.id)}
-                  >
-                    {cat.title}
-                  </button>
+                    image={cat.image}
+                    title={cat.title}
+                    onClick={() => openQuiz(cat.id, cat.title)}
+                  />
                 ))}
               </div>
-              {selectedCategory ? (
-                <div className="mt-3 grid grid-cols-3 gap-2 sm:gap-3">
-                  {QUIZ_DIFFICULTIES.map((d) => (
-                    <button
-                      key={d.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedDifficulty(d.id);
-                        setSelectedMode(null);
-                      }}
-                      className={homeTileClass(selectedDifficulty === d.id)}
-                    >
-                      {d.title}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-              {selectedCategory && selectedDifficulty ? (
-                <div className="mt-3 grid gap-2 sm:grid-cols-2 sm:gap-3">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      void createRoom({
-                        mode: GAME_MODE_TAKE_TURNS,
-                        difficulty: selectedDifficulty,
-                        category: selectedCategory,
-                      })
-                    }
-                    className={homeTileClass(false)}
-                  >
-                    Play separate
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      void createRoom({
-                        mode: GAME_MODE_PLAY_TOGETHER,
-                        difficulty: selectedDifficulty,
-                        category: selectedCategory,
-                      })
-                    }
-                    className={homeTileClass(false)}
-                  >
-                    Play together
-                  </button>
-                </div>
-              ) : null}
             </section>
 
             <section>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-200">Games</p>
-              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-200/90">Games</p>
+              <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {GAME_TILES.map((tile) => (
-                  <button
+                  <CoverTile
                     key={tile.id}
-                    type="button"
+                    image={tile.image}
+                    title={tile.title}
                     onClick={() => {
                       if (tile.id === "millionaire") {
                         setPickedGame("millionaire");
-                        setSelectedMode(null);
+                        setPickedTitle(tile.title);
                         setSelectedCategory(null);
                         setSelectedDifficulty(null);
+                        setBoardStep("play");
+                        setError(null);
                         return;
                       }
                       const mode =
@@ -631,115 +610,161 @@ export function FunQuizClient() {
                             ? GAME_MODE_CATCHPHRASE
                             : GAME_MODE_BLOCKBUSTERS;
                       setPickedGame(tile.id);
-                      setSelectedMode(mode);
                       void createRoom({ mode });
                     }}
-                    className={homeTileClass(pickedGame === tile.id)}
-                  >
-                    {tile.title}
-                  </button>
+                  />
                 ))}
               </div>
-              {pickedGame === "millionaire" ? (
-                <div className="mt-3 grid gap-2 sm:grid-cols-2 sm:gap-3">
-                  <button
-                    type="button"
-                    onClick={() => void createRoom({ mode: GAME_MODE_SHARED_MILLIONAIRE })}
-                    className={homeTileClass(false)}
-                  >
-                    Play together
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void createRoom({ mode: GAME_MODE_PARALLEL_MILLIONAIRE })}
-                    className={homeTileClass(false)}
-                  >
-                    Play separate
-                  </button>
-                </div>
-              ) : null}
             </section>
 
             <section>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-200">Name That</p>
-              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-200/90">Name That</p>
+              <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {NAME_THAT_TILES.map((tile) => (
-                  <Link key={tile.id} href={tile.href ?? "/funquiz"} className={homeTileClass()}>
-                    {tile.title}
-                  </Link>
+                  <CoverTile key={tile.id} image={tile.image} title={tile.title} href={tile.href ?? "/funquiz"} />
                 ))}
               </div>
             </section>
 
             <section>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-200">Draw That</p>
-              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5 sm:gap-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-200/90">Draw That</p>
+              <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
                 {DRAW_THAT_TILES.map((tile) => (
-                  <Link key={tile.id} href={tile.href ?? "/funquiz"} className={homeTileClass()}>
-                    {tile.title}
-                  </Link>
+                  <CoverTile key={tile.id} image={tile.image} title={tile.title} href={tile.href ?? "/funquiz"} />
                 ))}
               </div>
             </section>
+
+            <div className="mx-auto w-full max-w-xl pb-6">
+              <div className="my-2 flex items-center gap-3 text-xs uppercase tracking-[0.18em] text-slate-500">
+                <span className="h-px flex-1 bg-white/10" />
+                or join with a code
+                <span className="h-px flex-1 bg-white/10" />
+              </div>
+              <label className="mt-4 block text-sm font-medium text-slate-200">
+                Room code
+                <input
+                  className="mt-2 w-full rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-center font-mono text-lg tracking-[0.35em] text-white uppercase outline-none focus:ring-2 focus:ring-amber-200/70"
+                  value={joinCode}
+                  onChange={(e) => setJoinCode(normalizeRoomCode(e.target.value))}
+                  onPaste={(e) => {
+                    e.preventDefault();
+                    setJoinCode(normalizeRoomCode(e.clipboardData.getData("text")));
+                  }}
+                  placeholder="ABC123"
+                  maxLength={18}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      void joinRoom();
+                    }
+                  }}
+                  inputMode="text"
+                  autoCapitalize="characters"
+                  autoCorrect="off"
+                  spellCheck={false}
+                />
+              </label>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={joinRoom}
+                className="mt-4 w-full rounded-2xl bg-white/10 py-3.5 text-sm font-semibold text-white ring-1 ring-white/15 transition hover:bg-white/15 disabled:opacity-60"
+              >
+                Join room
+              </button>
+            </div>
           </div>
-
-          <button
-            type="button"
-            disabled={busy || !selectedMode}
-            onClick={() => void createRoom()}
-            className="mt-6 w-full rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 py-3.5 text-sm font-semibold text-white shadow-lg shadow-violet-700/30 transition hover:brightness-110 disabled:opacity-60"
-          >
-            Create room
-          </button>
-
-          <div className="my-6 flex items-center gap-3 text-xs text-slate-500">
-            <span className="h-px flex-1 bg-white/10" />
-            or join with code
-            <span className="h-px flex-1 bg-white/10" />
-          </div>
-
-          <label className="block text-sm font-medium text-slate-200">
-            Room code
-            <input
-              className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-center font-mono text-lg tracking-[0.35em] text-white uppercase outline-none focus:ring-2 focus:ring-violet-400/60"
-              value={joinCode}
-              onChange={(e) => setJoinCode(normalizeRoomCode(e.target.value))}
-              onPaste={(e) => {
-                e.preventDefault();
-                const text = e.clipboardData.getData("text");
-                setJoinCode(normalizeRoomCode(text));
-              }}
-              placeholder="ABC123"
-              maxLength={18}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  void joinRoom();
-                }
-              }}
-              inputMode="text"
-              autoCapitalize="characters"
-              autoCorrect="off"
-              spellCheck={false}
-            />
-          </label>
-
-          <button
-            type="button"
-            disabled={busy}
-            onClick={joinRoom}
-            className="mt-4 w-full rounded-xl border border-violet-400/50 bg-violet-950/50 py-3.5 text-sm font-semibold text-violet-100 transition hover:bg-violet-900/60 disabled:opacity-60"
-          >
-            Join room
-          </button>
-
-          {error ? (
-            <p className="mt-4 text-center text-sm text-red-300" role="alert">
-              {error}
+        ) : (
+          <div className="mx-auto mt-8 w-full max-w-3xl">
+            <button
+              type="button"
+              onClick={goBack}
+              className="rounded-full border border-white/15 px-4 py-1.5 text-sm text-slate-200 transition hover:bg-white/10"
+            >
+              Back
+            </button>
+            <p className="mt-6 text-sm font-medium text-amber-200/90">
+              {pickedTitle}
+              {boardStep === "play" && difficultyTitle ? ` · ${difficultyTitle}` : ""}
             </p>
-          ) : null}
-          {account ? <FriendsClub onLogout={() => setAccount(null)} /> : null}
-        </div>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+              {boardStep === "difficulty" ? "Choose a difficulty" : "Choose how to play"}
+            </h2>
+            <div className={`mt-6 grid gap-4 ${boardStep === "difficulty" ? "" : "sm:grid-cols-2"}`}>
+              {boardStep === "difficulty"
+                ? QUIZ_DIFFICULTIES.map((item) => (
+                    <WideChoice
+                      key={item.id}
+                      image={DIFFICULTY_ART[item.id].image}
+                      title={item.title}
+                      detail={DIFFICULTY_ART[item.id].detail}
+                      onClick={() => {
+                        setSelectedDifficulty(item.id);
+                        setBoardStep("play");
+                        setError(null);
+                      }}
+                    />
+                  ))
+                : null}
+              {boardStep === "play" && pickedGame === "quiz" && selectedDifficulty && selectedCategory ? (
+                <>
+                  <WideChoice
+                    image="/funquiz/covers/cover-separate.jpg"
+                    title="Play separate"
+                    detail="Take turns and keep your own score."
+                    disabled={busy}
+                    onClick={() =>
+                      void createRoom({
+                        mode: GAME_MODE_TAKE_TURNS,
+                        difficulty: selectedDifficulty,
+                        category: selectedCategory,
+                      })
+                    }
+                  />
+                  <WideChoice
+                    image="/funquiz/covers/cover-together.jpg"
+                    title="Play together"
+                    detail="Answer as one team and share the score."
+                    disabled={busy}
+                    onClick={() =>
+                      void createRoom({
+                        mode: GAME_MODE_PLAY_TOGETHER,
+                        difficulty: selectedDifficulty,
+                        category: selectedCategory,
+                      })
+                    }
+                  />
+                </>
+              ) : null}
+              {boardStep === "play" && pickedGame === "millionaire" ? (
+                <>
+                  <WideChoice
+                    image="/funquiz/covers/cover-together.jpg"
+                    title="Play together"
+                    detail="Share one hot seat and climb the prize ladder."
+                    disabled={busy}
+                    onClick={() => void createRoom({ mode: GAME_MODE_SHARED_MILLIONAIRE })}
+                  />
+                  <WideChoice
+                    image="/funquiz/covers/cover-separate.jpg"
+                    title="Play separate"
+                    detail="Each player runs their own ladder."
+                    disabled={busy}
+                    onClick={() => void createRoom({ mode: GAME_MODE_PARALLEL_MILLIONAIRE })}
+                  />
+                </>
+              ) : null}
+            </div>
+          </div>
+        )}
+
+        {error ? (
+          <p className="mt-4 text-center text-sm text-red-300" role="alert">
+            {error}
+          </p>
+        ) : null}
+        {boardStep === "board" && account ? <FriendsClub onLogout={() => setAccount(null)} /> : null}
       </div>
     );
   }
