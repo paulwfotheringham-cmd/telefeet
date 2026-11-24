@@ -2,7 +2,7 @@ import {
   QUIZ_CATEGORY_GENERAL_KNOWLEDGE,
   type QuizCategoryId,
 } from "./categories";
-import type { QuizDifficulty } from "./difficulties";
+import { QUIZ_DIFFICULTY_EASY, QUIZ_DIFFICULTY_INTERMEDIATE, type QuizDifficulty } from "./difficulties";
 import { QUESTIONS_PER_GAME } from "./constants";
 import { QUIZ_QUESTIONS } from "./question-bank";
 import type { GeneralKnowledgeSubject } from "./question-bank/types";
@@ -29,20 +29,26 @@ function shuffleInPlace<T>(arr: T[]): T[] {
   return arr;
 }
 
+/** Easy uses the familiar question set. Several subjects only have 50 of those, which a full game needs. */
+function bankDifficulty(difficulty: QuizDifficulty): QuizDifficulty {
+  return difficulty === QUIZ_DIFFICULTY_EASY ? QUIZ_DIFFICULTY_INTERMEDIATE : difficulty;
+}
+
 function eligibleForCategoryAndDifficulty(
   categoryId: QuizCategoryId,
   difficulty: QuizDifficulty,
 ): number[] {
+  const stored = bankDifficulty(difficulty);
   if (categoryId === QUIZ_CATEGORY_GENERAL_KNOWLEDGE) {
     return QUIZ_QUESTIONS.filter(
       (q) =>
-        q.difficulty === difficulty &&
+        q.difficulty === stored &&
         q.generalKnowledgeSubjects &&
         q.generalKnowledgeSubjects.length > 0,
     ).map((q) => q.id);
   }
   return QUIZ_QUESTIONS.filter(
-    (q) => q.categoryId === categoryId && q.difficulty === difficulty,
+    (q) => q.categoryId === categoryId && q.difficulty === stored,
   ).map((q) => q.id);
 }
 
@@ -122,16 +128,19 @@ export function countQuestionsByCategoryAndDifficulty(): Record<
   const out = {} as Record<string, Record<QuizDifficulty, number>>;
   for (const q of QUIZ_QUESTIONS) {
     if (!out[q.categoryId]) {
-      out[q.categoryId] = { intermediate: 0, hard: 0 };
+      out[q.categoryId] = { easy: 0, intermediate: 0, hard: 0 };
     }
     out[q.categoryId]![q.difficulty]++;
   }
-  const gk = { intermediate: 0, hard: 0 };
+  const gk = { easy: 0, intermediate: 0, hard: 0 };
   for (const q of QUIZ_QUESTIONS) {
     if (q.generalKnowledgeSubjects && q.generalKnowledgeSubjects.length > 0) {
       gk[q.difficulty]++;
     }
   }
   out[QUIZ_CATEGORY_GENERAL_KNOWLEDGE] = gk;
+  for (const row of Object.values(out)) {
+    row.easy = row.intermediate;
+  }
   return out;
 }

@@ -12,9 +12,9 @@ import { addPlayer, createRoom, startGame } from "../lib/funquiz/game-logic";
 import { getQuestionByBankId } from "../lib/funquiz/questions";
 
 function runDifficultyIds() {
+  assert.ok(isQuizDifficulty("easy"));
   assert.ok(isQuizDifficulty("intermediate"));
   assert.ok(isQuizDifficulty("hard"));
-  assert.ok(!isQuizDifficulty("easy"));
 }
 
 function runNoCrossDifficultyMix() {

@@ -1,7 +1,9 @@
+export const QUIZ_DIFFICULTY_EASY = "easy" as const;
 export const QUIZ_DIFFICULTY_INTERMEDIATE = "intermediate" as const;
 export const QUIZ_DIFFICULTY_HARD = "hard" as const;
 
 export type QuizDifficulty =
+  | typeof QUIZ_DIFFICULTY_EASY
   | typeof QUIZ_DIFFICULTY_INTERMEDIATE
   | typeof QUIZ_DIFFICULTY_HARD;
 
@@ -10,6 +12,11 @@ export const QUIZ_DIFFICULTIES: {
   title: string;
   description: string;
 }[] = [
+  {
+    id: QUIZ_DIFFICULTY_EASY,
+    title: "Easy",
+    description: "Familiar facts and well-known answers.",
+  },
   {
     id: QUIZ_DIFFICULTY_INTERMEDIATE,
     title: "Intermediate",

@@ -64,7 +64,10 @@ function runCategoryQuestionSets() {
       assert.equal(ids.length, QUESTIONS_PER_GAME);
       assert.equal(new Set(ids).size, QUESTIONS_PER_GAME);
       for (const id of ids) {
-        assert.equal(getQuestionByBankId(id).difficulty, diff.id);
+        assert.equal(
+          getQuestionByBankId(id).difficulty,
+          diff.id === "easy" ? QUIZ_DIFFICULTY_INTERMEDIATE : diff.id,
+        );
       }
       if (cat.id === QUIZ_CATEGORY_GENERAL_KNOWLEDGE) {
         const subjects = new Set<GeneralKnowledgeSubject>();
