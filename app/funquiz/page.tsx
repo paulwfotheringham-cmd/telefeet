@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { FunQuizClient } from "./funquiz-client";
 
 export const metadata: Metadata = {
-  title: "Fun Quiz | Head-to-head general knowledge",
+  title: "International Games",
   description:
     "Two-player multiplayer general knowledge quiz with room codes — science, geography, history, and more.",
 };

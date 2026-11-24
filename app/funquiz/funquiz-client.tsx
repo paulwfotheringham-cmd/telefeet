@@ -530,15 +530,9 @@ export function FunQuizClient() {
     return (
       <div className="mx-auto flex min-h-[100dvh] max-w-5xl flex-col justify-center px-4 py-10">
         <div className="rounded-3xl border border-violet-400/25 bg-gradient-to-b from-slate-900/95 to-indigo-950/90 p-8 shadow-2xl shadow-violet-900/40">
-          <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-violet-300">
-            Two-player quiz
-          </p>
-          <h1 className="mt-3 text-center font-bold tracking-tight text-white text-4xl">
-            Fun Quiz
+          <h1 className="text-center text-4xl font-bold tracking-tight text-white">
+            International Games
           </h1>
-          <p className="mt-3 text-center text-sm leading-relaxed text-slate-300">
-            Pick a quiz subject, then Easy, Intermediate, or Hard, then play separate or together.
-          </p>
 
           {storeWarning ? (
             <p className="mt-4 rounded-xl border border-amber-500/40 bg-amber-950/40 px-3 py-2 text-xs text-amber-100">
@@ -744,7 +738,7 @@ export function FunQuizClient() {
               {error}
             </p>
           ) : null}
-          {account ? <FriendsClub account={account} onLogout={() => setAccount(null)} /> : null}
+          {account ? <FriendsClub onLogout={() => setAccount(null)} /> : null}
         </div>
       </div>
     );
