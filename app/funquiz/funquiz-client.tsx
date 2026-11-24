@@ -527,7 +527,7 @@ export function FunQuizClient() {
             Fun Quiz
           </h1>
           <p className="mt-3 text-center text-sm leading-relaxed text-slate-300">
-            Pick a game. Take turns and Play together appear after you choose Quiz.
+            Pick Quiz for Geography, Space, Military, and the other subjects.
           </p>
 
           {storeWarning ? (
@@ -583,6 +583,22 @@ export function FunQuizClient() {
 
           {pickedGame === "quiz" ? (
             <>
+              <div className="mt-3 grid grid-cols-4 gap-2 sm:gap-3">
+                {QUIZ_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setSelectedCategory(cat.id)}
+                    className={`flex min-h-24 items-center justify-center rounded-2xl border bg-black/30 p-2 text-center text-xs font-semibold leading-tight text-violet-100 transition sm:min-h-28 sm:p-3 sm:text-sm ${
+                      selectedCategory === cat.id
+                        ? "border-violet-300 ring-2 ring-white"
+                        : "border-violet-400/40 hover:bg-violet-950/40"
+                    }`}
+                  >
+                    {cat.title}
+                  </button>
+                ))}
+              </div>
               <p className="mt-6 text-sm font-medium text-slate-200">Game mode</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <button
@@ -650,7 +666,7 @@ export function FunQuizClient() {
             </div>
           ) : null}
 
-          {selectedMode && !isStandaloneGameMode(selectedMode) ? (
+          {pickedGame === "quiz" || (selectedMode && !isStandaloneGameMode(selectedMode)) ? (
             <>
               <p className="mt-6 text-sm font-medium text-slate-200">Difficulty</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -658,10 +674,7 @@ export function FunQuizClient() {
                   <button
                     key={d.id}
                     type="button"
-                    onClick={() => {
-                      setSelectedDifficulty(d.id);
-                      setSelectedCategory(null);
-                    }}
+                    onClick={() => setSelectedDifficulty(d.id)}
                     className={`rounded-xl border p-3 text-left transition ${
                       selectedDifficulty === d.id
                         ? "border-violet-400 bg-violet-950/50 ring-1 ring-violet-400/40"
@@ -676,7 +689,7 @@ export function FunQuizClient() {
             </>
           ) : null}
 
-          {selectedMode && !isStandaloneGameMode(selectedMode) && selectedDifficulty ? (
+          {selectedMode && !isStandaloneGameMode(selectedMode) && selectedDifficulty && pickedGame !== "quiz" ? (
             <>
               <p className="mt-6 text-sm font-medium text-slate-200">Choose your quiz</p>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
