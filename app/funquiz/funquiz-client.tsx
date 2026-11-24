@@ -283,7 +283,8 @@ export function FunQuizClient() {
     const difficulty = choice ? (choice.difficulty ?? QUIZ_DIFFICULTY_INTERMEDIATE) : selectedDifficulty;
     const category = choice ? (choice.category ?? QUIZ_CATEGORY_GENERAL_KNOWLEDGE) : selectedCategory;
     setError(null);
-    if (!name.trim()) {
+    const playerName = (account?.name || name).trim();
+    if (!playerName) {
       setError("Enter your name first.");
       return;
     }
@@ -302,7 +303,7 @@ export function FunQuizClient() {
     }
     const activePlayerId = resolvePlayerId();
     if (!playerId) setPlayerId(activePlayerId);
-    persistName(name.trim());
+    persistName(playerName);
     setBusy(true);
     try {
       const res = await fetch("/api/funquiz/room", {
@@ -310,7 +311,7 @@ export function FunQuizClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           playerId: activePlayerId,
-          playerName: name.trim(),
+          playerName,
           gameMode: mode,
           quizDifficulty: isStandalone ? QUIZ_DIFFICULTY_INTERMEDIATE : difficulty,
           quizCategory: isStandalone ? QUIZ_CATEGORY_GENERAL_KNOWLEDGE : category,
@@ -331,7 +332,8 @@ export function FunQuizClient() {
 
   const joinRoom = async () => {
     setError(null);
-    if (!name.trim()) {
+    const playerName = (account?.name || name).trim();
+    if (!playerName) {
       setError("Enter your name first.");
       return;
     }
@@ -346,7 +348,7 @@ export function FunQuizClient() {
     }
     const activePlayerId = resolvePlayerId();
     if (!playerId) setPlayerId(activePlayerId);
-    persistName(name.trim());
+    persistName(playerName);
     setBusy(true);
     try {
       const res = await fetch("/api/funquiz/room/join", {
@@ -355,7 +357,7 @@ export function FunQuizClient() {
         body: JSON.stringify({
           code: normalizedJoin,
           playerId: activePlayerId,
-          playerName: name.trim(),
+          playerName,
         }),
       });
       const state = await parseState(res);
@@ -365,7 +367,7 @@ export function FunQuizClient() {
       }
     } catch (e) {
       const message = e instanceof Error ? e.message : "Could not join room";
-      if (await openRoomByCode(normalizedJoin, name, "/funquiz")) return;
+      if (await openRoomByCode(normalizedJoin, playerName, "/funquiz")) return;
       setError(message);
     } finally {
       setBusy(false);
@@ -528,33 +530,15 @@ export function FunQuizClient() {
     return (
       <div className="mx-auto flex min-h-[100dvh] max-w-5xl flex-col justify-center px-4 py-10">
         <div className="rounded-3xl border border-violet-400/25 bg-gradient-to-b from-slate-900/95 to-indigo-950/90 p-8 shadow-2xl shadow-violet-900/40">
-          <p className="text-center text-xs font-semibold uppercase tracking-[0.2em] text-violet-300">
-            Two-player quiz
-          </p>
-          <h1 className="mt-3 text-center font-bold tracking-tight text-white text-4xl">
-            Fun Quiz
+          <h1 className="text-center text-4xl font-bold tracking-tight text-white">
+            International Games
           </h1>
-          <p className="mt-3 text-center text-sm leading-relaxed text-slate-300">
-            Pick a quiz subject, then Easy, Intermediate, or Hard, then play separate or together.
-          </p>
 
           {storeWarning ? (
             <p className="mt-4 rounded-xl border border-amber-500/40 bg-amber-950/40 px-3 py-2 text-xs text-amber-100">
               {storeWarning}
             </p>
           ) : null}
-
-          <label className="mt-6 block text-sm font-medium text-slate-200">
-            Your name
-            <input
-              className="mt-2 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-white outline-none ring-violet-400/0 transition focus:ring-2 focus:ring-violet-400/60"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Enter your name"
-              maxLength={24}
-              autoComplete="nickname"
-            />
-          </label>
 
           <div className="mt-8 space-y-8">
             <section>
@@ -754,7 +738,7 @@ export function FunQuizClient() {
               {error}
             </p>
           ) : null}
-          {account ? <FriendsClub account={account} onLogout={() => setAccount(null)} /> : null}
+          {account ? <FriendsClub onLogout={() => setAccount(null)} /> : null}
         </div>
       </div>
     );
