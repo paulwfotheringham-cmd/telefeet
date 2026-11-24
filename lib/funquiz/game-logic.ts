@@ -521,39 +521,54 @@ function submitPlayTogether(room: QuizRoom, playerId: string, choiceRaw: unknown
     throw new Error("Only the room creator can submit answers in Play Together");
   }
   if (hasLogForTogetherQuestion(room, room.questionIndex)) {
-    return room;
+    // Answer already scored — never leave the client on a locked question screen.
+    if (room.phase === "reveal") {
+      return room;
+    }
+    return {
+      ...room,
+      phase: "reveal",
+      revealStartedAt: room.revealStartedAt ?? Date.now(),
+      updatedAt: Date.now(),
+    };
   }
   if (room.phase !== "question") {
     throw new Error("Not accepting answers right now");
   }
   const host = room.players.find((p) => p.id === room.hostId);
   if (!host) throw new Error("Host not in room");
+  // Orphan player.answer with no log locks the UI; clear and accept this tap.
+  let working = room;
   if (host.answer !== null) {
-    return room;
+    working = {
+      ...room,
+      players: room.players.map((player) => ({ ...player, answer: null })),
+      updatedAt: Date.now(),
+    };
   }
 
-  const bankId = room.questionOrder[room.questionIndex]!;
+  const bankId = working.questionOrder[working.questionIndex]!;
   const graded = gradeAnswer(bankId, choiceFromSubmission(bankId, choiceRaw));
   const entry: AnswerLogEntry = {
-    sessionId: room.sessionId,
-    turnIndex: room.questionIndex,
+    sessionId: working.sessionId,
+    turnIndex: working.questionIndex,
     bankId,
     playerId,
     choiceIndex: graded.choiceIndex,
     correct: graded.correct,
   };
-  const jointScore = room.jointScore + (graded.correct ? 1 : 0);
-  const players = room.players.map((p) => ({
+  const jointScore = working.jointScore + (graded.correct ? 1 : 0);
+  const players = working.players.map((p) => ({
     ...p,
-    answer: p.id === room.hostId ? persistedPlayerAnswer(graded.question, graded.choiceIndex) : null,
+    answer: p.id === working.hostId ? persistedPlayerAnswer(graded.question, graded.choiceIndex) : null,
     score: jointScore,
   }));
 
   return {
-    ...room,
+    ...working,
     players,
     jointScore,
-    answerLog: [...room.answerLog, entry],
+    answerLog: [...working.answerLog, entry],
     phase: "reveal",
     revealStartedAt: Date.now(),
     updatedAt: Date.now(),
@@ -661,6 +676,85 @@ function advanceFromReveal(room: QuizRoom): QuizRoom {
   return advanceFromRevealPlayTogether(room);
 }
 
+/**
+ * Player answer rows and room phase can drift apart after a partial save.
+ * A shared quiz then sits on the question screen with a locked choice and no way forward.
+ */
+function healSharedQuestionState(room: QuizRoom, now: number): QuizRoom {
+  if (isClosestRoom(room) || !isSharedQuizMode(room.gameMode) || room.phase !== "question") {
+    return room;
+  }
+  const host = room.players.find((player) => player.id === room.hostId);
+  if (!host || host.answer === null) {
+    return room;
+  }
+  if (hasLogForTogetherQuestion(room, room.questionIndex)) {
+    return {
+      ...room,
+      phase: "reveal",
+      revealStartedAt: room.revealStartedAt ?? now,
+      updatedAt: now,
+    };
+  }
+  return {
+    ...room,
+    players: room.players.map((player) => ({ ...player, answer: null })),
+    updatedAt: now,
+  };
+}
+
+function healClosestQuestionState(room: QuizRoom, now: number): QuizRoom {
+  if (!isClosestRoom(room) || room.phase !== "question") {
+    return room;
+  }
+  const logs = closestLogs(room, room.questionIndex);
+  if (logs.length === 0) {
+    const answered = room.players.some((player) => player.answer !== null);
+    if (!answered) return room;
+    return {
+      ...room,
+      players: room.players.map((player) => ({ ...player, answer: null })),
+      updatedAt: now,
+    };
+  }
+  if (logs.length < room.players.length) {
+    return room;
+  }
+  return scoreClosestBatch(room, room.questionIndex);
+}
+
+/**
+ * Host escape hatch: heal a locked question, show reveal if needed, or skip the
+ * reveal timer and move to the next question.
+ */
+export function continueFromReveal(room: QuizRoom, playerId: string, now = Date.now()): QuizRoom {
+  if (playerId !== room.hostId) {
+    throw new Error("Only the room creator can continue");
+  }
+  const ticked = tickRoom(room, now);
+  if (ticked.phase === "question") {
+    const host = ticked.players.find((player) => player.id === ticked.hostId);
+    // Still locked after heal — force-clear so single player can tap again.
+    if (host && host.answer !== null && isSharedQuizMode(ticked.gameMode) && !isClosestRoom(ticked)) {
+      return {
+        ...ticked,
+        players: ticked.players.map((player) => ({ ...player, answer: null })),
+        updatedAt: now,
+      };
+    }
+    return ticked;
+  }
+  if (ticked.phase !== "reveal") {
+    return ticked;
+  }
+  // From a locked question that healed into reveal, pause on the reveal screen
+  // once so the player sees the answer. A second Continue / timer advances.
+  if (room.phase === "question") {
+    return ticked;
+  }
+  return advanceFromReveal(ticked);
+}
+
 export function tickRoom(room: QuizRoom, now = Date.now()): QuizRoom {
   if (isMillionaireRoom(room)) {
     return millionaireTickRoom(room, now);
@@ -671,12 +765,17 @@ export function tickRoom(room: QuizRoom, now = Date.now()): QuizRoom {
   if (isBlockbustersRoom(room)) {
     return blockbustersTickRoom(room, now);
   }
-  if (room.phase === "reveal" && room.revealStartedAt !== null) {
-    if (now - room.revealStartedAt >= REVEAL_MS) {
-      return advanceFromReveal(room);
+
+  let current = healSharedQuestionState(room, now);
+  current = healClosestQuestionState(current, now);
+
+  if (current.phase === "reveal" && current.revealStartedAt !== null) {
+    const startedAt = Number(current.revealStartedAt);
+    if (Number.isFinite(startedAt) && now - startedAt >= REVEAL_MS) {
+      return advanceFromReveal(current);
     }
   }
-  return room;
+  return current;
 }
 
 function computeWinners(players: QuizPlayer[]): string[] {

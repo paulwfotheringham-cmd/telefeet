@@ -34,7 +34,9 @@ export async function GET(request: Request, { params }: Params) {
         if (!latest) {
           return NextResponse.json({ error: "Room not found" }, { status: 404 });
         }
-        room = latest;
+        // Still advance the copy we return so a busy room does not leave the
+        // player staring at a finished reveal or a locked answer.
+        room = tickRoom(latest);
       }
     }
     return NextResponse.json(
