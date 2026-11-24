@@ -12,7 +12,7 @@ export default function PodcastsPage() {
       <LinkLibrary
         kind="podcast"
         title="Podcasts"
-        intro="Add a podcast. Enter the name, the web address, and a short description."
+        intro="Every saved podcast, and who added it."
       />
     </div>
   );

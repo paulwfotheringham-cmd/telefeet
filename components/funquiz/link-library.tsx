@@ -31,6 +31,7 @@ export function LinkLibrary({
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [adding, setAdding] = useState(false);
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/club/links?kind=${kind}`, { headers: clubAuthHeaders() });
@@ -71,6 +72,7 @@ export function LinkLibrary({
       setName("");
       setUrl("");
       setDescription("");
+      setAdding(false);
       setItems((current) => [data.item!, ...current.filter((item) => item.id !== data.item!.id)]);
     } catch {
       setError("Could not save that.");
@@ -84,9 +86,48 @@ export function LinkLibrary({
       <Link href="/funquiz" className="text-sm font-medium text-slate-300 hover:text-white">
         Back to games
       </Link>
-      <h1 className="mt-6 text-4xl font-bold tracking-tight text-white">{title}</h1>
-      <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-300">{intro}</p>
+      <div className="mt-6 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-4xl font-bold tracking-tight text-white">{title}</h1>
+          <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-300">{intro}</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setAdding((open) => !open);
+            setError("");
+          }}
+          className="rounded-full border border-amber-300/40 bg-amber-400/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-amber-100 hover:bg-amber-400/20"
+        >
+          {adding ? "Close" : "Add new"}
+        </button>
+      </div>
 
+      <section className="mt-8">
+        <h2 className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-200/90">Saved</h2>
+        {!loaded ? <p className="mt-4 text-sm text-slate-400">Loading…</p> : null}
+        {loaded && items.length === 0 ? <p className="mt-4 text-sm text-slate-400">Nothing saved yet.</p> : null}
+        {items.length > 0 ? (
+        <ul className="mt-4 divide-y divide-white/10 overflow-hidden rounded-2xl border border-white/10 bg-slate-950/70">
+          {items.map((item) => (
+            <li key={item.id} className="px-4 py-4 sm:px-5">
+              <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                <a href={item.url} target="_blank" rel="noreferrer" className="text-lg font-semibold text-white underline decoration-white/30 underline-offset-4 hover:decoration-white">
+                  {item.name}
+                </a>
+                <p className="text-sm text-amber-100">
+                  Saved by <span className="font-medium">{item.email}</span>
+                </p>
+              </div>
+              {item.description ? <p className="mt-2 text-sm leading-relaxed text-slate-200">{item.description}</p> : null}
+              <p className="mt-2 break-all text-xs text-slate-500">{item.url}</p>
+            </li>
+          ))}
+        </ul>
+        ) : null}
+      </section>
+
+      {adding ? (
       <form onSubmit={(event) => void submit(event)} className="mt-8 rounded-3xl border border-white/10 bg-slate-900/70 p-5 sm:p-6">
         <label className="block text-sm font-medium text-slate-200">
           Name
@@ -131,28 +172,7 @@ export function LinkLibrary({
           {busy ? "Saving…" : "Save"}
         </button>
       </form>
-
-      <section className="mt-8">
-        <h2 className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-200/90">Saved</h2>
-        {!loaded ? <p className="mt-4 text-sm text-slate-400">Loading…</p> : null}
-        {loaded && items.length === 0 ? <p className="mt-4 text-sm text-slate-400">Nothing saved yet.</p> : null}
-        <ul className="mt-4 space-y-3">
-          {items.map((item) => (
-            <li key={item.id} className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
-              <a href={item.url} target="_blank" rel="noreferrer" className="text-lg font-semibold text-white underline decoration-white/30 underline-offset-4 hover:decoration-white">
-                {item.name}
-              </a>
-              {item.description ? <p className="mt-2 text-sm leading-relaxed text-slate-200">{item.description}</p> : null}
-              <p className="mt-3 break-all text-xs text-slate-400">{item.url}</p>
-              <p className="mt-1 text-xs text-slate-500">
-                {item.email}
-                {" · "}
-                {new Date(item.createdAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
-              </p>
-            </li>
-          ))}
-        </ul>
-      </section>
+      ) : null}
     </div>
   );
 }
