@@ -11,7 +11,8 @@ import {
   QUESTIONS_PER_GAME,
   REVEAL_MS,
   ROOM_CODE_LENGTH,
-  TAKE_TURNS_QUESTIONS_PER_PLAYER,
+  hostQuestionShare,
+  type QuestionCount,
 } from "./constants";
 import {
   catchphraseTickRoom,
@@ -100,6 +101,7 @@ export function allocateQuestionsForGame(
   quizCategoryId: QuizCategoryId,
   quizDifficulty: QuizDifficulty,
   excludeBankIds: number[] = [],
+  questionCount: QuestionCount = QUESTIONS_PER_GAME,
 ): {
   questionOrder: number[];
   hostQuestionOrder: number[];
@@ -109,13 +111,11 @@ export function allocateQuestionsForGame(
     quizCategoryId,
     quizDifficulty,
     excludeBankIds,
+    questionCount,
   );
-  const hostQuestionOrder = shuffleInPlace(
-    questionOrder.slice(0, TAKE_TURNS_QUESTIONS_PER_PLAYER),
-  );
-  const guestQuestionOrder = shuffleInPlace(
-    questionOrder.slice(TAKE_TURNS_QUESTIONS_PER_PLAYER, QUESTIONS_PER_GAME),
-  );
+  const hostShare = hostQuestionShare(questionCount);
+  const hostQuestionOrder = shuffleInPlace(questionOrder.slice(0, hostShare));
+  const guestQuestionOrder = shuffleInPlace(questionOrder.slice(hostShare, questionCount));
   return { questionOrder, hostQuestionOrder, guestQuestionOrder };
 }
 
@@ -133,6 +133,7 @@ export function createRoom(
   gameMode: GameMode,
   quizCategoryId: QuizCategoryId,
   quizDifficulty: QuizDifficulty,
+  questionCount: QuestionCount = QUESTIONS_PER_GAME,
 ): QuizRoom {
   const now = Date.now();
   return {
@@ -141,6 +142,7 @@ export function createRoom(
     gameMode,
     quizCategoryId,
     quizDifficulty,
+    questionCount,
     sessionId: newSessionId(),
     phase: "lobby",
     questionIndex: 0,
@@ -283,6 +285,7 @@ export function startGame(room: QuizRoom, playerId: string): QuizRoom {
     room.quizCategoryId,
     room.quizDifficulty,
     exclude,
+    room.questionCount,
   );
   const guestId = guestPlayerId(room);
   if (!solo && !guestId) {
@@ -319,6 +322,7 @@ export function resetRoomForNewGame(
   gameMode: GameMode,
   quizCategoryId: QuizCategoryId,
   quizDifficulty: QuizDifficulty,
+  questionCount: QuestionCount = room.questionCount,
 ): QuizRoom {
   if (playerId !== room.hostId) {
     throw new Error("Only the host can start a new game");
@@ -336,6 +340,7 @@ export function resetRoomForNewGame(
     gameMode,
     quizCategoryId,
     quizDifficulty,
+    questionCount,
     sessionId: newSessionId(),
     phase: "lobby",
     questionIndex: 0,
@@ -575,7 +580,7 @@ function advanceFromRevealTakeTurns(room: QuizRoom): QuizRoom {
   const nextTurn = room.turnIndex + 1;
   const clearedPlayers = room.players.map((p) => ({ ...p, answer: null }));
 
-  if (nextTurn >= QUESTIONS_PER_GAME) {
+  if (nextTurn >= room.questionCount) {
     return {
       ...room,
       phase: "finished",
@@ -602,7 +607,7 @@ function advanceFromRevealTakeTurns(room: QuizRoom): QuizRoom {
 
 function advanceFromRevealPlayTogether(room: QuizRoom): QuizRoom {
   const nextIndex = room.questionIndex + 1;
-  if (nextIndex >= QUESTIONS_PER_GAME) {
+  if (nextIndex >= room.questionCount) {
     return {
       ...room,
       phase: "finished",
@@ -624,7 +629,7 @@ function advanceFromRevealPlayTogether(room: QuizRoom): QuizRoom {
 function advanceClosest(room: QuizRoom): QuizRoom {
   const nextIndex = room.questionIndex + 1;
   const clearedPlayers = room.players.map((p) => ({ ...p, answer: null }));
-  if (nextIndex >= QUESTIONS_PER_GAME) {
+  if (nextIndex >= room.questionCount) {
     return {
       ...room,
       phase: "finished",
@@ -717,7 +722,7 @@ function currentBankId(room: QuizRoom): number | null {
     return null;
   }
   if (room.gameMode === GAME_MODE_TAKE_TURNS) {
-    if (room.turnIndex >= QUESTIONS_PER_GAME) return null;
+    if (room.turnIndex >= room.questionCount) return null;
     if (room.phase === "question" || room.phase === "reveal") {
       return bankIdForTakeTurn(room, room.turnIndex);
     }
@@ -898,7 +903,7 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
       quizDifficultyTitle: difficultyTitle(room.quizDifficulty),
       phase: room.phase,
       questionIndex: room.questionIndex,
-      totalQuestions: QUESTIONS_PER_GAME,
+      totalQuestions: room.questionCount,
       turnIndex: room.turnIndex,
       activePlayerId: room.activePlayerId,
       isYourTurn: false,
@@ -1047,7 +1052,7 @@ export function toClientState(room: QuizRoom, viewerId: string): ClientRoomState
     quizDifficultyTitle: difficultyTitle(room.quizDifficulty),
     phase: room.phase,
     questionIndex: room.questionIndex,
-    totalQuestions: QUESTIONS_PER_GAME,
+    totalQuestions: room.questionCount,
     turnIndex: room.turnIndex,
     activePlayerId: room.activePlayerId,
     isYourTurn,

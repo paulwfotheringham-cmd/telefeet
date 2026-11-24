@@ -145,7 +145,7 @@ function readPlayerId(): string {
 
 
 type FunQuizTile = { id: string; title: string; href?: string; image: string };
-type BoardStep = "board" | "difficulty" | "play";
+type BoardStep = "board" | "difficulty" | "play" | "length";
 
 const QUIZ_HOME: { id: QuizCategoryId; title: string; image: string }[] = [
   { id: QUIZ_CATEGORY_GENERAL_KNOWLEDGE, title: "General Knowledge", image: "/funquiz/covers/cover-general-knowledge.jpg" },
@@ -259,7 +259,8 @@ export function FunQuizClient() {
   const [playerId, setPlayerId] = useState(readPlayerId);
   const [name, setName] = useState("");
   const [joinCode, setJoinCode] = useState("");
-  const [selectedMode] = useState<GameMode | null>(null);
+  const [pendingMode, setPendingMode] = useState<GameMode | null>(null);
+  const [newGameCount, setNewGameCount] = useState<25 | 50>(50);
   const [pickedGame, setPickedGame] = useState<string | null>(null);
   const [selectedDifficulty, setSelectedDifficulty] = useState<QuizDifficulty | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<QuizCategoryId | null>(null);
@@ -364,8 +365,9 @@ export function FunQuizClient() {
     mode: GameMode;
     difficulty?: QuizDifficulty | null;
     category?: QuizCategoryId | null;
+    questionCount?: 25 | 50;
   }) => {
-    const mode = choice?.mode ?? selectedMode;
+    const mode = choice?.mode ?? pendingMode;
     const difficulty = choice ? (choice.difficulty ?? QUIZ_DIFFICULTY_INTERMEDIATE) : selectedDifficulty;
     const category = choice ? (choice.category ?? QUIZ_CATEGORY_GENERAL_KNOWLEDGE) : selectedCategory;
     setError(null);
@@ -397,6 +399,7 @@ export function FunQuizClient() {
           gameMode: mode,
           quizDifficulty: isStandalone ? QUIZ_DIFFICULTY_INTERMEDIATE : difficulty,
           quizCategory: isStandalone ? QUIZ_CATEGORY_GENERAL_KNOWLEDGE : category,
+          questionCount: choice?.questionCount ?? 50,
         }),
       });
       const state = await parseState(res);
@@ -503,6 +506,7 @@ export function FunQuizClient() {
           gameMode: roomState.gameMode,
           quizCategory: roomState.quizCategoryId,
           quizDifficulty: roomState.quizDifficulty,
+          questionCount: roomState.totalQuestions === 25 ? 25 : 50,
         }),
       });
       const state = await parseState(res);
@@ -527,6 +531,7 @@ export function FunQuizClient() {
           gameMode: newGameMode,
           quizDifficulty: newGameDifficulty,
           quizCategory: newGameCategory,
+          questionCount: newGameCount,
         }),
       });
       const state = await parseState(res);
@@ -570,8 +575,14 @@ export function FunQuizClient() {
 
   const isHost = roomState?.hostId === playerId;
 
+  const progressIndex = roomState
+    ? roomState.gameMode === GAME_MODE_TAKE_TURNS &&
+      roomState.quizCategoryId !== QUIZ_CATEGORY_CLOSEST
+      ? roomState.turnIndex
+      : roomState.questionIndex
+    : 0;
   const progressPct = roomState
-    ? Math.round(((roomState.questionIndex + 1) / roomState.totalQuestions) * 100)
+    ? Math.round(((progressIndex + 1) / roomState.totalQuestions) * 100)
     : 0;
 
   const leaveRoom = () => {
@@ -585,7 +596,12 @@ export function FunQuizClient() {
 
   const goBack = () => {
     setError(null);
+    if (boardStep === "length") {
+      setBoardStep("play");
+      return;
+    }
     if (boardStep === "play" && pickedGame === "quiz") {
+      setPendingMode(null);
       setBoardStep("difficulty");
       return;
     }
@@ -723,11 +739,22 @@ export function FunQuizClient() {
             <p className="mt-6 text-sm font-medium text-amber-200/90">
               {pickedTitle}
               {boardStep === "play" && difficultyTitle ? ` · ${difficultyTitle}` : ""}
+              {boardStep === "length" && difficultyTitle && pendingMode
+                ? ` · ${difficultyTitle} · ${gameModeLabel(pendingMode)}`
+                : ""}
             </p>
             <h2 className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-              {boardStep === "difficulty" ? "Choose a difficulty" : "Choose how to play"}
+              {boardStep === "difficulty"
+                ? "Choose a difficulty"
+                : boardStep === "length"
+                  ? "How many questions?"
+                  : "Choose how to play"}
             </h2>
-            <div className={`mt-6 grid gap-4 ${boardStep === "difficulty" ? "" : "sm:grid-cols-3"}`}>
+            <div
+              className={`mt-6 grid gap-4 ${
+                boardStep === "difficulty" ? "" : boardStep === "length" ? "sm:grid-cols-2" : "sm:grid-cols-3"
+              }`}
+            >
               {boardStep === "difficulty"
                 ? QUIZ_DIFFICULTIES.map((item) => (
                     <WideChoice
@@ -750,37 +777,63 @@ export function FunQuizClient() {
                     title="Single player"
                     detail="Answer on your own. No second player."
                     disabled={busy}
-                    onClick={() =>
-                      void createRoom({
-                        mode: GAME_MODE_SINGLE,
-                        difficulty: selectedDifficulty,
-                        category: selectedCategory,
-                      })
-                    }
+                    onClick={() => {
+                      setPendingMode(GAME_MODE_SINGLE);
+                      setBoardStep("length");
+                      setError(null);
+                    }}
                   />
                   <WideChoice
                     image="/funquiz/covers/cover-together.jpg"
                     title="Play together"
                     detail="Answer as one team and share the score."
                     disabled={busy}
-                    onClick={() =>
-                      void createRoom({
-                        mode: GAME_MODE_PLAY_TOGETHER,
-                        difficulty: selectedDifficulty,
-                        category: selectedCategory,
-                      })
-                    }
+                    onClick={() => {
+                      setPendingMode(GAME_MODE_PLAY_TOGETHER);
+                      setBoardStep("length");
+                      setError(null);
+                    }}
                   />
                   <WideChoice
                     image="/funquiz/covers/cover-separate.jpg"
                     title="Play separate"
                     detail="Take turns and keep your own score."
                     disabled={busy}
+                    onClick={() => {
+                      setPendingMode(GAME_MODE_TAKE_TURNS);
+                      setBoardStep("length");
+                      setError(null);
+                    }}
+                  />
+                </>
+              ) : null}
+              {boardStep === "length" && pendingMode && selectedDifficulty && selectedCategory ? (
+                <>
+                  <WideChoice
+                    image="/funquiz/covers/cover-easy.jpg"
+                    title="25 questions"
+                    detail="A shorter quiz."
+                    disabled={busy}
                     onClick={() =>
                       void createRoom({
-                        mode: GAME_MODE_TAKE_TURNS,
+                        mode: pendingMode,
                         difficulty: selectedDifficulty,
                         category: selectedCategory,
+                        questionCount: 25,
+                      })
+                    }
+                  />
+                  <WideChoice
+                    image="/funquiz/covers/cover-hard.jpg"
+                    title="50 questions"
+                    detail="The full quiz."
+                    disabled={busy}
+                    onClick={() =>
+                      void createRoom({
+                        mode: pendingMode,
+                        difficulty: selectedDifficulty,
+                        category: selectedCategory,
+                        questionCount: 50,
                       })
                     }
                   />
@@ -955,7 +1008,7 @@ export function FunQuizClient() {
           <p className="text-sm font-semibold text-violet-200">Team score</p>
           <p className="mt-1 text-3xl font-bold tabular-nums text-white">
             {roomState.jointScore ?? 0}{" "}
-            <span className="text-lg font-medium text-violet-300/90">/ 50</span>
+            <span className="text-lg font-medium text-violet-300/90">/ {roomState.totalQuestions}</span>
           </p>
           <p className="mt-2 text-xs text-slate-400">
             {gameMode === GAME_MODE_SINGLE
@@ -1319,8 +1372,9 @@ export function FunQuizClient() {
           </p>
           {gameMode === GAME_MODE_PLAY_TOGETHER || gameMode === GAME_MODE_SINGLE ? (
             <p className="mt-2 text-violet-100">
-              {gameMode === GAME_MODE_SINGLE ? "Score" : "Joint score"}: {roomState.jointScore ?? 0} / 50 (
-              {Math.round(((roomState.jointScore ?? 0) / 50) * 100)}% correct)
+              {gameMode === GAME_MODE_SINGLE ? "Score" : "Joint score"}: {roomState.jointScore ?? 0} /{" "}
+              {roomState.totalQuestions} (
+              {Math.round(((roomState.jointScore ?? 0) / roomState.totalQuestions) * 100)}% correct)
             </p>
           ) : (
             <p className="mt-2 text-violet-100">
@@ -1360,7 +1414,7 @@ export function FunQuizClient() {
           </div>
           {isHost ? (
             <div className="mt-6 space-y-3">
-              <p className="text-sm text-slate-300">Start a new game (pick mode, difficulty and quiz):</p>
+              <p className="text-sm text-slate-300">Start a new game (pick mode, length, difficulty and quiz):</p>
               <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
@@ -1395,6 +1449,22 @@ export function FunQuizClient() {
                 >
                   Play together
                 </button>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {([25, 50] as const).map((count) => (
+                  <button
+                    key={count}
+                    type="button"
+                    onClick={() => setNewGameCount(count)}
+                    className={`rounded-lg border px-2 py-2 text-xs ${
+                      newGameCount === count
+                        ? "border-violet-400 bg-violet-950/50"
+                        : "border-white/10"
+                    }`}
+                  >
+                    {count} questions
+                  </button>
+                ))}
               </div>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 {QUIZ_DIFFICULTIES.map((d) => (

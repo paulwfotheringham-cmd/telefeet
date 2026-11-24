@@ -44,10 +44,10 @@ export function assertUniqueAllocation(ids: number[], expectedLength = QUESTIONS
 
 export function assertRoomQuestionAllocation(room: QuizRoom): void {
   if (room.gameMode === GAME_MODE_TAKE_TURNS) {
-    assertUniqueAllocation(allocatedBankIdsForSession(room));
+    assertUniqueAllocation(allocatedBankIdsForSession(room), room.questionCount);
     return;
   }
-  assertUniqueAllocation(room.questionOrder);
+  assertUniqueAllocation(room.questionOrder, room.questionCount);
 }
 
 export function bankIdAlreadyUsedInSession(room: QuizRoom, bankId: number): boolean {

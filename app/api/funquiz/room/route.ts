@@ -9,6 +9,8 @@ import {
   GAME_MODE_CATCHPHRASE,
   GAME_MODE_BLOCKBUSTERS,
   GAME_MODE_TEXAS_HOLDEM,
+  QUESTIONS_PER_GAME,
+  isQuestionCount,
 } from "@/lib/funquiz/constants";
 import { isQuizCategoryId } from "@/lib/funquiz/categories";
 import { isQuizDifficulty } from "@/lib/funquiz/difficulties";
@@ -26,6 +28,7 @@ export async function POST(request: Request) {
       gameMode?: string;
       quizCategory?: string;
       quizDifficulty?: string;
+      questionCount?: number;
     };
     const playerId = body.playerId?.trim();
     const playerName = body.playerName?.trim();
@@ -75,6 +78,7 @@ export async function POST(request: Request) {
       code = generateRoomCode();
     }
 
+    const questionCount = isQuestionCount(body.questionCount) ? body.questionCount : QUESTIONS_PER_GAME;
     const room = createRoom(
       playerId,
       playerName,
@@ -82,6 +86,7 @@ export async function POST(request: Request) {
       gameMode,
       quizCategoryId,
       quizDifficultyFinal,
+      questionCount,
     );
     await persistNewRoom(room);
     return NextResponse.json({ state: toClientState(room, playerId) });
