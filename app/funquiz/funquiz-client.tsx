@@ -560,7 +560,7 @@ export function FunQuizClient() {
     return (
       <div className="mx-auto flex min-h-[100dvh] max-w-6xl flex-col px-4 py-8 sm:py-10">
         <h1 className="text-center text-4xl font-bold tracking-tight text-white sm:text-5xl">
-          International Games
+          A Selection of Games
         </h1>
 
         {storeWarning ? (
