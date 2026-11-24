@@ -604,6 +604,9 @@ export function FunQuizClient() {
     const instantCover = GAME_TILES.find((tile) => tile.id === pickedGame)?.image;
     return (
       <div className="mx-auto flex min-h-[100dvh] max-w-6xl flex-col px-4 py-8 sm:py-10">
+        <p className="mb-4 text-center text-sm text-slate-200 sm:text-base">
+          Click the buttons below to see our teams suggestions and enter yours
+        </p>
         <div className="mb-6 flex flex-wrap justify-center gap-2">
               <Link
                 href="/funquiz/podcasts"
