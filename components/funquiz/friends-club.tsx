@@ -7,14 +7,7 @@ type Challenge = { id: string; fromName: string; game: string; path: string; roo
 type Stat = { points: number; wins: number; games: number; best: number };
 type Player = { id: string; email: string } & Stat;
 type GameColumn = { title: string; short: string; players: ({ id: string } & Stat)[] };
-type Match = { email: string; game: string; score: number; won: boolean; playedAt: string };
-type Scoreboard = { players: Player[]; games: GameColumn[]; matches: Match[] };
-
-function when(iso: string) {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-}
+type Scoreboard = { players: Player[]; games: GameColumn[] };
 
 function ScoreCell({ stat }: { stat: Stat }) {
   if (stat.games === 0) return <span className="text-slate-500">0</span>;
@@ -47,7 +40,7 @@ export function FriendsClub({ onLogout, meEmail }: { onLogout: () => void; meEma
     }
     const data = (await res.json()) as { challenges?: Challenge[]; scoreboard?: Scoreboard };
     setChallenges(data.challenges ?? []);
-    setScoreboard(data.scoreboard ?? { players: [], games: [], matches: [] });
+    setScoreboard(data.scoreboard ?? { players: [], games: [] });
     setError("");
   }, []);
 
@@ -59,15 +52,13 @@ export function FriendsClub({ onLogout, meEmail }: { onLogout: () => void; meEma
 
   const players = scoreboard?.players ?? [];
   const games = scoreboard?.games ?? [];
-  const matches = scoreboard?.matches ?? [];
-
   return (
     <div className="mt-8 space-y-4">
       <section className="overflow-hidden rounded-2xl border border-white/10 bg-black/30">
         <div className="flex items-end justify-between gap-3 px-4 py-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-200/90">Scoreboard</p>
-            <p className="mt-1 text-sm text-slate-300">Every login, every game, and each saved result.</p>
+            <p className="mt-1 text-sm text-slate-300">Every login and every game.</p>
           </div>
           {scoreboard ? <p className="text-xs text-slate-400">{players.length} {players.length === 1 ? "login" : "logins"}</p> : null}
         </div>
@@ -146,37 +137,6 @@ export function FriendsClub({ onLogout, meEmail }: { onLogout: () => void; meEma
                   </tbody>
                 </table>
               </div>
-            </div>
-
-            <div>
-              <p className="px-4 text-xs font-semibold uppercase tracking-[0.18em] text-amber-200/90">Saved results</p>
-              {matches.length === 0 ? <p className="mt-2 px-4 text-xs text-slate-400">No finished games saved yet.</p> : null}
-              {matches.length > 0 ? (
-                <div className="mt-3 overflow-x-auto">
-                  <table className="w-full min-w-[36rem] text-left text-sm">
-                    <thead className="border-y border-white/10 text-xs uppercase tracking-wider text-slate-400">
-                      <tr>
-                        <th className="px-4 py-2 font-medium">When</th>
-                        <th className="px-4 py-2 font-medium">Email</th>
-                        <th className="px-4 py-2 font-medium">Game</th>
-                        <th className="px-4 py-2 font-medium">Score</th>
-                        <th className="px-4 py-2 font-medium">Result</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {matches.map((match, index) => (
-                        <tr key={`${match.playedAt}-${match.email}-${index}`} className="text-slate-200">
-                          <td className="px-4 py-2 text-slate-400">{when(match.playedAt)}</td>
-                          <td className="px-4 py-2">{match.email}</td>
-                          <td className="px-4 py-2">{match.game}</td>
-                          <td className="px-4 py-2">{match.score}</td>
-                          <td className="px-4 py-2">{match.won ? "Win" : "Loss"}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : null}
             </div>
           </div>
         ) : null}
