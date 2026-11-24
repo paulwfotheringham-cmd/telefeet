@@ -126,16 +126,16 @@ function readPlayerId(): string {
 type FunQuizTile = { id: string; title: string; href?: string; tone: string };
 
 const FUNQUIZ_TILES: FunQuizTile[] = [
-  { id: "millionaire", title: "Millionaire", tone: "border-amber-400/50 text-amber-200 hover:bg-amber-950/40" },
+  { id: "millionaire", title: "Who Wants To be A Millionaire", tone: "border-amber-400/50 text-amber-200 hover:bg-amber-950/40" },
   { id: "holdem", title: "Texas Hold'em", tone: "border-emerald-400/50 text-emerald-200 hover:bg-emerald-950/40" },
   { id: "catchphrase", title: "Catchphrase", tone: "border-[#ffcc00]/60 text-[#ffcc00] hover:bg-[#0047ab]/30" },
   { id: "blockbusters", title: "Blockbusters", tone: "border-sky-300/60 text-sky-200 hover:bg-[#003399]/40" },
   { id: "movie", title: "Name That Movie", href: "/name-that-movie", tone: "border-violet-400/50 text-violet-200 hover:bg-violet-950/40" },
   { id: "show", title: "Name That Show", href: "/name-that-show", tone: "border-amber-300/50 text-amber-200 hover:bg-amber-950/30" },
-  { id: "computer", title: "Name That Game", href: "/name-that-game", tone: "border-emerald-400/50 text-emerald-200 hover:bg-emerald-950/30" },
-  { id: "quiz", title: "Quiz", tone: "border-violet-300/60 text-violet-100 hover:bg-violet-950/50" },
+  { id: "computer", title: "Name The Computer Game", href: "/name-that-game", tone: "border-emerald-400/50 text-emerald-200 hover:bg-emerald-950/30" },
+  { id: "quiz", title: "Trivia Quiz Games", tone: "border-violet-300/60 text-violet-100 hover:bg-violet-950/50" },
   { id: "tune", title: "Name That Tune", href: "/name-that-tune", tone: "border-fuchsia-400/50 text-fuchsia-200 hover:bg-fuchsia-950/30" },
-  { id: "draw", title: "Draw the", tone: "border-rose-400/60 text-rose-100 hover:bg-rose-950/40" },
+  { id: "draw", title: "Drawing Games", tone: "border-rose-400/60 text-rose-100 hover:bg-rose-950/40" },
 ];
 
 const DRAW_TILES: FunQuizTile[] = [
@@ -527,7 +527,7 @@ export function FunQuizClient() {
             Fun Quiz
           </h1>
           <p className="mt-3 text-center text-sm leading-relaxed text-slate-300">
-            Pick Quiz, choose a subject, then Easy, Intermediate, or Hard, then play separate or together.
+            Pick Trivia Quiz Games, choose a subject, then Easy, Intermediate, or Hard, then play separate or together.
           </p>
 
           {storeWarning ? (
