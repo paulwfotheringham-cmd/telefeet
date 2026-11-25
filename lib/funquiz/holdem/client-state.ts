@@ -2,21 +2,21 @@ import { categoryTitle } from "../categories";
 import { difficultyTitle } from "../difficulties";
 import { formatCard } from "./cards";
 import { handLabel, bestHandScore } from "./eval";
-import type { HoldemState } from "./types";
-import type { ClientRoomState, HoldemClientView, QuizRoom } from "../types";
+import { isHoldemAiId, type HoldemState } from "./types";
+import type { ClientRoomState, HoldemClientView, HoldemSeatView, QuizRoom } from "../types";
 
 function dealerName(room: QuizRoom, h: HoldemState): string {
-  const seat = h.dealerSeat;
+  const seat = h.dealerSeat % Math.max(1, room.players.length);
   return room.players[seat]?.name ?? "Dealer";
 }
 
 export function toHoldemClientState(room: QuizRoom, viewerId: string): ClientRoomState {
   const you = room.players.find((p) => p.id === viewerId)!;
   const h = room.holdem!;
-  const opponent = room.players.find((p) => p.id !== viewerId);
+  const opponents = room.players.filter((p) => p.id !== viewerId);
+  const opponent = opponents[0];
 
-  const showOppHole =
-    h.street === "showdown" || h.street === "hand_over";
+  const showOppHole = h.street === "showdown" || h.street === "hand_over";
 
   const yourHole = h.holeCards[viewerId];
   const oppHole = opponent ? h.holeCards[opponent.id] : undefined;
@@ -32,6 +32,24 @@ export function toHoldemClientState(room: QuizRoom, viewerId: string): ClientRoo
     }
   }
 
+  const seats: HoldemSeatView[] = room.players.map((player) => {
+    const hole = h.holeCards[player.id];
+    const reveal = player.id === viewerId || showOppHole;
+    return {
+      playerId: player.id,
+      name: player.name,
+      stack: h.stacks[player.id] ?? 0,
+      isAi: isHoldemAiId(player.id),
+      folded: Boolean(h.folded[player.id]),
+      cards:
+        reveal && hole
+          ? [formatCard(hole[0]), formatCard(hole[1])]
+          : player.id === viewerId
+            ? []
+            : null,
+    };
+  });
+
   const holdemView: HoldemClientView = {
     street: h.street,
     handNumber: h.handNumber,
@@ -46,6 +64,7 @@ export function toHoldemClientState(room: QuizRoom, viewerId: string): ClientRoo
         : null,
     yourStack: h.stacks[viewerId] ?? 0,
     opponentStack: opponent ? h.stacks[opponent.id] ?? 0 : 0,
+    seats,
     toCall,
     minRaise,
     currentBet: h.currentBet,
@@ -56,8 +75,7 @@ export function toHoldemClientState(room: QuizRoom, viewerId: string): ClientRoo
     canCall: h.actionOn === viewerId && toCall > 0,
     canRaise: h.actionOn === viewerId && (h.stacks[viewerId] ?? 0) > toCall,
     canAllIn: h.actionOn === viewerId && (h.stacks[viewerId] ?? 0) > 0,
-    canDealNextHand:
-      room.hostId === viewerId && h.street === "hand_over",
+    canDealNextHand: room.hostId === viewerId && h.street === "hand_over",
     lastHandSummary: h.lastHandSummary,
     showdownLabel,
     smallBlind: h.smallBlind,

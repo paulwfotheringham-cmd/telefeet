@@ -1,45 +1,104 @@
-import { GAME_MODE_TEXAS_HOLDEM, MAX_PLAYERS } from "../constants";
+import { GAME_MODE_TEXAS_HOLDEM } from "../constants";
 import type { QuizPlayer, QuizRoom } from "../types";
 import { freshDeck, shuffleDeck } from "./cards";
 import { bestHandScore, compareScores, handLabel } from "./eval";
 import {
   createInitialHoldemState,
+  HOLDEM_AI_COUNT,
+  HOLDEM_AI_NAMES,
   HOLDEM_BIG_BLIND,
   HOLDEM_SMALL_BLIND,
   HOLDEM_STARTING_STACK,
+  isHoldemAiId,
   type HoldemState,
   type HoldemStreet,
 } from "./types";
 
 export type HoldemAction = "fold" | "check" | "call" | "raise" | "all_in";
 
+export { isHoldemAiId };
+
 export function isHoldemRoom(room: QuizRoom): boolean {
   return room.gameMode === GAME_MODE_TEXAS_HOLDEM;
 }
 
-function seatIds(room: QuizRoom): [string, string] {
-  if (room.players.length < 2) throw new Error("Need two players");
-  return [room.players[0]!.id, room.players[1]!.id];
+/** Seat two AI opponents when a lone human opens the table. */
+export function ensureHoldemAiOpponents(room: QuizRoom): QuizRoom {
+  if (!isHoldemRoom(room)) return room;
+  const humans = room.players.filter((player) => !isHoldemAiId(player.id));
+  if (humans.length !== 1) return room;
+  const existingAi = room.players.filter((player) => isHoldemAiId(player.id));
+  if (existingAi.length >= HOLDEM_AI_COUNT) return room;
+  const bots: QuizPlayer[] = [];
+  for (let index = existingAi.length; index < HOLDEM_AI_COUNT; index++) {
+    bots.push({
+      id: `ai-holdem-${index + 1}`,
+      name: HOLDEM_AI_NAMES[index] ?? `AI ${index + 1}`,
+      score: 0,
+      answer: null,
+    });
+  }
+  return {
+    ...room,
+    players: [...room.players, ...bots],
+    updatedAt: Date.now(),
+  };
 }
 
+function seatIds(room: QuizRoom): string[] {
+  if (room.players.length < 2) throw new Error("Need at least two players");
+  return room.players.map((player) => player.id);
+}
+
+function seatCount(room: QuizRoom): number {
+  return seatIds(room).length;
+}
+
+function normalizeDealerSeat(state: HoldemState, room: QuizRoom): number {
+  const n = seatCount(room);
+  return ((state.dealerSeat % n) + n) % n;
+}
+
+/** Heads-up: button is SB. Multiway: SB is left of button. */
 function sbId(state: HoldemState, room: QuizRoom): string {
-  const [s0, s1] = seatIds(room);
-  return state.dealerSeat === 0 ? s0 : s1;
+  const ids = seatIds(room);
+  const dealer = normalizeDealerSeat(state, room);
+  if (ids.length === 2) return ids[dealer]!;
+  return ids[(dealer + 1) % ids.length]!;
 }
 
 function bbId(state: HoldemState, room: QuizRoom): string {
-  const [s0, s1] = seatIds(room);
-  return state.dealerSeat === 0 ? s1 : s0;
+  const ids = seatIds(room);
+  const dealer = normalizeDealerSeat(state, room);
+  if (ids.length === 2) return ids[(dealer + 1) % 2]!;
+  return ids[(dealer + 2) % ids.length]!;
 }
 
-function postBlind(
-  state: HoldemState,
-  playerId: string,
-  amount: number,
-): HoldemState {
+function firstToActPreflop(state: HoldemState, room: QuizRoom): string {
+  const ids = seatIds(room);
+  if (ids.length === 2) return sbId(state, room);
+  const dealer = normalizeDealerSeat(state, room);
+  return ids[(dealer + 3) % ids.length]!;
+}
+
+function firstToActPostflop(state: HoldemState, room: QuizRoom): string {
+  const ids = seatIds(room);
+  const dealer = normalizeDealerSeat(state, room);
+  if (ids.length === 2) return bbId(state, room);
+  for (let step = 1; step <= ids.length; step++) {
+    const id = ids[(dealer + step) % ids.length]!;
+    if (!state.folded[id] && (state.stacks[id] ?? 0) > 0) return id;
+  }
+  return sbId(state, room);
+}
+
+function postBlind(state: HoldemState, playerId: string, amount: number): HoldemState {
   const pay = Math.min(amount, state.stacks[playerId] ?? 0);
   const stacks = { ...state.stacks, [playerId]: (state.stacks[playerId] ?? 0) - pay };
-  const streetBets = { ...state.streetBets, [playerId]: (state.streetBets[playerId] ?? 0) + pay };
+  const streetBets = {
+    ...state.streetBets,
+    [playerId]: (state.streetBets[playerId] ?? 0) + pay,
+  };
   const allIn = { ...state.allIn, [playerId]: stacks[playerId] === 0 };
   return {
     ...state,
@@ -61,17 +120,9 @@ function playerNeedsAction(state: HoldemState, id: string): boolean {
 }
 
 function bettingClosed(state: HoldemState, room: QuizRoom): boolean {
-  const alive = room.players.map((p) => p.id).filter((id) => !state.folded[id]);
+  const alive = seatIds(room).filter((id) => !state.folded[id]);
   if (alive.length <= 1) return true;
   return alive.every((id) => !playerNeedsAction(state, id));
-}
-
-function firstToActPostflop(state: HoldemState, room: QuizRoom): string {
-  return bbId(state, room);
-}
-
-function firstToActPreflop(state: HoldemState, room: QuizRoom): string {
-  return sbId(state, room);
 }
 
 function dealBoard(state: HoldemState, count: number): HoldemState {
@@ -111,12 +162,12 @@ function advanceStreet(state: HoldemState, room: QuizRoom): HoldemState {
   if (next === "showdown") {
     return resolveShowdown(s, room);
   }
-  const alive = room.players.map((p) => p.id).filter((id) => !s.folded[id] && (s.stacks[id] ?? 0) > 0);
+  const alive = seatIds(room).filter((id) => !s.folded[id] && (s.stacks[id] ?? 0) > 0);
   s.actionOn = next === "preflop" ? firstToActPreflop(s, room) : firstToActPostflop(s, room);
   if (alive.length === 1) {
     return awardPotTo(s, room, alive[0]!, "Opponent folded");
   }
-  s.statusMessage = `${next.toUpperCase()} — your action`;
+  s.statusMessage = `${next.toUpperCase()} — action continues`;
   return s;
 }
 
@@ -135,7 +186,7 @@ function awardPotTo(state: HoldemState, room: QuizRoom, winnerId: string, reason
 }
 
 function resolveShowdown(state: HoldemState, room: QuizRoom): HoldemState {
-  const contenders = room.players.map((p) => p.id).filter((id) => !state.folded[id]);
+  const contenders = seatIds(room).filter((id) => !state.folded[id]);
   if (contenders.length === 1) {
     return awardPotTo(state, room, contenders[0]!, "everyone else folded");
   }
@@ -170,29 +221,39 @@ function runoutIfAllIn(state: HoldemState, room: QuizRoom): HoldemState {
 }
 
 export function startHoldemGame(room: QuizRoom): QuizRoom {
-  if (room.players.length < MAX_PLAYERS) {
+  const seated = ensureHoldemAiOpponents(room);
+  if (seated.players.length < 2) {
     throw new Error("Waiting for a second player");
   }
   let holdem = createInitialHoldemState();
-  for (const p of room.players) {
+  for (const p of seated.players) {
     holdem.stacks[p.id] = HOLDEM_STARTING_STACK;
   }
-  return dealNewHand({ ...room, holdem, phase: "question" });
+  return dealNewHand({ ...seated, holdem, phase: "question" });
 }
 
 export function dealNewHand(room: QuizRoom): QuizRoom {
   if (!isHoldemRoom(room) || !room.holdem) throw new Error("Not a holdem room");
-  const [p0, p1] = seatIds(room);
+  const ids = seatIds(room);
   let holdem = { ...room.holdem };
   if (holdem.handNumber > 0) {
-    holdem = { ...holdem, dealerSeat: (holdem.dealerSeat === 0 ? 1 : 0) as 0 | 1 };
+    holdem = {
+      ...holdem,
+      dealerSeat: (normalizeDealerSeat(holdem, room) + 1) % ids.length,
+    };
   }
   holdem.handNumber += 1;
   const deck = shuffleDeck(freshDeck());
-  const holeCards: Record<string, [number, number]> = {
-    [p0]: [deck.pop()!, deck.pop()!],
-    [p1]: [deck.pop()!, deck.pop()!],
-  };
+  const holeCards: Record<string, [number, number]> = {};
+  const streetBets: Record<string, number> = {};
+  const folded: Record<string, boolean> = {};
+  const allIn: Record<string, boolean> = {};
+  for (const id of ids) {
+    holeCards[id] = [deck.pop()!, deck.pop()!];
+    streetBets[id] = 0;
+    folded[id] = false;
+    allIn[id] = false;
+  }
   holdem = {
     ...holdem,
     street: "preflop",
@@ -201,16 +262,16 @@ export function dealNewHand(room: QuizRoom): QuizRoom {
     holeCards,
     pot: 0,
     currentBet: 0,
-    streetBets: { [p0]: 0, [p1]: 0 },
-    folded: { [p0]: false, [p1]: false },
-    allIn: { [p0]: false, [p1]: false },
+    streetBets,
+    folded,
+    allIn,
     actedThisStreet: {},
     lastHandSummary: null,
-    statusMessage: "Blinds posted — action on small blind (dealer).",
+    statusMessage: "Blinds posted.",
   };
   holdem = postBlind(holdem, sbId(holdem, room), HOLDEM_SMALL_BLIND);
   holdem = postBlind(holdem, bbId(holdem, room), HOLDEM_BIG_BLIND);
-  holdem.actionOn = sbId(holdem, room);
+  holdem.actionOn = firstToActPreflop(holdem, room);
   holdem.actedThisStreet[bbId(holdem, room)] = true;
 
   const players: QuizPlayer[] = room.players.map((p) => ({
@@ -219,32 +280,32 @@ export function dealNewHand(room: QuizRoom): QuizRoom {
     answer: null,
   }));
 
-  return {
+  return finishWithAi({
     ...room,
     holdem,
     players,
     phase: "question",
     updatedAt: Date.now(),
-  };
+  });
 }
 
 function afterAction(state: HoldemState, room: QuizRoom): HoldemState {
   let s = state;
-  const alive = room.players.map((p) => p.id).filter((id) => !s.folded[id]);
+  const alive = seatIds(room).filter((id) => !s.folded[id]);
   if (alive.length === 1) {
     return awardPotTo(s, room, alive[0]!, "fold");
   }
   if (bettingClosed(s, room)) {
-    const bothAllIn = alive.every((id) => s.allIn[id] || (s.stacks[id] ?? 0) === 0);
-    if (bothAllIn && s.street !== "river") {
+    const everyoneAllIn = alive.every((id) => s.allIn[id] || (s.stacks[id] ?? 0) === 0);
+    if (everyoneAllIn && s.street !== "river") {
       return runoutIfAllIn(s, room);
     }
     return advanceStreet(s, room);
   }
   const ids = seatIds(room);
   const start = ids.indexOf(s.actionOn ?? ids[0]!);
-  for (let i = 1; i <= 2; i++) {
-    const next = ids[(start + i) % 2]!;
+  for (let i = 1; i <= ids.length; i++) {
+    const next = ids[(start + i) % ids.length]!;
     if (playerNeedsAction(s, next)) {
       return { ...s, actionOn: next };
     }
@@ -272,26 +333,26 @@ export function holdemApplyAction(
     s = { ...s, folded: { ...s.folded, [playerId]: true } };
     s.actionOn = null;
     s = afterAction(s, room);
-    return syncRoom(room, s);
+    return finishWithAi(syncRoom(room, s));
   }
 
   if (action === "check") {
     if (toCall > 0) throw new Error("Cannot check — must call or fold");
     s = afterAction(s, room);
-    return syncRoom(room, s);
+    return finishWithAi(syncRoom(room, s));
   }
 
   if (action === "call") {
     const pay = Math.min(toCall, stack);
     s = postBlind(s, playerId, pay);
     s = afterAction(s, room);
-    return syncRoom(room, s);
+    return finishWithAi(syncRoom(room, s));
   }
 
   if (action === "all_in") {
     s = postBlind(s, playerId, stack);
     s = afterAction(s, room);
-    return syncRoom(room, s);
+    return finishWithAi(syncRoom(room, s));
   }
 
   if (action === "raise") {
@@ -307,11 +368,13 @@ export function holdemApplyAction(
     if (s.currentBet > prevBet) {
       s.lastRaiseSize = s.currentBet - prevBet;
       s.actedThisStreet = { ...s.actedThisStreet, [playerId]: true };
-      const other = seatIds(room).find((id) => id !== playerId)!;
-      s.actedThisStreet[other] = false;
+      for (const id of seatIds(room)) {
+        if (id === playerId || s.folded[id] || s.allIn[id]) continue;
+        s.actedThisStreet[id] = false;
+      }
     }
     s = afterAction(s, room);
-    return syncRoom(room, s);
+    return finishWithAi(syncRoom(room, s));
   }
 
   throw new Error("Unknown action");
@@ -331,11 +394,114 @@ function syncRoom(room: QuizRoom, holdem: HoldemState): QuizRoom {
   };
 }
 
+function chooseBotAction(
+  state: HoldemState,
+  playerId: string,
+): { action: HoldemAction; raiseTo?: number } {
+  const stack = state.stacks[playerId] ?? 0;
+  const myBet = state.streetBets[playerId] ?? 0;
+  const toCall = Math.max(0, state.currentBet - myBet);
+  const seed = (state.handNumber * 17 + playerId.length * 3 + state.board.length * 5) % 100;
+
+  if (toCall <= 0) {
+    if (seed < 18 && stack > state.bigBlind * 3) {
+      return { action: "raise", raiseTo: state.currentBet + state.lastRaiseSize };
+    }
+    return { action: "check" };
+  }
+  if (toCall >= stack) {
+    return seed < 45 ? { action: "all_in" } : { action: "fold" };
+  }
+  if (toCall > state.bigBlind * 5) {
+    return seed < 35 ? { action: "call" } : { action: "fold" };
+  }
+  if (seed < 12 && stack > toCall + state.bigBlind * 2) {
+    return { action: "raise", raiseTo: state.currentBet + state.lastRaiseSize };
+  }
+  return { action: "call" };
+}
+
+/** Keep acting for AI seats until a human must act or the hand ends. */
+export function runHoldemAiTurns(room: QuizRoom): QuizRoom {
+  let current = room;
+  for (let step = 0; step < 48; step++) {
+    const h = current.holdem;
+    if (!h || h.street === "hand_over" || !h.actionOn) break;
+    if (!isHoldemAiId(h.actionOn)) break;
+    const choice = chooseBotAction(h, h.actionOn);
+    current = holdemApplyActionRaw(current, h.actionOn, choice.action, choice.raiseTo);
+  }
+  return current;
+}
+
+/** Apply without re-entering AI loop (used by the AI runner). */
+function holdemApplyActionRaw(
+  room: QuizRoom,
+  playerId: string,
+  action: HoldemAction,
+  raiseTo?: number,
+): QuizRoom {
+  if (!isHoldemRoom(room) || !room.holdem) throw new Error("Not in a poker hand");
+  const h = room.holdem;
+  if (h.street === "hand_over") throw new Error("Hand is over — deal a new hand");
+  if (h.actionOn !== playerId) throw new Error("Not your action");
+
+  let s: HoldemState = { ...h, actedThisStreet: { ...h.actedThisStreet, [playerId]: true } };
+  const stack = s.stacks[playerId] ?? 0;
+  const myBet = s.streetBets[playerId] ?? 0;
+  const toCall = s.currentBet - myBet;
+
+  if (action === "fold") {
+    s = { ...s, folded: { ...s.folded, [playerId]: true } };
+    s.actionOn = null;
+    return syncRoom(room, afterAction(s, room));
+  }
+  if (action === "check") {
+    if (toCall > 0) throw new Error("Cannot check — must call or fold");
+    return syncRoom(room, afterAction(s, room));
+  }
+  if (action === "call") {
+    return syncRoom(room, afterAction(postBlind(s, playerId, Math.min(toCall, stack)), room));
+  }
+  if (action === "all_in") {
+    return syncRoom(room, afterAction(postBlind(s, playerId, stack), room));
+  }
+  if (action === "raise") {
+    const minRaise = s.currentBet + s.lastRaiseSize;
+    const target = raiseTo ?? minRaise;
+    if (target < minRaise && stack > toCall) {
+      throw new Error(`Minimum raise to ${minRaise}`);
+    }
+    const total = Math.min(myBet + stack, target);
+    const add = total - myBet;
+    const prevBet = s.currentBet;
+    s = postBlind(s, playerId, add);
+    if (s.currentBet > prevBet) {
+      s.lastRaiseSize = s.currentBet - prevBet;
+      s.actedThisStreet = { ...s.actedThisStreet, [playerId]: true };
+      for (const id of seatIds(room)) {
+        if (id === playerId || s.folded[id] || s.allIn[id]) continue;
+        s.actedThisStreet[id] = false;
+      }
+    }
+    return syncRoom(room, afterAction(s, room));
+  }
+  throw new Error("Unknown action");
+}
+
+function finishWithAi(room: QuizRoom): QuizRoom {
+  return runHoldemAiTurns(room);
+}
+
 export function initHoldemOnCreate(room: QuizRoom): QuizRoom {
   if (!isHoldemRoom(room)) return room;
   return { ...room, holdem: createInitialHoldemState() };
 }
 
 export function holdemTickRoom(room: QuizRoom): QuizRoom {
+  if (!isHoldemRoom(room) || !room.holdem) return room;
+  if (room.holdem.actionOn && isHoldemAiId(room.holdem.actionOn)) {
+    return runHoldemAiTurns(room);
+  }
   return room;
 }

@@ -8,7 +8,7 @@ export function parseHoldemState(raw: unknown): HoldemState | undefined {
   const base = createInitialHoldemState();
   return {
     ...base,
-    dealerSeat: r.dealerSeat === 1 ? 1 : 0,
+    dealerSeat: Number.isFinite(r.dealerSeat) ? Math.max(0, Math.floor(r.dealerSeat)) : 0,
     handNumber: typeof r.handNumber === "number" ? r.handNumber : 0,
     street:
       r.street === "preflop" ||

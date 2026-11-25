@@ -49,7 +49,19 @@ export function HoldemStage({
     }
   };
 
-  const opponent = roomState.players.find((p) => p.id !== playerId);
+  const seats = hv.seats?.length
+    ? hv.seats
+    : roomState.players.map((player) => ({
+        playerId: player.id,
+        name: player.name,
+        stack: player.id === playerId ? hv.yourStack : hv.opponentStack,
+        isAi: false,
+        folded: false,
+        cards:
+          player.id === playerId
+            ? hv.yourCards
+            : hv.opponentCards,
+      }));
 
   return (
     <div className="mt-6 rounded-3xl border border-emerald-500/25 bg-[#041510] p-4 shadow-xl md:p-6">
@@ -91,42 +103,50 @@ export function HoldemStage({
         )}
       </div>
 
-      <div className="mt-8 grid gap-4 md:grid-cols-2">
-        <div className="rounded-2xl border border-emerald-400/30 bg-black/40 p-4">
-          <p className="text-xs text-emerald-300">You · {hv.yourStack} chips</p>
-          <div className="mt-3 flex gap-2">
-            {hv.yourCards.map((c) => (
-              <span
-                key={c}
-                className="flex h-16 w-12 items-center justify-center rounded-lg border border-emerald-400/50 bg-emerald-950/50 font-mono text-lg text-white"
-              >
-                {c}
-              </span>
-            ))}
-          </div>
-          {hv.showdownLabel ? (
-            <p className="mt-2 text-xs text-slate-400">{hv.showdownLabel}</p>
-          ) : null}
-        </div>
-        <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
-          <p className="text-xs text-slate-400">
-            {opponent?.name ?? "Opponent"} · {hv.opponentStack} chips
-          </p>
-          {hv.opponentCards ? (
-            <div className="mt-3 flex gap-2">
-              {hv.opponentCards.map((c) => (
-                <span
-                  key={c}
-                  className="flex h-16 w-12 items-center justify-center rounded-lg border border-white/20 bg-slate-900 font-mono text-lg text-slate-200"
-                >
-                  {c}
-                </span>
-              ))}
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {seats.map((seat) => {
+          const isYou = seat.playerId === playerId;
+          const acting = hv.actionOn === seat.playerId;
+          return (
+            <div
+              key={seat.playerId}
+              className={`rounded-2xl border p-4 ${
+                isYou
+                  ? "border-emerald-400/30 bg-black/40"
+                  : "border-white/10 bg-black/30"
+              } ${acting ? "ring-2 ring-amber-300/60" : ""}`}
+            >
+              <p className={`text-xs ${isYou ? "text-emerald-300" : "text-slate-400"}`}>
+                {isYou ? "You" : seat.name}
+                {seat.isAi ? " · AI" : ""}
+                {seat.folded ? " · folded" : ""} · {seat.stack} chips
+              </p>
+              {seat.cards && seat.cards.length > 0 ? (
+                <div className="mt-3 flex gap-2">
+                  {seat.cards.map((c) => (
+                    <span
+                      key={`${seat.playerId}-${c}`}
+                      className={`flex h-16 w-12 items-center justify-center rounded-lg border font-mono text-lg ${
+                        isYou
+                          ? "border-emerald-400/50 bg-emerald-950/50 text-white"
+                          : "border-white/20 bg-slate-900 text-slate-200"
+                      }`}
+                    >
+                      {c}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-4 text-sm text-slate-500">
+                  {seat.folded ? "Folded" : "Hidden hole cards"}
+                </p>
+              )}
+              {isYou && hv.showdownLabel ? (
+                <p className="mt-2 text-xs text-slate-400">{hv.showdownLabel}</p>
+              ) : null}
             </div>
-          ) : (
-            <p className="mt-4 text-sm text-slate-500">Hidden hole cards</p>
-          )}
-        </div>
+          );
+        })}
       </div>
 
       {hv.isYourAction && hv.street !== "hand_over" ? (
@@ -208,7 +228,9 @@ export function HoldemStage({
         <p className="mt-6 text-center text-sm text-slate-400">
           {hv.street === "hand_over"
             ? "Hand complete."
-            : "Waiting for opponent…"}
+            : hv.actionOn
+              ? `Waiting for ${seats.find((seat) => seat.playerId === hv.actionOn)?.name ?? "opponent"}…`
+              : "Waiting for opponent…"}
         </p>
       )}
 

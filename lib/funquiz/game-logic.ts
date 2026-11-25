@@ -32,6 +32,7 @@ import { toHoldemClientState } from "./holdem/client-state";
 import { toMillionaireClientState } from "./millionaire/client-state";
 import {
   dealNewHand,
+  holdemTickRoom,
   initHoldemOnCreate,
   isHoldemRoom,
   startHoldemGame,
@@ -229,9 +230,7 @@ export function startGame(room: QuizRoom, playerId: string): QuizRoom {
   }
 
   if (room.gameMode === GAME_MODE_TEXAS_HOLDEM) {
-    if (room.players.length < MAX_PLAYERS) {
-      throw new Error("Waiting for a second player");
-    }
+    // Lone host gets two AI seats; two humans stay heads-up.
     return startHoldemGame(initHoldemOnCreate(room));
   }
 
@@ -764,6 +763,9 @@ export function tickRoom(room: QuizRoom, now = Date.now()): QuizRoom {
   }
   if (isBlockbustersRoom(room)) {
     return blockbustersTickRoom(room, now);
+  }
+  if (isHoldemRoom(room)) {
+    return holdemTickRoom(room);
   }
 
   let current = healSharedQuestionState(room, now);
