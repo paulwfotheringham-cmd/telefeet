@@ -196,17 +196,29 @@ export type ClientRoomState = {
   error?: string;
 };
 
+export type HoldemSeatView = {
+  playerId: string;
+  name: string;
+  stack: number;
+  isAi: boolean;
+  folded: boolean;
+  cards: string[] | null;
+};
+
 export type HoldemClientView = {
   street: string;
   handNumber: number;
-  dealerSeat: 0 | 1;
+  dealerSeat: number;
   dealerName: string;
   pot: number;
   board: string[];
   yourCards: string[];
+  /** @deprecated Prefer `seats` for multi-opponent tables. */
   opponentCards: string[] | null;
   yourStack: number;
+  /** @deprecated Prefer `seats` for multi-opponent tables. */
   opponentStack: number;
+  seats: HoldemSeatView[];
   toCall: number;
   minRaise: number;
   currentBet: number;

@@ -930,7 +930,11 @@ export function FunQuizClient() {
                   <WideChoice
                     image={instantCover}
                     title="Single player"
-                    detail="Open a table. A second player still joins before it starts."
+                    detail={
+                      instantMode === GAME_MODE_TEXAS_HOLDEM
+                        ? "You versus two AI players at the table."
+                        : "Open a table. A second player still joins before it starts."
+                    }
                     disabled={busy}
                     onClick={() => void createRoom({ mode: instantMode })}
                   />
@@ -981,7 +985,9 @@ export function FunQuizClient() {
   const opponent = players.find((p) => p.id !== playerId);
   const bothIn = players.length >= 2;
   const canStartGame =
-    gameMode === GAME_MODE_SHARED_MILLIONAIRE || gameMode === GAME_MODE_SINGLE
+    gameMode === GAME_MODE_SHARED_MILLIONAIRE ||
+    gameMode === GAME_MODE_SINGLE ||
+    gameMode === GAME_MODE_TEXAS_HOLDEM
       ? players.length >= 1
       : bothIn;
   const isMillionaire = isMillionaireGameMode(gameMode);
@@ -1111,7 +1117,7 @@ export function FunQuizClient() {
             <p className="mt-2 text-sm text-slate-300">
               {isCatchphrase
                 ? "Picture clues reveal square by square — buzz in and guess the hidden phrase (+2 per correct answer)."
-                : "Heads-up poker with rotating dealer and blinds."}
+                : "Poker with blinds and a rotating dealer. Start alone to seat two AI opponents, or wait for a friend for heads-up."}
             </p>
           ) : isBlockbusters ? (
             <>
@@ -1165,7 +1171,11 @@ export function FunQuizClient() {
                 {p.name}
               </li>
             ))}
-            {!canStartGame ? <li className="text-slate-500">Waiting for player 2…</li> : null}
+            {!canStartGame ? (
+              <li className="text-slate-500">Waiting for player 2…</li>
+            ) : isHoldem && players.length === 1 ? (
+              <li className="text-slate-500">Two AI players will join when you start.</li>
+            ) : null}
           </ul>
           {isHost ? (
             <button
