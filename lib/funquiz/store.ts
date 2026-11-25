@@ -6,7 +6,7 @@ import {
   type FunquizPlayerRow,
   type FunquizRoomRow,
 } from "./db-mapper";
-import { MAX_PLAYERS } from "./constants";
+import { MAX_SEATED_PLAYERS } from "./constants";
 import { normalizeRoomCode } from "./room-code";
 import { broadcastRoomSync } from "./realtime-server";
 import { tickRoom } from "./game-logic";
@@ -18,7 +18,7 @@ export function mergePlayersForSave(inMemory: QuizPlayer[], fromDb: QuizPlayer[]
   const dbById = new Map(fromDb.map((p) => [p.id, p]));
   const ids = new Set([...memById.keys(), ...dbById.keys()]);
   const merged = [...ids].map((id) => memById.get(id) ?? dbById.get(id)!);
-  if (merged.length <= MAX_PLAYERS) {
+  if (merged.length <= MAX_SEATED_PLAYERS) {
     return merged;
   }
   const memIds = new Set(inMemory.map((p) => p.id));
@@ -26,7 +26,7 @@ export function mergePlayersForSave(inMemory: QuizPlayer[], fromDb: QuizPlayer[]
     ...merged.filter((p) => memIds.has(p.id)),
     ...merged.filter((p) => !memIds.has(p.id)),
   ];
-  return prioritized.slice(0, MAX_PLAYERS);
+  return prioritized.slice(0, MAX_SEATED_PLAYERS);
 }
 
 /** Merge player rows from multiple read paths (table select + JSON RPC). Later groups win on id clash. */
@@ -37,7 +37,7 @@ export function mergePlayerRowsForRead(...groups: FunquizPlayerRow[][]): Funquiz
       byId.set(row.player_id, row);
     }
   }
-  return [...byId.values()].slice(0, MAX_PLAYERS);
+  return [...byId.values()].slice(0, MAX_SEATED_PLAYERS);
 }
 
 /** Monotonic merge across poll attempts — never drop a player id we already observed. */
@@ -48,7 +48,7 @@ export function absorbPlayerRowsIntoMap(
   for (const row of mergePlayerRowsForRead(...groups)) {
     bestById.set(row.player_id, row);
   }
-  return [...bestById.values()].slice(0, MAX_PLAYERS);
+  return [...bestById.values()].slice(0, MAX_SEATED_PLAYERS);
 }
 
 /** Stop lobby player load when full or DB reports a full lobby that matches visible rows. */
@@ -57,10 +57,10 @@ export function shouldStopLobbyPlayerLoad(
   dbCount: number | null,
   deadlinePassed: boolean,
 ): boolean {
-  if (visibleCount >= MAX_PLAYERS) {
+  if (visibleCount >= MAX_SEATED_PLAYERS) {
     return true;
   }
-  if (dbCount !== null && dbCount >= MAX_PLAYERS && visibleCount >= dbCount) {
+  if (dbCount !== null && dbCount >= MAX_SEATED_PLAYERS && visibleCount >= dbCount) {
     return true;
   }
   return deadlinePassed;
@@ -222,7 +222,7 @@ export async function loadPlayerRowsForRoom(
     absorbPlayerRowsIntoMap(bestById, ...groups);
   }
 
-  return [...bestById.values()].slice(0, MAX_PLAYERS);
+  return [...bestById.values()].slice(0, MAX_SEATED_PLAYERS);
 }
 
 async function readPlayerRowGroups(
