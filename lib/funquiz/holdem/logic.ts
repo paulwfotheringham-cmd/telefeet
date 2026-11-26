@@ -7,12 +7,33 @@ import {
   HOLDEM_AI_COUNT,
   HOLDEM_AI_NAMES,
   HOLDEM_BIG_BLIND,
+  HOLDEM_MAX_RAISE,
   HOLDEM_SMALL_BLIND,
   HOLDEM_STARTING_STACK,
+  HOLDEM_TURN_MS,
   isHoldemAiId,
   type HoldemState,
   type HoldemStreet,
 } from "./types";
+
+function raiseBounds(state: HoldemState): { minRaise: number; maxRaise: number } {
+  const minRaise = state.currentBet + state.lastRaiseSize;
+  const maxRaise = state.currentBet + HOLDEM_MAX_RAISE;
+  return { minRaise, maxRaise: Math.max(minRaise, maxRaise) };
+}
+
+/** Refresh the 60s clock when the acting seat (or street) changes. */
+function withActionClock(prev: HoldemState | null, next: HoldemState, now: number): HoldemState {
+  if (!next.actionOn || next.street === "hand_over") {
+    return { ...next, actionDeadlineAt: null };
+  }
+  const seatChanged = !prev || prev.actionOn !== next.actionOn;
+  const streetChanged = !prev || prev.street !== next.street || prev.handNumber !== next.handNumber;
+  if (seatChanged || streetChanged || next.actionDeadlineAt == null) {
+    return { ...next, actionDeadlineAt: now + HOLDEM_TURN_MS };
+  }
+  return next;
+}
 
 export type HoldemAction = "fold" | "check" | "call" | "raise" | "all_in";
 
@@ -172,7 +193,8 @@ function advanceStreet(state: HoldemState, room: QuizRoom): HoldemState {
 }
 
 function awardPotTo(state: HoldemState, room: QuizRoom, winnerId: string, reason: string): HoldemState {
-  const stacks = { ...state.stacks, [winnerId]: (state.stacks[winnerId] ?? 0) + state.pot };
+  const potWon = state.pot;
+  const stacks = { ...state.stacks, [winnerId]: (state.stacks[winnerId] ?? 0) + potWon };
   const name = room.players.find((p) => p.id === winnerId)?.name ?? "Player";
   return {
     ...state,
@@ -180,8 +202,11 @@ function awardPotTo(state: HoldemState, room: QuizRoom, winnerId: string, reason
     pot: 0,
     street: "hand_over",
     actionOn: null,
-    lastHandSummary: `${name} wins ${reason}.`,
-    statusMessage: "Hand complete — host can deal next hand.",
+    actionDeadlineAt: null,
+    lastWinnerId: winnerId,
+    lastPotWon: potWon,
+    lastHandSummary: `${name} wins $${potWon}${reason ? ` — ${reason}` : ""}.`,
+    statusMessage: `${name} takes the pot ($${potWon}).`,
   };
 }
 
@@ -267,12 +292,18 @@ export function dealNewHand(room: QuizRoom): QuizRoom {
     allIn,
     actedThisStreet: {},
     lastHandSummary: null,
+    lastWinnerId: null,
+    lastPotWon: 0,
     statusMessage: "Blinds posted.",
+    smallBlind: HOLDEM_SMALL_BLIND,
+    bigBlind: HOLDEM_BIG_BLIND,
+    lastRaiseSize: HOLDEM_BIG_BLIND,
   };
   holdem = postBlind(holdem, sbId(holdem, room), HOLDEM_SMALL_BLIND);
   holdem = postBlind(holdem, bbId(holdem, room), HOLDEM_BIG_BLIND);
   holdem.actionOn = firstToActPreflop(holdem, room);
   holdem.actedThisStreet[bbId(holdem, room)] = true;
+  holdem = withActionClock(room.holdem, holdem, Date.now());
 
   const players: QuizPlayer[] = room.players.map((p) => ({
     ...p,
@@ -356,17 +387,21 @@ export function holdemApplyAction(
   }
 
   if (action === "raise") {
-    const minRaise = s.currentBet + s.lastRaiseSize;
-    const target = raiseTo ?? minRaise;
+    const { minRaise, maxRaise } = raiseBounds(s);
+    let target = raiseTo ?? minRaise;
     if (target < minRaise && stack > toCall) {
       throw new Error(`Minimum raise to ${minRaise}`);
     }
+    if (target > maxRaise && myBet + stack > maxRaise) {
+      throw new Error(`Maximum raise to ${maxRaise}`);
+    }
+    target = Math.min(target, maxRaise);
     const total = Math.min(myBet + stack, target);
     const add = total - myBet;
     const prevBet = s.currentBet;
     s = postBlind(s, playerId, add);
     if (s.currentBet > prevBet) {
-      s.lastRaiseSize = s.currentBet - prevBet;
+      s.lastRaiseSize = Math.min(HOLDEM_MAX_RAISE, s.currentBet - prevBet);
       s.actedThisStreet = { ...s.actedThisStreet, [playerId]: true };
       for (const id of seatIds(room)) {
         if (id === playerId || s.folded[id] || s.allIn[id]) continue;
@@ -380,17 +415,18 @@ export function holdemApplyAction(
   throw new Error("Unknown action");
 }
 
-function syncRoom(room: QuizRoom, holdem: HoldemState): QuizRoom {
+function syncRoom(room: QuizRoom, holdem: HoldemState, now = Date.now()): QuizRoom {
+  const stamped = withActionClock(room.holdem ?? null, holdem, now);
   const players = room.players.map((p) => ({
     ...p,
-    score: holdem.stacks[p.id] ?? p.score,
+    score: stamped.stacks[p.id] ?? p.score,
   }));
   return {
     ...room,
-    holdem,
+    holdem: stamped,
     players,
-    phase: holdem.street === "hand_over" ? "finished" : "question",
-    updatedAt: Date.now(),
+    phase: stamped.street === "hand_over" ? "finished" : "question",
+    updatedAt: now,
   };
 }
 
@@ -403,9 +439,10 @@ function chooseBotAction(
   const toCall = Math.max(0, state.currentBet - myBet);
   const seed = (state.handNumber * 17 + playerId.length * 3 + state.board.length * 5) % 100;
 
+  const { minRaise, maxRaise } = raiseBounds(state);
   if (toCall <= 0) {
     if (seed < 18 && stack > state.bigBlind * 3) {
-      return { action: "raise", raiseTo: state.currentBet + state.lastRaiseSize };
+      return { action: "raise", raiseTo: Math.min(minRaise, maxRaise) };
     }
     return { action: "check" };
   }
@@ -416,7 +453,7 @@ function chooseBotAction(
     return seed < 35 ? { action: "call" } : { action: "fold" };
   }
   if (seed < 12 && stack > toCall + state.bigBlind * 2) {
-    return { action: "raise", raiseTo: state.currentBet + state.lastRaiseSize };
+    return { action: "raise", raiseTo: Math.min(minRaise, maxRaise) };
   }
   return { action: "call" };
 }
@@ -467,17 +504,21 @@ function holdemApplyActionRaw(
     return syncRoom(room, afterAction(postBlind(s, playerId, stack), room));
   }
   if (action === "raise") {
-    const minRaise = s.currentBet + s.lastRaiseSize;
-    const target = raiseTo ?? minRaise;
+    const { minRaise, maxRaise } = raiseBounds(s);
+    let target = raiseTo ?? minRaise;
     if (target < minRaise && stack > toCall) {
       throw new Error(`Minimum raise to ${minRaise}`);
     }
+    if (target > maxRaise && myBet + stack > maxRaise) {
+      throw new Error(`Maximum raise to ${maxRaise}`);
+    }
+    target = Math.min(target, maxRaise);
     const total = Math.min(myBet + stack, target);
     const add = total - myBet;
     const prevBet = s.currentBet;
     s = postBlind(s, playerId, add);
     if (s.currentBet > prevBet) {
-      s.lastRaiseSize = s.currentBet - prevBet;
+      s.lastRaiseSize = Math.min(HOLDEM_MAX_RAISE, s.currentBet - prevBet);
       s.actedThisStreet = { ...s.actedThisStreet, [playerId]: true };
       for (const id of seatIds(room)) {
         if (id === playerId || s.folded[id] || s.allIn[id]) continue;
@@ -498,10 +539,24 @@ export function initHoldemOnCreate(room: QuizRoom): QuizRoom {
   return { ...room, holdem: createInitialHoldemState() };
 }
 
-export function holdemTickRoom(room: QuizRoom): QuizRoom {
+export function holdemTickRoom(room: QuizRoom, now = Date.now()): QuizRoom {
   if (!isHoldemRoom(room) || !room.holdem) return room;
-  if (room.holdem.actionOn && isHoldemAiId(room.holdem.actionOn)) {
-    return runHoldemAiTurns(room);
+  let current = room;
+  const acting = current.holdem?.actionOn;
+  if (acting && isHoldemAiId(acting)) {
+    current = runHoldemAiTurns(current);
   }
-  return room;
+  const h = current.holdem;
+  if (!h?.actionOn || h.street === "hand_over") return current;
+  if (isHoldemAiId(h.actionOn)) return current;
+  const deadline = h.actionDeadlineAt;
+  if (deadline == null || now < deadline) return current;
+  const seat = h.actionOn;
+  const myBet = h.streetBets[seat] ?? 0;
+  const toCall = Math.max(0, h.currentBet - myBet);
+  try {
+    return holdemApplyAction(current, seat, toCall > 0 ? "fold" : "check");
+  } catch {
+    return current;
+  }
 }

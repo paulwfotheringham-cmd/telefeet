@@ -15,7 +15,7 @@ import {
 import { isQuizCategoryId } from "@/lib/funquiz/categories";
 import { isQuizDifficulty } from "@/lib/funquiz/difficulties";
 import type { GameMode } from "@/lib/funquiz/types";
-import { createRoom, generateRoomCode, toClientState } from "@/lib/funquiz/game-logic";
+import { createRoom, generateRoomCode, startGame, toClientState } from "@/lib/funquiz/game-logic";
 import { loadRoom, persistNewRoom } from "@/lib/funquiz/store";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +29,8 @@ export async function POST(request: Request) {
       quizCategory?: string;
       quizDifficulty?: string;
       questionCount?: number;
+      /** Skip lobby and deal immediately (solo Hold'em). */
+      autoStart?: boolean;
     };
     const playerId = body.playerId?.trim();
     const playerName = body.playerName?.trim();
@@ -79,7 +81,7 @@ export async function POST(request: Request) {
     }
 
     const questionCount = isQuestionCount(body.questionCount) ? body.questionCount : QUESTIONS_PER_GAME;
-    const room = createRoom(
+    let room = createRoom(
       playerId,
       playerName,
       code,
@@ -88,6 +90,10 @@ export async function POST(request: Request) {
       quizDifficultyFinal,
       questionCount,
     );
+    // Solo Hold'em: seat AI and deal the first hand in the same create call.
+    if (body.autoStart === true && gameMode === GAME_MODE_TEXAS_HOLDEM) {
+      room = startGame(room, playerId);
+    }
     await persistNewRoom(room);
     return NextResponse.json({ state: toClientState(room, playerId) });
   } catch (err) {
