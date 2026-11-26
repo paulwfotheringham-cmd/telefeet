@@ -524,13 +524,17 @@ body {
 /* Soften baked portrait roster in plate (lower-left) without a heavy left bar */
 .holdem-gnd-baked-portraits-smear {
   left: 0;
-  bottom: 10%;
-  width: 36%;
-  height: 42%;
-  top: auto;
-  backdrop-filter: blur(16px) saturate(1.05);
-  background: linear-gradient(0deg, rgba(14, 9, 6, 0.35) 0%, rgba(14, 9, 6, 0.08) 65%, transparent 100%);
-  mask-image: linear-gradient(90deg, #000 0%, #000 78%, transparent 100%);
+  top: 4%;
+  width: 28%;
+  height: 62%;
+  backdrop-filter: blur(22px) saturate(0.95);
+  background: linear-gradient(
+    90deg,
+    rgba(8, 5, 3, 0.55) 0%,
+    rgba(8, 5, 3, 0.28) 55%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(180deg, transparent 0%, #000 6%, #000 90%, transparent 100%);
 }
 
 /* Hide decorative Q/K in plate; live hole cards render above */
@@ -538,79 +542,136 @@ body {
   background: radial-gradient(ellipse 52% 42% at 50% 92%, rgba(9, 6, 4, 0.97) 0%, rgba(9, 6, 4, 0.85) 55%, transparent 78%);
 }
 
-/* RDR2-style bottom roster — no panel box */
+/* RDR2-style left roster — per-row bars, top to bottom */
 .holdem-gnd-roster-rail {
-  left: 2.25%;
-  bottom: 16%;
-  width: min(34vw, 12.5rem);
-  padding: 0.5rem 0.65rem 0.75rem;
-  background: linear-gradient(
-    0deg,
-    rgba(6, 4, 2, 0.62) 0%,
-    rgba(8, 5, 3, 0.38) 55%,
-    rgba(8, 5, 3, 0) 100%
-  );
+  left: 0.85%;
+  top: 6%;
+  width: auto;
+  max-width: min(44vw, 14rem);
+  padding: 0;
+  background: none;
 }
 
 .holdem-gnd-roster-lines {
   display: flex;
   flex-direction: column;
-  gap: 0.42rem;
+  gap: 0.28rem;
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
 .holdem-gnd-roster-line {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  grid-template-rows: auto auto;
-  column-gap: 0.5rem;
-  row-gap: 0.05rem;
-  align-items: baseline;
-  font-family: var(--font-serif, Georgia, "Times New Roman", serif);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 0 12px rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 9.75rem;
+  padding: 0.28rem 0.85rem 0.3rem 0.28rem;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.62) 0%,
+    rgba(0, 0, 0, 0.48) 55%,
+    rgba(0, 0, 0, 0.18) 82%,
+    transparent 100%
+  );
 }
 
-.holdem-gnd-roster-name {
-  grid-column: 1;
-  grid-row: 1;
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: #f0dfc0;
-  text-transform: none;
+.holdem-gnd-roster-active {
+  min-width: 11.75rem;
+  background: linear-gradient(
+    90deg,
+    rgba(18, 10, 5, 0.82) 0%,
+    rgba(10, 6, 3, 0.6) 62%,
+    rgba(0, 0, 0, 0.12) 88%,
+    transparent 100%
+  );
+}
+
+.holdem-gnd-roster-avatar {
+  position: relative;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.12rem;
+  overflow: visible;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.holdem-gnd-roster-avatar-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0.12rem;
+  filter: saturate(0.72) contrast(1.08) brightness(0.94);
+}
+
+.holdem-gnd-roster-dealer-d {
+  position: absolute;
+  right: -0.15rem;
+  bottom: -0.1rem;
+  width: 0.95rem;
+  height: 0.95rem;
+  border-radius: 999px;
+  border: 1px solid rgba(40, 24, 12, 0.75);
+  background: radial-gradient(circle at 35% 30%, #fffef2 0%, #e8d8b0 55%, #c4a060 100%);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.45);
+}
+
+.holdem-gnd-roster-dealer-d::after {
+  content: "D";
+  display: block;
+  font-family: var(--font-serif, Georgia, serif);
+  font-size: 0.55rem;
+  font-weight: 800;
+  line-height: 0.95rem;
+  text-align: center;
+  color: #2a1808;
+}
+
+.holdem-gnd-roster-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.02rem;
+  min-width: 0;
 }
 
 .holdem-gnd-roster-stack {
-  grid-column: 2;
-  grid-row: 1;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #fffaf2;
-  justify-self: end;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.05;
+  color: #fff;
+  letter-spacing: -0.01em;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
 }
 
 .holdem-gnd-roster-meta {
-  grid-column: 1 / -1;
-  grid-row: 2;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   font-size: 0.62rem;
-  color: rgba(255, 255, 255, 0.72);
-  letter-spacing: 0.01em;
+  font-weight: 400;
+  line-height: 1.2;
+  color: rgba(255, 255, 255, 0.82);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
 }
 
 @media (min-width: 640px) {
   .holdem-gnd-roster-rail {
-    bottom: 17%;
-    width: 12.75rem;
+    left: 1.1%;
+    top: 5.5%;
   }
 
-  .holdem-gnd-roster-name {
-    font-size: 0.72rem;
+  .holdem-gnd-roster-avatar {
+    width: 2.65rem;
+    height: 2.65rem;
   }
 
   .holdem-gnd-roster-stack {
-    font-size: 0.85rem;
+    font-size: 1.22rem;
+  }
+
+  .holdem-gnd-roster-meta {
+    font-size: 0.68rem;
   }
 }
 
@@ -627,15 +688,14 @@ body {
   display: inline-block;
 }
 
-.holdem-gnd-roster-active .holdem-gnd-roster-name {
-  color: #ffe8b8;
+.holdem-gnd-roster-active .holdem-gnd-roster-stack {
+  color: #fffaf0;
 }
 
 .holdem-gnd-roster-active .holdem-gnd-roster-meta {
   color: #f5e0b0;
 }
 
-.holdem-gnd-roster-winner .holdem-gnd-roster-name,
 .holdem-gnd-roster-winner .holdem-gnd-roster-stack {
   color: #ffe6a0;
   animation: holdem-winner-pulse 1.6s ease-in-out infinite;

@@ -1,6 +1,13 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import type { HoldemSeatView } from "@/lib/funquiz/types";
+import {
+  faceGenderForSeat,
+  holdemFaceUrl,
+  readFaceGender,
+  type HoldemFaceGender,
+} from "@/lib/funquiz/holdem/faces";
 
 const GROUNDED_WEBP = "/funquiz/holdem/holdem-rdr2-mockup-v3-grounded.webp";
 const GROUNDED_JPG = "/funquiz/holdem/holdem-rdr2-mockup-v3-grounded.jpg";
@@ -88,17 +95,18 @@ function rosterLabel(isYou: boolean, aiNumber: number | null): string {
   return `AI player ${aiNumber ?? 1}`;
 }
 
-function statusLine(seat: HoldemSeatView, isYou: boolean): string {
+function statusLine(seat: HoldemSeatView, label: string, isYou: boolean): string {
   if (seat.isActing) return isYou ? "Your turn…" : "Thinking…";
-  if (seat.streetBet > 0) return `Bet $${seat.streetBet}`;
   if (seat.isBigBlind) return "Big blind";
   if (seat.isSmallBlind) return "Small blind";
-  if (seat.isDealer) return "Dealer";
-  return "";
+  return label;
 }
 
 export default function HoldemRosterPreviewPage() {
   const playerId = "you";
+  const [gender, setGender] = useState<HoldemFaceGender>("male");
+  useEffect(() => setGender(readFaceGender()), []);
+
   let aiNumber = 0;
 
   return (
@@ -118,15 +126,29 @@ export default function HoldemRosterPreviewPage() {
                 const isYou = seat.playerId === playerId;
                 if (!isYou) aiNumber += 1;
                 const label = rosterLabel(isYou, isYou ? null : aiNumber);
-                const meta = statusLine(seat, isYou);
+                const status = statusLine(seat, label, isYou);
+                const bet = seat.streetBet > 0 ? `$${seat.streetBet}` : "$0";
+                const sub = `${bet}, ${status}`;
+                const faceGender = faceGenderForSeat(seat.playerId, isYou, gender);
                 return (
                   <li
                     key={seat.playerId}
                     className={`holdem-gnd-roster-line ${seat.isActing ? "holdem-gnd-roster-active" : ""}`}
                   >
-                    <span className="holdem-gnd-roster-name">{label}</span>
-                    <span className="holdem-gnd-roster-stack tabular-nums">${seat.stack}</span>
-                    {meta ? <span className="holdem-gnd-roster-meta">{meta}</span> : null}
+                    <span className="holdem-gnd-roster-avatar">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={holdemFaceUrl(seat.playerId, faceGender)}
+                        alt=""
+                        className="holdem-gnd-roster-avatar-img"
+                        draggable={false}
+                      />
+                      {seat.isDealer ? <span className="holdem-gnd-roster-dealer-d" aria-hidden /> : null}
+                    </span>
+                    <span className="holdem-gnd-roster-copy">
+                      <span className="holdem-gnd-roster-stack tabular-nums">${seat.stack.toFixed(2)}</span>
+                      <span className="holdem-gnd-roster-meta">{sub}</span>
+                    </span>
                   </li>
                 );
               })}
