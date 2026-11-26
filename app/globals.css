@@ -491,7 +491,91 @@ body {
   animation: holdem-pot-pulse 0.5s ease-out;
 }
 
-/* First-person saloon (Mockup B) */
+/* Grounded saloon plate (mockup v3) */
+.holdem-gnd {
+  background: #0a0705;
+}
+
+.holdem-gnd-aspect {
+  aspect-ratio: 16 / 9;
+  max-height: min(88vh, 52rem);
+  margin-inline: auto;
+}
+
+@media (max-width: 640px) {
+  .holdem-gnd-aspect {
+    aspect-ratio: 4 / 3;
+    max-height: none;
+  }
+}
+
+.holdem-gnd-plate img {
+  filter: saturate(1.02) contrast(1.05);
+}
+
+.holdem-gnd-shade {
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.42) 0%, rgba(0, 0, 0, 0.08) 22%, transparent 38%),
+    linear-gradient(180deg, rgba(12, 6, 2, 0.25) 0%, transparent 22%, transparent 62%, rgba(8, 4, 2, 0.35) 100%),
+    radial-gradient(ellipse at center, transparent 48%, rgba(0, 0, 0, 0.35) 100%);
+  pointer-events: none;
+}
+
+.holdem-gnd-roster li {
+  pointer-events: auto;
+}
+
+.holdem-gnd-roster-active {
+  background: linear-gradient(90deg, rgba(80, 50, 12, 0.5), transparent 85%);
+  border-radius: 0.35rem;
+  padding: 0.15rem 0.25rem;
+  margin-left: -0.25rem;
+  box-shadow: inset 2px 0 0 #e6c78a;
+}
+
+.holdem-gnd-roster-winner {
+  background: linear-gradient(90deg, rgba(100, 70, 16, 0.65), transparent 85%);
+  border-radius: 0.35rem;
+  padding: 0.15rem 0.25rem;
+  margin-left: -0.25rem;
+  box-shadow: inset 2px 0 0 #ffe6a0;
+  animation: holdem-winner-pulse 1.6s ease-in-out infinite;
+}
+
+.holdem-gnd-board {
+  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.55));
+  transform: translateX(-50%) perspective(600px) rotateX(12deg);
+}
+
+.holdem-gnd-winner {
+  border-radius: 0.4rem;
+  border: 1px solid rgba(196, 165, 116, 0.4);
+  background: linear-gradient(180deg, rgba(40, 26, 10, 0.82), rgba(10, 6, 3, 0.88));
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55);
+  animation: holdem-winner-pulse 1.8s ease-in-out infinite;
+  backdrop-filter: blur(4px);
+}
+
+.holdem-gnd-winner-you {
+  border-color: rgba(255, 214, 120, 0.75);
+}
+
+.holdem-gnd-hands button,
+.holdem-gnd-hands input,
+.holdem-gnd-hands label {
+  pointer-events: auto;
+}
+
+.holdem-gnd-hero {
+  animation: holdem-hero-float 3.4s ease-in-out infinite;
+  filter: drop-shadow(0 22px 28px rgba(0, 0, 0, 0.75));
+}
+
+.holdem-gnd-btn {
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45);
+}
+
+/* Legacy first-person saloon (Mockup B) */
 .holdem-fp {
   background: #0a0705;
 }
@@ -686,11 +770,18 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .holdem-card-deal,
   .holdem-pot-pulse,
+  .holdem-gnd-hero,
+  .holdem-gnd-roster-winner,
+  .holdem-gnd-winner,
   .holdem-fp-hero-cards,
   .holdem-fp-row-winner,
   .holdem-fp-opp-winner,
   .holdem-fp-winner {
     animation: none !important;
+  }
+
+  .holdem-gnd-board {
+    transform: translateX(-50%);
   }
 
   .holdem-fp-rail {
