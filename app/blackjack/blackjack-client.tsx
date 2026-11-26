@@ -123,22 +123,20 @@ export function BlackjackClient() {
   const showControls = game.phase === "playerTurn" && human && game.seats[game.activeSeatIndex]?.isHuman;
 
   return (
-    <div className="mx-auto flex min-h-[100dvh] max-w-7xl flex-col px-3 py-4 sm:px-5 sm:py-6">
+    <div className="bj-page mx-auto flex min-h-[100dvh] max-w-[82rem] flex-col px-3 py-4 sm:px-6 sm:py-6">
       <header className="bj-header">
-        <div className="flex items-center gap-3">
-          <Link href="/funquiz" className="bj-back">
-            ← All Games
-          </Link>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-gold/80">International Games</p>
-            <h1 className="flex items-center gap-2 text-xl font-bold text-white sm:text-2xl">
-              <span aria-hidden className="text-brand-gold">
-                ♠
-              </span>
-              Blackjack
-            </h1>
-            <p className="text-xs text-brand-muted">Beat the dealer and get 21</p>
-          </div>
+        <Link href="/funquiz" className="bj-back">
+          ← All Games
+        </Link>
+        <div className="bj-title-block">
+          <p className="bj-brand-kicker">International Games</p>
+          <h1 className="bj-title">
+            <span aria-hidden className="bj-title-suit">
+              ♠
+            </span>
+            Blackjack
+          </h1>
+          <p className="bj-subtitle">Beat the dealer and get 21</p>
         </div>
         <div className="bj-profile">
           <span className="bj-avatar">{initials(playerName)}</span>
@@ -185,25 +183,36 @@ export function BlackjackClient() {
         <HostAiBar count={game.aiSeatCount} onChange={(c) => dispatchAction({ type: "SET_AI_COUNT", count: c })} />
       ) : null}
 
-      <div className="mt-4 grid flex-1 gap-4 lg:grid-cols-[1fr_220px]">
-        <div className="flex flex-col gap-4">
-          <BlackjackTable state={game} />
-          {game.banner ? (
+      <div className="mt-2 grid flex-1 gap-4 lg:grid-cols-[1fr_240px]">
+        <div className="flex flex-col gap-3">
+          <BlackjackTable
+            state={game}
+            banner={
+              game.banner && game.phase !== "betting" ? (
+                <p role="status" className="bj-banner-text">
+                  {game.banner}
+                </p>
+              ) : null
+            }
+            controls={
+              showControls ? (
+                <GameControls
+                  canHit={canHit(game)}
+                  canStand={canStand(game)}
+                  canDouble={canDouble(game)}
+                  canSplit={canSplit(game)}
+                  onHit={() => dispatchAction({ type: "HIT" })}
+                  onStand={() => dispatchAction({ type: "STAND" })}
+                  onDouble={() => dispatchAction({ type: "DOUBLE" })}
+                  onSplit={() => dispatchAction({ type: "SPLIT" })}
+                />
+              ) : null
+            }
+          />
+          {game.banner && game.phase === "betting" ? (
             <p className="bj-banner" role="status">
               {game.banner}
             </p>
-          ) : null}
-          {showControls ? (
-            <GameControls
-              canHit={canHit(game)}
-              canStand={canStand(game)}
-              canDouble={canDouble(game)}
-              canSplit={canSplit(game)}
-              onHit={() => dispatchAction({ type: "HIT" })}
-              onStand={() => dispatchAction({ type: "STAND" })}
-              onDouble={() => dispatchAction({ type: "DOUBLE" })}
-              onSplit={() => dispatchAction({ type: "SPLIT" })}
-            />
           ) : null}
           {showBetting ? (
             <BettingBar

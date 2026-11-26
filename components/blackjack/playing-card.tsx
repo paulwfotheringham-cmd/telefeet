@@ -14,15 +14,17 @@ export function PlayingCardView({
   card,
   className = "",
   delay = 0,
+  size = "md",
 }: {
   card: Card;
   className?: string;
   delay?: number;
+  size?: "md" | "lg";
 }) {
   if (card.faceDown) {
     return (
       <div
-        className={`bj-card bj-card-back ${className}`}
+        className={`bj-card bj-card-back ${size === "lg" ? "bj-card-lg" : ""} ${className}`}
         style={{ animationDelay: `${delay}ms` }}
         aria-hidden
       />
@@ -35,7 +37,7 @@ export function PlayingCardView({
 
   return (
     <div
-      className={`bj-card bj-card-face ${className}`}
+      className={`bj-card bj-card-face ${size === "lg" ? "bj-card-lg" : ""} ${className}`}
       style={{ animationDelay: `${delay}ms` }}
     >
       <span className={`bj-card-corner top ${red ? "red" : "black"}`}>

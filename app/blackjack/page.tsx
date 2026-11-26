@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function BlackjackPage() {
   return (
-    <div className="min-h-[100dvh] bg-[radial-gradient(ellipse_at_top,_#0a1628_0%,_#030508_45%,_#000_100%)]">
+    <div className="min-h-[100dvh] bg-[radial-gradient(ellipse_120%_80%_at_50%_-10%,_#142238_0%,_#070b12_42%,_#030305_100%)]">
       <BlackjackClient />
     </div>
   );
