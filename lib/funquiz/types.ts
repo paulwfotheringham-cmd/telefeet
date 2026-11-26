@@ -221,8 +221,12 @@ export type HoldemClientView = {
   seats: HoldemSeatView[];
   toCall: number;
   minRaise: number;
+  maxRaise: number;
   currentBet: number;
   actionOn: string | null;
+  /** Epoch ms when the acting seat times out (check if free, else fold). */
+  actionDeadlineAt: number | null;
+  turnSecondsLeft: number | null;
   isYourAction: boolean;
   canFold: boolean;
   canCheck: boolean;
@@ -234,6 +238,9 @@ export type HoldemClientView = {
   showdownLabel: string | null;
   smallBlind: number;
   bigBlind: number;
+  startingStack: number;
+  maxRaiseSize: number;
+  turnLimitSeconds: number;
 };
 
 export type MillionaireOpponentWatch = {

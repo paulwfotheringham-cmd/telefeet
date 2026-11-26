@@ -22,6 +22,8 @@ export type HoldemState = {
   folded: Record<string, boolean>;
   allIn: Record<string, boolean>;
   actionOn: string | null;
+  /** Epoch ms when the acting player must act or auto check/fold. */
+  actionDeadlineAt: number | null;
   lastRaiseSize: number;
   smallBlind: number;
   bigBlind: number;
@@ -30,9 +32,14 @@ export type HoldemState = {
   actedThisStreet: Record<string, boolean>;
 };
 
-export const HOLDEM_STARTING_STACK = 1000;
-export const HOLDEM_SMALL_BLIND = 10;
-export const HOLDEM_BIG_BLIND = 20;
+export const HOLDEM_STARTING_STACK = 500;
+/** Big blind / minimum opening bet. */
+export const HOLDEM_BIG_BLIND = 5;
+export const HOLDEM_SMALL_BLIND = 2;
+/** Cap on how much a raise may increase the current bet. */
+export const HOLDEM_MAX_RAISE = 25;
+/** Max time each player has to act. */
+export const HOLDEM_TURN_MS = 60_000;
 
 export function createInitialHoldemState(): HoldemState {
   return {
@@ -49,6 +56,7 @@ export function createInitialHoldemState(): HoldemState {
     folded: {},
     allIn: {},
     actionOn: null,
+    actionDeadlineAt: null,
     lastRaiseSize: HOLDEM_BIG_BLIND,
     smallBlind: HOLDEM_SMALL_BLIND,
     bigBlind: HOLDEM_BIG_BLIND,

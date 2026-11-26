@@ -765,7 +765,7 @@ export function tickRoom(room: QuizRoom, now = Date.now()): QuizRoom {
     return blockbustersTickRoom(room, now);
   }
   if (isHoldemRoom(room)) {
-    return holdemTickRoom(room);
+    return holdemTickRoom(room, now);
   }
 
   let current = healSharedQuestionState(room, now);
