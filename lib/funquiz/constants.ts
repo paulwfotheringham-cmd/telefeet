@@ -1,7 +1,7 @@
 /** Max humans joining a standard Fun Quiz / heads-up room. */
 export const MAX_PLAYERS = 2;
-/** Absolute player rows persisted per room (Hold'em seats 1 human + 2 AI). */
-export const MAX_SEATED_PLAYERS = 3;
+/** Absolute player rows persisted per room (Hold'em single seats 1 human + 4 AI). */
+export const MAX_SEATED_PLAYERS = 5;
 export const ROOM_CODE_LENGTH = 6;
 export const REVEAL_MS = 4500;
 export const ROOM_TTL_SECONDS = 60 * 60 * 4; // 4 hours

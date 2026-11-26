@@ -39,8 +39,8 @@ assert.ok(compareScores(bestHandScore([0, 1, 2, 3, 4]), bestHandScore([8, 9, 10,
     QUIZ_DIFFICULTY_INTERMEDIATE,
   );
   solo = startGame(solo, "host");
-  assert.equal(solo.players.length, 3);
-  assert.equal(solo.players.filter((player) => isHoldemAiId(player.id)).length, 2);
+  assert.equal(solo.players.length, 5);
+  assert.equal(solo.players.filter((player) => isHoldemAiId(player.id)).length, 4);
   assert.ok(solo.holdem);
   assert.equal(solo.holdem.street, "preflop");
   assert.ok(solo.holdem.actionOn);
@@ -50,7 +50,7 @@ assert.ok(compareScores(bestHandScore([0, 1, 2, 3, 4]), bestHandScore([8, 9, 10,
     solo = holdemApplyAction(solo, "host", "call");
     assert.ok(solo.holdem);
   }
-  assert.equal(Object.keys(solo.holdem!.holeCards).length, 3);
+  assert.equal(Object.keys(solo.holdem!.holeCards).length, 5);
 }
 
 console.log("funquiz-holdem.test.ts OK");

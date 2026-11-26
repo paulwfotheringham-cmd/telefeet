@@ -43,7 +43,7 @@ export function isHoldemRoom(room: QuizRoom): boolean {
   return room.gameMode === GAME_MODE_TEXAS_HOLDEM;
 }
 
-/** Seat two AI opponents when a lone human opens the table. */
+/** Seat four AI opponents when a lone human opens the table (five-handed). */
 export function ensureHoldemAiOpponents(room: QuizRoom): QuizRoom {
   if (!isHoldemRoom(room)) return room;
   const humans = room.players.filter((player) => !isHoldemAiId(player.id));
@@ -59,11 +59,20 @@ export function ensureHoldemAiOpponents(room: QuizRoom): QuizRoom {
       answer: null,
     });
   }
-  return {
+  let next: QuizRoom = {
     ...room,
     players: [...room.players, ...bots],
     updatedAt: Date.now(),
   };
+  if (next.holdem && bots.length > 0) {
+    const table: HoldemState = next.holdem;
+    const stacks = { ...table.stacks };
+    for (const bot of bots) {
+      stacks[bot.id] = stacks[bot.id] ?? HOLDEM_STARTING_STACK;
+    }
+    next = { ...next, holdem: { ...table, stacks } };
+  }
+  return next;
 }
 
 function seatIds(room: QuizRoom): string[] {
@@ -259,9 +268,11 @@ export function startHoldemGame(room: QuizRoom): QuizRoom {
 
 export function dealNewHand(room: QuizRoom): QuizRoom {
   if (!isHoldemRoom(room) || !room.holdem) throw new Error("Not a holdem room");
+  room = ensureHoldemAiOpponents(room);
+  if (!room.holdem) throw new Error("Not a holdem room");
   const ids = seatIds(room);
-  let holdem = { ...room.holdem };
-  if (holdem.handNumber > 0) {
+  let holdem: HoldemState = { ...room.holdem };
+  if ((holdem.handNumber ?? 0) > 0) {
     holdem = {
       ...holdem,
       dealerSeat: (normalizeDealerSeat(holdem, room) + 1) % ids.length,
