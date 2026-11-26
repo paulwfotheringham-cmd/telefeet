@@ -3,6 +3,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import type { ClientRoomState, HoldemSeatView } from "@/lib/funquiz/types";
 import { readFaceGender, writeFaceGender, type HoldemFaceGender } from "@/lib/funquiz/holdem/faces";
+import { HoldemTableMotion } from "@/components/funquiz/holdem-table-motion";
 
 const GROUNDED_WEBP = "/funquiz/holdem/holdem-rdr2-mockup-v3-grounded.webp";
 const GROUNDED_JPG = "/funquiz/holdem/holdem-rdr2-mockup-v3-grounded.jpg";
@@ -235,6 +236,14 @@ export function HoldemStage({
           />
         </picture>
         <div className="holdem-gnd-shade pointer-events-none absolute inset-0" aria-hidden />
+        {/* Covers baked portrait roster in plate art — one live column only */}
+        <div className="holdem-gnd-roster-mask pointer-events-none absolute inset-0 z-[22]" aria-hidden />
+        <HoldemTableMotion
+          seats={seats}
+          pot={hv.pot}
+          boardLen={hv.board.length}
+          handNumber={hv.handNumber}
+        />
 
         {/* Gender / leave — low chrome */}
         <div className="absolute right-2 top-2 z-40 flex gap-1.5 sm:right-3 sm:top-3">
@@ -300,34 +309,45 @@ export function HoldemStage({
             </div>
           ) : null}
           {heroCards.length > 0 ? (
-            <p className="mt-2 text-[11px] text-white/75 drop-shadow" aria-live="polite">
+            <p className="sr-only" aria-live="polite">
               Your hand: {heroCards.join(" ")}
             </p>
           ) : null}
         </div>
 
-        {/* LHS stack readouts — text only (mockup art already has portraits) */}
-        <aside className="holdem-gnd-roster pointer-events-none absolute left-[13%] top-[9%] z-30 w-[6.25rem] sm:left-[14%] sm:top-[8%] sm:w-28">
-          <ul className="flex flex-col gap-[1.35rem] sm:gap-[1.5rem]">
+        {heroCards.length > 0 ? (
+          <>
+            <div className="holdem-gnd-hero-mask pointer-events-none absolute inset-0 z-[28]" aria-hidden />
+            <div className="holdem-gnd-hero-cards pointer-events-none absolute bottom-[11.5%] left-1/2 z-[34] flex -translate-x-1/2 gap-1 sm:bottom-[12%] sm:gap-1.5">
+              {heroCards.map((c, i) => (
+                <PlayingCard key={`hero-${c}-${i}`} label={c} hero delayMs={i * 40} tilt={i === 0 ? -5 : 5} />
+              ))}
+            </div>
+          </>
+        ) : null}
+
+        <aside className="holdem-gnd-roster pointer-events-none absolute left-[9%] top-[7.5%] z-30 w-[min(28vw,10.5rem)] sm:left-[10%] sm:top-[7%] sm:w-44">
+          <ul className="flex flex-col gap-[1.05rem] sm:gap-[1.15rem]">
             {seats.map((seat) => {
               const isYou = seat.playerId === playerId;
               const status = seatStatus(seat, hv.street, isYou);
+              const label = seat.name.trim() || (isYou ? "You" : "Player");
               return (
                 <li
                   key={seat.playerId}
                   className={`holdem-gnd-roster-slot text-left ${
                     seat.isWinner ? "holdem-gnd-roster-winner" : seat.isActing ? "holdem-gnd-roster-active" : ""
-                  } ${seat.folded ? "opacity-50" : ""}`}
+                  } ${seat.folded ? "opacity-55" : ""}`}
                 >
-                  <p className="truncate text-[9px] font-medium text-white/85 drop-shadow sm:text-[10px]">
-                    {isYou ? "You" : seat.name.replace(/^AI /, "")}
+                  <p className="truncate font-serif text-[10px] font-semibold tracking-wide text-[#f5e6c0] drop-shadow sm:text-[11px]">
+                    {label}
                   </p>
                   <p className="font-serif text-sm leading-none text-white tabular-nums drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] sm:text-base">
                     ${seat.stack}
                   </p>
                   <p
                     className={`mt-0.5 text-[8px] leading-tight sm:text-[9px] ${
-                      seat.isWinner ? "text-[#ffe6a0]" : seat.isActing ? "text-[#f5e0b0]" : "text-white/70"
+                      seat.isWinner ? "text-[#ffe6a0]" : seat.isActing ? "text-[#f5e0b0]" : "text-white/75"
                     }`}
                   >
                     {seat.isWinner && hv.lastPotWon ? `+$${hv.lastPotWon}` : status}

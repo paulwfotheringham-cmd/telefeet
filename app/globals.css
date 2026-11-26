@@ -521,6 +521,25 @@ body {
   pointer-events: none;
 }
 
+/* Hide baked LHS avatar column in grounded plate */
+.holdem-gnd-roster-mask {
+  background:
+    linear-gradient(90deg, rgba(6, 4, 2, 0.94) 0%, rgba(10, 7, 4, 0.9) 68%, transparent 100%),
+    linear-gradient(180deg, rgba(8, 5, 3, 0.5) 0%, transparent 12%, transparent 88%, rgba(8, 5, 3, 0.35) 100%);
+  clip-path: polygon(0 0, 34% 0, 34% 58%, 0 58%);
+}
+
+/* Hide decorative Q/K in plate; live hole cards render above */
+.holdem-gnd-hero-mask {
+  background: radial-gradient(ellipse 52% 42% at 50% 92%, rgba(9, 6, 4, 0.97) 0%, rgba(9, 6, 4, 0.85) 55%, transparent 78%);
+}
+
+.holdem-gnd-roster {
+  padding: 0.35rem 0.5rem;
+  border-radius: 0.35rem;
+  background: linear-gradient(90deg, rgba(8, 5, 3, 0.55), rgba(8, 5, 3, 0.15));
+}
+
 .holdem-gnd-topHud {
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.95);
 }
@@ -575,6 +594,214 @@ body {
 
 .holdem-gnd-btn {
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45);
+}
+
+/* Motion-only overlays (no art changes) */
+.holdem-motion-layer {
+  container-type: size;
+}
+
+.holdem-motion {
+  pointer-events: none;
+}
+
+.holdem-motion .holdem-chip {
+  width: 2.1rem;
+  height: 1.05rem;
+}
+
+.holdem-motion-dealer-btn {
+  position: absolute;
+  z-index: 24;
+  width: 1.65rem;
+  height: 1.65rem;
+  transform: translate(-50%, -130%);
+  border-radius: 999px;
+  background: radial-gradient(circle at 35% 30%, #fffef5 0%, #f0e6c8 45%, #c4a85a 100%);
+  border: 2px solid rgba(90, 52, 24, 0.65);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
+  font-family: var(--font-serif, Georgia, serif);
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.65rem;
+  text-align: center;
+  color: #2a1808;
+  transition:
+    left 0.85s cubic-bezier(0.4, 0, 0.2, 1),
+    top 0.85s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.holdem-motion-dealer-btn::after {
+  content: "D";
+}
+
+.holdem-chip-gold {
+  background: radial-gradient(circle at 35% 30%, #ffe08a 0%, #d4af37 38%, #8a6a1f 78%, #5c4512 100%);
+}
+
+.holdem-chip-blue {
+  background: radial-gradient(circle at 35% 30%, #9ec5ff 0%, #2f5f9a 45%, #1a3358 100%);
+}
+
+.holdem-chip-red {
+  background: radial-gradient(circle at 35% 30%, #ff8a8a 0%, #c62828 45%, #7a1212 100%);
+}
+
+.holdem-chip-white {
+  background: radial-gradient(circle at 35% 30%, #fff 0%, #e8e8e8 40%, #9a9a9a 100%);
+}
+
+.holdem-motion-pot-chip {
+  animation: holdem-pot-stack-grow 0.45s ease-out both;
+}
+
+@keyframes holdem-pot-stack-grow {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.holdem-motion-hand-action {
+  position: absolute;
+  z-index: 26;
+  width: 0;
+  height: 0;
+  transform: translate(-50%, -50%);
+}
+
+.holdem-motion-hand-action-chip-push,
+.holdem-motion-hand-action-muck {
+  animation: holdem-hand-reach-felt 1.05s cubic-bezier(0.33, 0.9, 0.4, 1) forwards;
+}
+
+.holdem-motion-hand-action-deal {
+  animation: holdem-hand-deal-riffle 0.85s ease-in-out forwards;
+}
+
+.holdem-motion-hand-action-flop-dealer {
+  animation: holdem-hand-reach-felt 1.05s ease-in-out forwards;
+}
+
+@keyframes holdem-hand-reach-felt {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(var(--hand-start-rot, -6deg)) scale(0.92);
+  }
+  18% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--hand-shift-x, 0cqw)), calc(-50% + var(--hand-shift-y, 0cqh)))
+      rotate(var(--hand-end-rot, 4deg)) scale(0.98);
+  }
+}
+
+@keyframes holdem-hand-deal-riffle {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(-4deg);
+  }
+  25% {
+    opacity: 0.85;
+    transform: translate(calc(-50% + 2cqw), calc(-50% + 4cqh)) rotate(6deg);
+  }
+  55% {
+    opacity: 0.75;
+    transform: translate(calc(-50% - 3cqw), calc(-50% + 8cqh)) rotate(-8deg);
+  }
+  80% {
+    opacity: 0.5;
+    transform: translate(calc(-50% + 1cqw), calc(-50% + 10cqh)) rotate(3deg);
+  }
+}
+
+.holdem-motion-player-hand {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  width: 4rem;
+  height: 2.45rem;
+  transform: translate(-72%, -55%);
+  transform-origin: 78% 88%;
+  border-radius: 48% 42% 38% 52%;
+  background:
+    radial-gradient(ellipse at 32% 28%, rgba(214, 176, 132, 0.92) 0%, rgba(168, 118, 78, 0.88) 55%, rgba(92, 58, 34, 0.75) 100%);
+  box-shadow:
+    inset -5px -8px 14px rgba(48, 28, 16, 0.35),
+    0 6px 14px rgba(0, 0, 0, 0.35);
+}
+
+.holdem-motion-player-hand-dealer {
+  width: 3.75rem;
+  height: 2.35rem;
+  filter: saturate(0.92);
+}
+
+.holdem-motion-player-hand-dealer-b {
+  transform: translate(-28%, -40%) rotate(18deg) scale(0.92);
+  opacity: 0.75;
+}
+
+.holdem-motion-chip-with-hand {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-95%, -15%);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.holdem-motion-muck-card-felt {
+  position: absolute;
+  width: 1.35rem;
+  height: 1.85rem;
+  border-radius: 0.2rem;
+  background: linear-gradient(145deg, #5a3418 0%, #2e180c 55%, #140c08 100%);
+  border: 1px solid rgba(196, 165, 116, 0.35);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.35);
+}
+
+.holdem-motion-muck-card-felt-a {
+  transform: translate(-120%, -20%) rotate(-16deg);
+}
+
+.holdem-motion-muck-card-felt-b {
+  transform: translate(-75%, -25%) rotate(10deg);
+}
+
+.holdem-motion-board-card {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  min-width: 2.25rem;
+  padding: 0.12rem 0.28rem;
+  border-radius: 0.22rem;
+  font-family: var(--font-serif, Georgia, serif);
+  font-size: 0.65rem;
+  text-align: center;
+  color: #1a1208;
+  background: linear-gradient(160deg, #f8f4ea 0%, #e8dcc8 40%, #cbb896 100%);
+  border: 1px solid rgba(90, 52, 24, 0.5);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
+  animation: holdem-flop-card-slide 0.7s cubic-bezier(0.25, 0.9, 0.35, 1) both;
+  z-index: 26;
+}
+
+@keyframes holdem-flop-card-slide {
+  0% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--board-to-x, 0cqw)), calc(-50% + 6cqh)) scale(0.82) rotate(-14deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(calc(-50% + var(--board-to-x, 0cqw)), -50%) scale(1) rotate(0deg);
+  }
 }
 
 /* Legacy first-person saloon (Mockup B) */
@@ -778,7 +1005,10 @@ body {
   .holdem-fp-hero-cards,
   .holdem-fp-row-winner,
   .holdem-fp-opp-winner,
-  .holdem-fp-winner {
+  .holdem-fp-winner,
+  .holdem-motion-hand-action,
+  .holdem-motion-pot-chip,
+  .holdem-motion-board-card {
     animation: none !important;
   }
 
