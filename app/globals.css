@@ -53,7 +53,7 @@ body {
   @apply relative mx-auto w-full max-w-[58rem];
 }
 .bj-table-floor {
-  @apply absolute inset-x-[8%] bottom-2 h-16 rounded-[50%];
+  @apply pointer-events-none absolute inset-x-[8%] bottom-2 h-16 rounded-[50%];
   background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.75), transparent 72%);
   filter: blur(10px);
   transform: translateY(12px);
@@ -70,9 +70,9 @@ body {
 }
 .bj-oval-felt {
   position: relative;
-  min-height: 420px;
+  min-height: 520px;
   border-radius: 50% / 44%;
-  overflow: hidden;
+  overflow: visible;
   background: radial-gradient(ellipse 95% 85% at 50% 36%, #2f9a5d 0%, #1a6b42 38%, #0d4a2c 68%, #062818 100%);
   box-shadow: inset 0 0 70px rgba(0, 0, 0, 0.45);
 }
@@ -83,11 +83,20 @@ body {
   background: radial-gradient(ellipse at center, transparent 38%, rgba(0, 0, 0, 0.55) 100%);
 }
 .bj-felt-markings {
-  @apply pointer-events-none absolute left-1/2 top-[34%] z-[1] w-[78%] -translate-x-1/2 text-center;
+  pointer-events: none;
+  position: absolute;
+  left: 50%;
+  top: 30%;
+  z-index: 1;
+  width: 70%;
+  text-align: center;
+  transform: translateX(-50%) perspective(520px) rotateX(42deg);
+  transform-origin: center center;
 }
 .bj-felt-title {
   font-family: Georgia, "Times New Roman", serif;
   @apply text-sm font-bold uppercase tracking-[0.22em] text-brand-gold/95 sm:text-base;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
 }
 .bj-felt-sub {
   @apply mt-1 text-[9px] uppercase tracking-[0.16em] text-brand-gold/45 sm:text-[10px];
@@ -96,16 +105,16 @@ body {
   @apply absolute z-[2] flex flex-col items-center gap-2;
 }
 .bj-spot-dealer {
-  top: 9%;
+  top: 14%;
   left: 50%;
   transform: translateX(-50%);
 }
 .bj-spot-human,
 .bj-spot-human-seat {
-  bottom: 11%;
+  bottom: 20%;
   left: 50%;
   transform: translateX(-50%);
-  width: min(92%, 28rem);
+  width: min(88%, 26rem);
 }
 .bj-spot-ai-left {
   bottom: 30%;
@@ -152,24 +161,19 @@ body {
 .bj-hand-result {
   @apply text-[10px] font-bold uppercase tracking-wide;
 }
-.bj-control-dock {
-  position: absolute;
-  bottom: 2%;
-  left: 50%;
-  z-index: 5;
-  width: min(calc(100% - 2rem), 34rem);
-  transform: translateX(-50%);
+.bj-controls-below {
+  @apply relative z-10 mx-auto mt-3 w-full max-w-xl;
 }
-.bj-table-banner {
-  @apply absolute bottom-[18%] left-1/2 z-[4] -translate-x-1/2;
+.bj-status-banner {
+  @apply mt-3 flex justify-center;
 }
 .bj-banner-text {
-  @apply rounded-md border border-brand-gold/40 bg-black/70 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-brand-goldHi;
+  @apply rounded-full border border-brand-gold/40 bg-black/80 px-5 py-2 text-xs font-bold uppercase tracking-wider text-brand-goldHi;
 }
 .bj-chip-tray {
   position: absolute;
-  top: 12%;
-  left: 7%;
+  top: 20%;
+  left: 13%;
   z-index: 2;
   width: 3.5rem;
   height: 2.2rem;
@@ -197,8 +201,8 @@ body {
 }
 .bj-card-shoe {
   position: absolute;
-  top: 11%;
-  right: 6%;
+  top: 19%;
+  right: 12%;
   z-index: 2;
   width: 3.25rem;
   height: 3.5rem;
@@ -408,10 +412,6 @@ body {
   }
   .bj-oval-felt {
     min-height: 380px;
-  }
-  .bj-control-dock {
-    bottom: 1%;
-    width: calc(100% - 1rem);
   }
   .bj-controls {
     grid-template-columns: repeat(2, minmax(0, 1fr));

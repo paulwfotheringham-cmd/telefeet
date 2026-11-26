@@ -57,7 +57,7 @@ export function BettingBar({
         </button>
         <div className="bj-bet-pill-center">
           <CasinoChip value={selectedChip} size="sm" displayOnly />
-          <span className="bj-bet-pill-amount">{pendingBet}</span>
+          <span className="bj-bet-pill-amount">${pendingBet}</span>
         </div>
         <button
           type="button"
