@@ -5,7 +5,10 @@ import type { SessionStats } from "@/lib/blackjack/types";
 export function StatsPanel({ stats, currentBet }: { stats: SessionStats; currentBet: number }) {
   return (
     <aside className="bj-panel">
-      <h2 className="bj-panel-title">Game stats</h2>
+      <h2 className="bj-panel-title">
+        <StatsIcon />
+        Game stats
+      </h2>
       <dl className="mt-3 space-y-2 text-sm">
         <Row label="Balance" value={`$${stats.balance}`} highlight />
         <Row label="Current bet" value={`$${currentBet}`} />
@@ -20,6 +23,16 @@ export function StatsPanel({ stats, currentBet }: { stats: SessionStats; current
         />
       </dl>
     </aside>
+  );
+}
+
+function StatsIcon() {
+  return (
+    <svg className="bj-panel-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <rect x="4" y="14" width="4" height="6" rx="1" fill="currentColor" opacity="0.85" />
+      <rect x="10" y="10" width="4" height="10" rx="1" fill="currentColor" opacity="0.85" />
+      <rect x="16" y="6" width="4" height="14" rx="1" fill="currentColor" opacity="0.85" />
+    </svg>
   );
 }
 

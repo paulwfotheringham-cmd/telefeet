@@ -4,9 +4,9 @@ import type { ChipDenomination } from "@/lib/blackjack/constants";
 
 const CHIP_STYLES: Record<number, { bg: string; ring: string; text: string }> = {
   5: { bg: "#6b7280", ring: "#9ca3af", text: "#f9fafb" },
-  10: { bg: "#1e3a5f", ring: "#60a5fa", text: "#e0f2fe" },
+  10: { bg: "#1f2937", ring: "#6b7280", text: "#f3f4f6" },
   25: { bg: "#14532d", ring: "#4ade80", text: "#ecfdf5" },
-  50: { bg: "#581c87", ring: "#c084fc", text: "#faf5ff" },
+  50: { bg: "#1e3a5f", ring: "#60a5fa", text: "#e0f2fe" },
   100: { bg: "#7f1d1d", ring: "#f87171", text: "#fff1f2" },
   250: { bg: "#4c1d95", ring: "#a78bfa", text: "#f5f3ff" },
   500: { bg: "#0f172a", ring: "#fbbf24", text: "#fef3c7" },

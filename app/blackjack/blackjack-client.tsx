@@ -123,20 +123,13 @@ export function BlackjackClient() {
   const showControls = game.phase === "playerTurn" && human && game.seats[game.activeSeatIndex]?.isHuman;
 
   return (
-    <div className="bj-page mx-auto flex min-h-[100dvh] max-w-[82rem] flex-col px-3 py-4 sm:px-6 sm:py-6">
-      <header className="bj-header">
+    <div className="bj-page mx-auto flex min-h-[100dvh] max-w-[86rem] flex-col px-2 py-2 sm:px-3 sm:py-3">
+      <header className="bj-header bj-header-casino">
         <Link href="/funquiz" className="bj-back">
           ← All Games
         </Link>
         <div className="bj-title-block">
-          <p className="bj-brand-kicker">International Games</p>
-          <h1 className="bj-title">
-            <span aria-hidden className="bj-title-suit">
-              ♠
-            </span>
-            Blackjack
-          </h1>
-          <p className="bj-subtitle">Beat the dealer and get 21</p>
+          <h1 className="bj-title-casino">Blackjack</h1>
         </div>
         <div className="bj-profile">
           <span className="bj-avatar">{initials(playerName)}</span>
@@ -147,77 +140,39 @@ export function BlackjackClient() {
         </div>
       </header>
 
-      {showSetup ? (
-        <section className="bj-setup mx-auto mt-8 w-full max-w-xl rounded-3xl border border-brand-line bg-brand-panel/80 p-6 shadow-card">
-          <h2 className="text-lg font-semibold text-brand-cream">Choose how to play</h2>
-          <p className="mt-2 text-sm text-brand-muted">Virtual chips only — starting bankroll ${STARTING_BALANCE}.</p>
-          <label className="mt-4 block text-sm text-brand-muted">
-            Your name
-            <input
-              value={playerName}
-              onChange={(e) => setPlayerName(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-brand-line bg-brand-ink px-3 py-2 text-brand-cream"
-            />
-          </label>
-          <div className="mt-6 grid gap-3">
-            <ModeButton
-              title="Solo vs dealer"
-              detail="Just you and the house."
-              onClick={() => startMode("solo", 0)}
-            />
-            <ModeButton
-              title="Table with AI guests"
-              detail="You plus up to 2 AI players sharing the dealer."
-              onClick={() => startMode("withAi", 2)}
-            />
-            <ModeButton
-              title="Play separate (host table)"
-              detail="Host the table and add up to 2 AI players before each round."
-              onClick={() => startMode("hostTable", 0)}
-            />
-          </div>
-        </section>
-      ) : null}
+      <div className="relative mt-1 min-w-0 flex-1">
+        <BlackjackTable
+          state={game}
+          banner={
+            game.banner &&
+            (game.phase === "playerTurn" || game.phase === "roundComplete" || game.phase === "dealerTurn") ? (
+              <p role="status" className="bj-banner-text">
+                {game.banner}
+              </p>
+            ) : null
+          }
+          controls={
+            showControls ? (
+              <GameControls
+                canHit={canHit(game)}
+                canStand={canStand(game)}
+                canDouble={canDouble(game)}
+                canSplit={canSplit(game)}
+                onHit={() => dispatchAction({ type: "HIT" })}
+                onStand={() => dispatchAction({ type: "STAND" })}
+                onDouble={() => dispatchAction({ type: "DOUBLE" })}
+                onSplit={() => dispatchAction({ type: "SPLIT" })}
+              />
+            ) : null
+          }
+        />
 
-      {game.mode === "hostTable" && game.phase === "betting" ? (
-        <HostAiBar count={game.aiSeatCount} onChange={(c) => dispatchAction({ type: "SET_AI_COUNT", count: c })} />
-      ) : null}
+        <aside className="absolute right-2 top-2 z-30 hidden w-52 flex-col gap-2 xl:flex">
+          <BjSidebar stats={stats} currentBet={human.pendingBet || human.hands[0]?.bet || 0} />
+        </aside>
 
-      <div className="mt-2 grid flex-1 gap-4 lg:grid-cols-[1fr_240px]">
-        <div className="flex flex-col gap-3">
-          <BlackjackTable
-            state={game}
-            banner={
-              game.banner &&
-              (game.phase === "playerTurn" ||
-                game.phase === "roundComplete" ||
-                game.phase === "dealerTurn") ? (
-                <p role="status" className="bj-banner-text">
-                  {game.banner}
-                </p>
-              ) : null
-            }
-            controls={
-              showControls ? (
-                <GameControls
-                  canHit={canHit(game)}
-                  canStand={canStand(game)}
-                  canDouble={canDouble(game)}
-                  canSplit={canSplit(game)}
-                  onHit={() => dispatchAction({ type: "HIT" })}
-                  onStand={() => dispatchAction({ type: "STAND" })}
-                  onDouble={() => dispatchAction({ type: "DOUBLE" })}
-                  onSplit={() => dispatchAction({ type: "SPLIT" })}
-                />
-              ) : null
-            }
-          />
-          {game.banner && game.phase === "betting" ? (
-            <p className="bj-banner" role="status">
-              {game.banner}
-            </p>
-          ) : null}
-          {showBetting ? (
+        {showBetting ? (
+          <div className="bj-betting-dock absolute bottom-3 left-1/2 z-20 w-[min(96%,36rem)] -translate-x-1/2">
             <BettingBar
               pendingBet={human.pendingBet}
               balance={human.balance}
@@ -231,25 +186,69 @@ export function BlackjackClient() {
               onPlaceBet={() => dispatchAction({ type: "PLACE_BET" })}
               onDeal={() => dispatchAction({ type: "DEAL" })}
             />
-          ) : null}
-          {game.phase === "roundComplete" ? (
-            <div className="flex flex-wrap justify-center gap-2">
-              <button type="button" className="bj-btn-deal" onClick={() => dispatchAction({ type: "NEW_ROUND" })}>
-                New round
+          </div>
+        ) : null}
+
+        {game.phase === "roundComplete" ? (
+          <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 flex-wrap justify-center gap-2">
+            <button type="button" className="bj-btn-deal" onClick={() => dispatchAction({ type: "NEW_ROUND" })}>
+              New round
+            </button>
+            {stats.balance < MIN_BET ? (
+              <button type="button" className="bj-btn-primary" onClick={() => dispatchAction({ type: "RESET_SESSION" })}>
+                Reset to ${STARTING_BALANCE}
               </button>
-              {stats.balance < MIN_BET ? (
-                <button type="button" className="bj-btn-primary" onClick={() => dispatchAction({ type: "RESET_SESSION" })}>
-                  Reset to ${STARTING_BALANCE}
-                </button>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
-        <aside className="flex flex-col gap-3">
-          <StatsPanel stats={stats} currentBet={human.pendingBet || human.hands[0]?.bet || 0} />
-          <RulesPanel />
-        </aside>
+            ) : null}
+          </div>
+        ) : null}
+
+        {showSetup ? (
+          <div className="absolute inset-0 z-[60] flex items-end justify-center bg-gradient-to-t from-black/70 via-black/35 to-transparent p-4 pb-8 sm:items-center sm:pb-4">
+            <section className="bj-setup pointer-events-auto w-full max-w-md rounded-2xl border border-[#c4a574]/35 bg-[#14100c]/92 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.75)] backdrop-blur-md">
+              <h2 className="font-serif text-lg font-semibold text-[#f0d9a8]">Take a seat</h2>
+              <p className="mt-1 text-sm text-[#d8c4a0]/80">Virtual chips — bankroll ${STARTING_BALANCE}.</p>
+              <label className="mt-3 block text-sm text-[#d8c4a0]/75">
+                Your name
+                <input
+                  value={playerName}
+                  onChange={(e) => setPlayerName(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-[#5a3d22]/60 bg-black/40 px-3 py-2 text-[#f2ebe0]"
+                />
+              </label>
+              <div className="mt-4 grid gap-2">
+                <ModeButton
+                  title="Solo vs dealer"
+                  detail="You + 4 AI — five-seat table."
+                  onClick={() => startMode("solo", 0)}
+                />
+                <ModeButton
+                  title="Table with AI guests"
+                  detail="Same five-seat table."
+                  onClick={() => startMode("withAi", 0)}
+                />
+                <ModeButton
+                  title="Host table"
+                  detail="Five seats; more humans later."
+                  onClick={() => startMode("hostTable", 0)}
+                />
+              </div>
+            </section>
+          </div>
+        ) : null}
       </div>
+
+      <aside className="mt-2 flex flex-col gap-2 xl:hidden">
+        <BjSidebar stats={stats} currentBet={human.pendingBet || human.hands[0]?.bet || 0} />
+      </aside>
+    </div>
+  );
+}
+
+function BjSidebar({ stats, currentBet }: { stats: SessionStats; currentBet: number }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <StatsPanel stats={stats} currentBet={currentBet} />
+      <RulesPanel />
     </div>
   );
 }
@@ -260,24 +259,6 @@ function ModeButton({ title, detail, onClick }: { title: string; detail: string;
       <span className="block font-semibold text-brand-cream">{title}</span>
       <span className="mt-1 block text-sm text-brand-muted">{detail}</span>
     </button>
-  );
-}
-
-function HostAiBar({ count, onChange }: { count: number; onChange: (n: number) => void }) {
-  return (
-    <div className="mt-3 flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-brand-line bg-brand-panel/60 px-4 py-3 text-sm">
-      <span className="text-brand-muted">AI seats at table:</span>
-      {[0, 1, 2].map((n) => (
-        <button
-          key={n}
-          type="button"
-          onClick={() => onChange(n)}
-          className={`rounded-full px-3 py-1 ${count === n ? "bg-brand-gold/20 text-brand-goldHi ring-1 ring-brand-gold" : "text-brand-cream ring-1 ring-brand-line"}`}
-        >
-          {n}
-        </button>
-      ))}
-    </div>
   );
 }
 
