@@ -4,8 +4,11 @@ import type { ReactNode } from "react";
 import { displayScore } from "@/lib/blackjack/hand";
 import type { BlackjackGameState, HandState, SeatState } from "@/lib/blackjack/types";
 import { FeltArcText } from "./felt-arc-text";
+import { FeltBetCircles } from "./felt-bet-circles";
 import { PlayingCardView } from "./playing-card";
 import { CardShoe, ChipTray } from "./table-decor";
+
+const AI_LAYOUT = ["bj-seat-0", "bj-seat-1", "bj-seat-3", "bj-seat-4"] as const;
 
 export function BlackjackTable({
   state,
@@ -20,46 +23,72 @@ export function BlackjackTable({
     state.dealer.cards.length > 0 || state.seats.some((s) => s.hands.some((h) => h.cards.length > 0));
 
   const dealerRevealed = state.dealerRevealed;
-  const dealerScore = showHands && state.dealer.cards.length > 0 ? displayScore(state.dealer.cards, dealerRevealed) : null;
+  const dealerScore =
+    showHands && state.dealer.cards.length > 0 ? displayScore(state.dealer.cards, dealerRevealed) : null;
 
   const humanSeat = state.seats.find((s) => s.isHuman);
   const aiSeats = state.seats.filter((s) => !s.isHuman);
   const humanActive =
     state.phase === "playerTurn" && state.seats[state.activeSeatIndex]?.id === humanSeat?.id;
 
-  const aiLayout = ["bj-ai-far-left", "bj-ai-left", "bj-ai-right", "bj-ai-far-right"];
+  const heroBet =
+    (humanSeat?.pendingBet ?? 0) || (humanSeat?.hands.reduce((sum, h) => sum + h.bet, 0) ?? 0);
 
   return (
     <div className="bj-casino-scene">
-      <div className="bj-casino-bokeh" aria-hidden />
-      <div className="bj-casino-vignette" aria-hidden />
+      <div className="bj-room" aria-hidden>
+        <span className="bj-room-glow" />
+        <span className="bj-bokeh b1" />
+        <span className="bj-bokeh b2" />
+        <span className="bj-bokeh b3" />
+        <span className="bj-bokeh b4" />
+        <span className="bj-bokeh b5" />
+        <span className="bj-bokeh b6" />
+        <span className="bj-bokeh b7" />
+        <span className="bj-bokeh b8" />
+        <span className="bj-bokeh b9" />
+        <span className="bj-bokeh b10" />
+        <span className="bj-bokeh b11" />
+        <span className="bj-bokeh b12" />
+      </div>
+      <div className="bj-room-vignette" aria-hidden />
 
       <div className="bj-table-stage">
-        <div className="bj-oval-rail bj-casino-rail">
-          <div className="bj-oval-felt bj-casino-felt">
-            <div className="bj-felt-vignette" aria-hidden />
+        <div className="bj-halfmoon">
+          <div className="bj-halfmoon-rim" aria-hidden />
+          <div className="bj-halfmoon-felt">
+            <div className="bj-felt-light" aria-hidden />
             <div className="bj-felt-arc-wrap">
               <FeltArcText />
             </div>
+            <FeltBetCircles />
             <ChipTray />
             <CardShoe />
 
-            <div className="bj-dealer-pit bj-spot">
-              <div className="bj-dealer-figure" aria-hidden />
-              <ScoreBadge label="Dealer" score={dealerScore ?? (showHands ? "—" : "")} />
+            <div className="bj-dealer-pit">
+              <div className="bj-dealer-figure" aria-hidden>
+                <span className="bj-dealer-hair" />
+                <span className="bj-dealer-face" />
+                <span className="bj-dealer-collar" />
+                <span className="bj-dealer-bow" />
+                <span className="bj-dealer-vest" />
+              </div>
               {showHands ? (
-                <div className="bj-hand-row">
-                  {state.dealer.cards.map((card, i) => (
-                    <PlayingCardView
-                      key={card.dealKey ?? `d-${i}`}
-                      card={card}
-                      delay={i * 100}
-                      size="xl"
-                      casino3d
-                      dropToSeat
-                    />
-                  ))}
-                </div>
+                <>
+                  <ScoreBadge label="Dealer" score={dealerScore ?? "—"} />
+                  <div className="bj-hand-row">
+                    {state.dealer.cards.map((card, i) => (
+                      <PlayingCardView
+                        key={card.dealKey ?? `d-${i}`}
+                        card={card}
+                        delay={i * 100}
+                        size="lg"
+                        casino3d
+                        dropToSeat
+                      />
+                    ))}
+                  </div>
+                </>
               ) : (
                 <p className="bj-dealer-label">Dealer</p>
               )}
@@ -69,9 +98,9 @@ export function BlackjackTable({
               <PlayerSpot
                 key={seat.id}
                 seat={seat}
-                className={`bj-spot ${aiLayout[index] ?? "bj-ai-left"}`}
-                showHands={showHands || seat.pendingBet > 0}
+                className={`bj-seat ${AI_LAYOUT[index] ?? "bj-seat-1"}`}
                 showOutcomes={state.phase === "roundComplete"}
+                size="sm"
                 minimal
               />
             ))}
@@ -79,10 +108,10 @@ export function BlackjackTable({
             {humanSeat && state.phase !== "setup" ? (
               <PlayerSpot
                 seat={humanSeat}
-                className={`bj-spot bj-spot-human-seat bj-player-zone ${humanActive ? "bj-spot-human-active" : ""}`}
-                showHands={showHands || humanSeat.pendingBet > 0}
+                className={`bj-seat bj-seat-2 ${humanActive ? "bj-seat-active" : ""}`}
                 showOutcomes={state.phase === "roundComplete"}
-                showStake={state.phase === "betting"}
+                showStake={state.phase === "betting" || heroBet > 0}
+                size="xl"
                 highlight
               />
             ) : null}
@@ -90,10 +119,20 @@ export function BlackjackTable({
             {banner ? <div className="bj-felt-banner">{banner}</div> : null}
             {controls ? <div className="bj-controls-on-felt">{controls}</div> : null}
           </div>
+          <div className="bj-black-rail" aria-hidden />
         </div>
       </div>
 
-      <div className="bj-hero-rail" aria-hidden />
+      <div className="bj-pov" aria-hidden>
+        <span className="bj-pov-arm left">
+          <span className="bj-pov-sleeve" />
+          <span className="bj-pov-hand" />
+        </span>
+        <span className="bj-pov-arm right">
+          <span className="bj-pov-sleeve" />
+          <span className="bj-pov-hand" />
+        </span>
+      </div>
     </div>
   );
 }
@@ -101,19 +140,19 @@ export function BlackjackTable({
 function PlayerSpot({
   seat,
   className,
-  showHands,
   showOutcomes,
   showStake,
   highlight,
   minimal,
+  size,
 }: {
   seat: SeatState;
   className: string;
-  showHands: boolean;
   showOutcomes: boolean;
   showStake?: boolean;
   highlight?: boolean;
   minimal?: boolean;
+  size: "sm" | "lg" | "xl";
 }) {
   const scores =
     seat.hands.length > 0 && seat.hands.some((h) => h.cards.length > 0)
@@ -122,32 +161,32 @@ function PlayerSpot({
           .map((h) => displayScore(h.cards, true))
           .join(" / ")
       : null;
-  const showBadge = scores !== null;
+
+  const hasCards = seat.hands.some((h) => h.cards.length > 0);
 
   return (
     <section className={className}>
-      {minimal ? <p className="bj-ai-name">{seat.name}</p> : null}
-      {showBadge && !minimal ? (
+      {scores ? (
         <ScoreBadge
           label={seat.isHuman ? "You" : seat.name}
-          score={scores!}
+          score={scores}
           highlight={highlight}
-          side={seat.isHuman}
+          compact={minimal}
         />
+      ) : minimal ? (
+        <p className="bj-ai-name">{seat.name}</p>
       ) : null}
-      {seat.hands.some((h) => h.cards.length > 0) ? (
-        <HandsRow
-          hands={seat.hands}
-          showOutcomes={showOutcomes}
-          showStake={showStake}
-          size={seat.isHuman ? "xl" : "lg"}
-        />
+
+      {hasCards ? (
+        <HandsRow hands={seat.hands} showOutcomes={showOutcomes} showStake={showStake} size={size} />
       ) : seat.pendingBet > 0 ? (
         <p className="bj-pending-chip">${seat.pendingBet}</p>
-      ) : minimal && !showHands ? (
-        <span className="bj-side-hand" aria-hidden />
+      ) : minimal ? (
+        <span className="bj-side-hands" aria-hidden>
+          <span />
+          <span />
+        </span>
       ) : null}
-      {minimal && showBadge ? <span className="bj-ai-score tabular-nums">{scores}</span> : null}
     </section>
   );
 }
@@ -156,15 +195,17 @@ function ScoreBadge({
   label,
   score,
   highlight,
-  side,
+  compact,
 }: {
   label: string;
   score: string;
   highlight?: boolean;
-  side?: boolean;
+  compact?: boolean;
 }) {
   return (
-    <div className={`bj-score-badge ${side ? "bj-score-badge-side" : ""} ${highlight ? "bj-score-badge-you" : ""}`}>
+    <div
+      className={`bj-score-badge ${compact ? "bj-score-badge-compact" : ""} ${highlight ? "bj-score-badge-you" : ""}`}
+    >
       <span className="bj-score-label">{label}</span>
       <strong className="bj-score-value">{score}</strong>
     </div>
@@ -180,7 +221,7 @@ function HandsRow({
   hands: HandState[];
   showOutcomes: boolean;
   showStake?: boolean;
-  size: "lg" | "xl";
+  size: "sm" | "lg" | "xl";
 }) {
   return (
     <div className="bj-hands-row">
@@ -193,7 +234,7 @@ function HandsRow({
                 card={card}
                 delay={i * 80}
                 size={size}
-                tilt={(i - (hand.cards.length - 1) / 2) * 6}
+                tilt={(i - (hand.cards.length - 1) / 2) * 5}
                 casino3d
                 dropToSeat
               />

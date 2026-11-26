@@ -14,7 +14,7 @@ export function FeltArcText() {
       </text>
       <text className="bj-felt-arc-sub">
         <textPath href="#bj-felt-arc-sub" startOffset="50%" textAnchor="middle">
-          DEALER HITS SOFT 17 • INSURANCE PAYS 2 TO 1
+          DEALER MUST DRAW TO 16 AND STAND ON ALL 17S
         </textPath>
       </text>
     </svg>
