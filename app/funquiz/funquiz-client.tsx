@@ -1024,7 +1024,7 @@ export function FunQuizClient() {
     <div
       className={`mx-auto flex min-h-[100dvh] flex-col ${
         holdemLive
-          ? "max-w-6xl px-2 py-3 pb-6 sm:px-4"
+          ? "max-w-7xl px-1 py-2 pb-4 sm:px-3"
           : `px-4 py-6 pb-10 ${isMillionaire || isHoldem || isCatchphrase || isBlockbusters ? "max-w-5xl" : "max-w-2xl"}`
       }`}
     >

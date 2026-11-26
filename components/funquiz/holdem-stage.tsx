@@ -21,41 +21,40 @@ type Props = {
 };
 
 function cardColor(label: string): string {
-  return label.includes("♥") || label.includes("♦") ? "text-red-700" : "text-[#1a1410]";
+  return label.includes("♥") || label.includes("♦") ? "text-[#b91c1c]" : "text-[#1c1410]";
 }
 
 function PlayingCard({
   label,
   hidden,
   large,
+  hero,
   delayMs = 0,
   tilt = 0,
-  ghost = false,
 }: {
   label?: string;
   hidden?: boolean;
   large?: boolean;
+  hero?: boolean;
   delayMs?: number;
   tilt?: number;
-  ghost?: boolean;
 }) {
-  const size = large
-    ? "h-[5.75rem] w-[4.05rem] sm:h-[7.25rem] sm:w-[5.1rem]"
-    : "h-[2.85rem] w-[2.05rem] sm:h-12 sm:w-[2.15rem]";
+  const size = hero
+    ? "h-[6.4rem] w-[4.5rem] sm:h-[8.2rem] sm:w-[5.7rem]"
+    : large
+      ? "h-[4.6rem] w-[3.25rem] sm:h-[5.5rem] sm:w-[3.9rem]"
+      : "h-[2.7rem] w-[1.95rem] sm:h-11 sm:w-8";
   const style: CSSProperties = {
     animationDelay: `${delayMs}ms`,
     transform: `rotate(${tilt}deg)`,
-    opacity: ghost ? 0.35 : 1,
   };
 
   if (hidden || !label) {
     return (
       <span className={`holdem-card-deal holdem-card-3d inline-flex ${size}`} style={style}>
-        <span className="holdem-card-face holdem-card-back relative flex h-full w-full items-center justify-center overflow-hidden rounded-[0.45rem]">
-          <span className="absolute inset-[3px] rounded-[0.32rem] border border-[#c4a574]/35 bg-[repeating-linear-gradient(135deg,#3d2918_0_3px,#1c120c_3px_6px)]" />
-          <span className="relative z-[1] font-serif text-[9px] tracking-widest text-[#d7b57a]/70 sm:text-[10px]">
-            ♦
-          </span>
+        <span className="holdem-card-face holdem-card-back relative flex h-full w-full items-center justify-center overflow-hidden rounded-[0.4rem]">
+          <span className="absolute inset-[3px] rounded-[0.28rem] border border-[#c4a574]/40 bg-[radial-gradient(circle_at_center,#5a2f18_0%,#2a160c_70%)]" />
+          <span className="relative z-[1] text-[10px] text-[#d7b57a]/55">♦</span>
         </span>
       </span>
     );
@@ -65,12 +64,12 @@ function PlayingCard({
   const suit = label.slice(-1);
   return (
     <span className={`holdem-card-deal holdem-card-3d inline-flex ${size}`} style={style}>
-      <span className="holdem-card-face relative flex h-full w-full flex-col items-start justify-between overflow-hidden rounded-[0.45rem] bg-gradient-to-br from-[#fffaf0] via-[#f3ead8] to-[#e4d5bc] px-1 py-0.5 sm:px-1.5 sm:py-1">
+      <span className="holdem-card-face relative flex h-full w-full flex-col items-start justify-between overflow-hidden rounded-[0.4rem] bg-gradient-to-br from-[#fffaf2] via-[#f2e6d0] to-[#dfd0b4] px-1 py-0.5 sm:px-1.5 sm:py-1">
         <span className={`font-serif text-[11px] font-bold leading-none sm:text-sm ${cardColor(label)}`}>
           {rank}
           {suit}
         </span>
-        <span className={`self-center font-serif text-xl leading-none sm:text-3xl ${cardColor(label)}`}>
+        <span className={`self-center font-serif text-2xl leading-none sm:text-4xl ${cardColor(label)}`}>
           {suit}
         </span>
         <span
@@ -84,25 +83,23 @@ function PlayingCard({
   );
 }
 
-function seatStatus(seat: HoldemSeatView, street: string): string {
-  if (seat.isWinner && street === "hand_over") return "Winner";
+function seatStatus(seat: HoldemSeatView, street: string, isYou: boolean): string {
+  if (seat.isWinner && street === "hand_over") return seat.playerId ? "Winner" : "Winner";
   if (seat.folded) return "Folded";
-  if (seat.isActing) return "Your turn…";
+  if (seat.isActing) return isYou ? "Your turn…" : "Thinking…";
   if (seat.allIn) return "All in";
   if (seat.streetBet > 0) return `Bet $${seat.streetBet}`;
   if (seat.isBigBlind) return "Big blind";
   if (seat.isSmallBlind) return "Small blind";
   if (seat.isDealer) return "Dealer";
-  return "In hand";
+  return "";
 }
 
-function tableSeatStyle(index: number, total: number): CSSProperties {
-  // Opponents only — arc across the far side of the table
+function opponentSeatStyle(index: number, total: number): CSSProperties {
   const t = total <= 1 ? 0.5 : index / Math.max(1, total - 1);
-  const angle = Math.PI * (0.2 + t * 0.6);
-  const x = 50 + Math.cos(angle) * 36;
-  const y = 34 - Math.sin(angle) * 22;
-  return { left: `${x}%`, top: `${y}%`, transform: "translate(-50%, -50%)" };
+  const x = 28 + t * 44;
+  const y = 18 + Math.sin(Math.PI * t) * 4;
+  return { left: `${x}%`, top: `${y}%`, transform: "translate(-50%, 0)" };
 }
 
 export function HoldemStage({
@@ -196,9 +193,9 @@ export function HoldemStage({
   const youSeat = seats.find((s) => s.playerId === playerId);
   const others = seats.filter((s) => s.playerId !== playerId);
   const heroCards =
-    youSeat && !youSeat.folded && youSeat.cards && youSeat.cards.length > 0
-      ? youSeat.cards.slice(0, 2)
-      : hv.yourCards?.slice(0, 2) ?? [];
+    youSeat && !youSeat.folded && ((youSeat.cards && youSeat.cards.length > 0) || hv.yourCards?.length)
+      ? (youSeat.cards?.length ? youSeat.cards : hv.yourCards).slice(0, 2)
+      : [];
   const boardSlots = Array.from({ length: 5 }, (_, i) => hv.board[i] ?? null);
   const locked = pending || busy;
   const handOver = hv.street === "hand_over";
@@ -225,51 +222,55 @@ export function HoldemStage({
     }
   };
 
-  const onGender = (next: HoldemFaceGender) => {
-    setGender(next);
-    writeFaceGender(next);
-  };
-
   return (
-    <div className="holdem-saloon relative mt-1 overflow-hidden rounded-[1.25rem] border border-[#6b4c2a]/55 shadow-[0_40px_90px_-40px_rgba(0,0,0,0.95)]">
-      <div className="holdem-saloon-bg pointer-events-none absolute inset-0" />
-      <div className="holdem-saloon-lamps pointer-events-none absolute inset-0" />
-      <div className="holdem-saloon-vignette pointer-events-none absolute inset-0" />
+    <div className="holdem-fp relative mt-1 min-h-[min(92dvh,920px)] overflow-hidden rounded-xl border border-[#5a3d22]/60 shadow-[0_40px_100px_-40px_rgba(0,0,0,0.95)]">
+      {/* Cinematic saloon plate */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/funquiz/holdem/saloon-plate.jpg"
+        alt=""
+        className="holdem-fp-plate pointer-events-none absolute inset-0 h-full w-full object-cover"
+      />
+      <div className="holdem-fp-grade pointer-events-none absolute inset-0" />
+      <div className="holdem-fp-vignette pointer-events-none absolute inset-0" />
 
-      {/* Top bar */}
-      <div className="relative z-20 flex flex-wrap items-center justify-between gap-2 px-3 pt-3 sm:px-5">
+      {/* Tiny top meta */}
+      <div className="relative z-30 flex items-start justify-between gap-2 px-3 pt-3 sm:px-5">
         <div>
-          <p className="font-serif text-[11px] uppercase tracking-[0.28em] text-[#e6c78a]/90">
+          <p className="font-serif text-[11px] uppercase tracking-[0.28em] text-[#f0d9a8]/85 drop-shadow">
             Saloon Hold&apos;em · Hand #{hv.handNumber}
           </p>
-          <p className="mt-0.5 text-[12px] text-[#d8c4a0]/75">
-            Blinds ${hv.smallBlind}/${hv.bigBlind} · Max raise ${hv.maxRaiseSize ?? 25} · Room{" "}
-            {roomState.code}
+          <p className="mt-0.5 text-[11px] text-[#d8c4a0]/70 drop-shadow">
+            Blinds ${hv.smallBlind}/${hv.bigBlind} · Max raise ${hv.maxRaiseSize ?? 25} · {roomState.code}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {secondsLeft != null && hv.actionOn ? (
             <span
-              className={`rounded border px-2.5 py-1 font-serif text-sm tabular-nums ${
-                secondsLeft <= 10
-                  ? "border-red-500/50 bg-red-950/70 text-red-100"
-                  : "border-[#c4a574]/40 bg-black/45 text-[#f0d9a8]"
+              className={`rounded px-2 py-1 font-serif text-sm tabular-nums backdrop-blur-sm ${
+                secondsLeft <= 10 ? "bg-red-950/70 text-red-100" : "bg-black/45 text-[#f0d9a8]"
               }`}
             >
               {secondsLeft}s
             </span>
           ) : null}
-          <div className="rounded border border-[#c4a574]/25 bg-black/40 p-0.5 text-[10px]">
+          <div className="rounded bg-black/40 p-0.5 text-[10px] backdrop-blur-sm">
             <button
               type="button"
-              onClick={() => onGender("male")}
+              onClick={() => {
+                setGender("male");
+                writeFaceGender("male");
+              }}
               className={`rounded px-2 py-1 ${gender === "male" ? "bg-[#c4a574] text-[#1a1208]" : "text-[#d8c4a0]"}`}
             >
               Male
             </button>
             <button
               type="button"
-              onClick={() => onGender("female")}
+              onClick={() => {
+                setGender("female");
+                writeFaceGender("female");
+              }}
               className={`rounded px-2 py-1 ${gender === "female" ? "bg-[#c4a574] text-[#1a1208]" : "text-[#d8c4a0]"}`}
             >
               Female
@@ -280,7 +281,7 @@ export function HoldemStage({
               type="button"
               disabled={locked}
               onClick={() => onLeaveLobby()}
-              className="rounded border border-[#c4a574]/30 bg-black/40 px-3 py-1.5 text-[11px] text-[#d8c4a0] disabled:opacity-50"
+              className="rounded bg-black/45 px-2.5 py-1.5 text-[11px] text-[#d8c4a0] backdrop-blur-sm disabled:opacity-50"
             >
               Leave
             </button>
@@ -288,339 +289,279 @@ export function HoldemStage({
         </div>
       </div>
 
-      <div className="relative z-10 grid gap-3 px-2 pb-3 pt-2 sm:grid-cols-[13.5rem_minmax(0,1fr)] sm:gap-4 sm:px-4 lg:grid-cols-[15rem_minmax(0,1fr)]">
-        {/* LHS roster — RDR2 style */}
-        <aside className="holdem-roster order-2 sm:order-1">
-          <p className="mb-2 px-1 font-serif text-[10px] uppercase tracking-[0.3em] text-[#c4a574]/70">
-            Players
-          </p>
-          <ul className="space-y-2">
-            {seats.map((seat) => {
-              const isYou = seat.playerId === playerId;
-              const g = faceGenderForSeat(seat.playerId, isYou, gender);
-              const face = holdemFaceUrl(seat.playerId, g);
-              const status = seatStatus(
-                {
-                  ...seat,
-                  isActing: seat.isActing && isYou ? seat.isActing : seat.isActing && !isYou,
-                },
-                hv.street,
-              );
-              const statusLabel =
-                seat.isActing && isYou
-                  ? "Your turn…"
-                  : seat.isActing
-                    ? "Thinking…"
-                    : status;
-              return (
-                <li
-                  key={seat.playerId}
-                  className={`holdem-roster-row flex items-center gap-2.5 px-2 py-2 ${
-                    seat.isWinner
-                      ? "holdem-roster-winner"
-                      : seat.isActing
-                        ? "holdem-roster-acting"
-                        : seat.folded
-                          ? "opacity-55"
-                          : ""
-                  }`}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={face} alt="" className="holdem-avatar h-10 w-10 shrink-0 rounded-full object-cover" />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-serif text-lg leading-tight text-[#f4ead4] tabular-nums">
-                      ${seat.stack}
-                    </p>
-                    <p className="truncate text-[11px] text-[#d8c4a0]/85">
-                      {isYou ? "You" : seat.name}
-                      {seat.isDealer ? " · D" : ""}
-                    </p>
-                    <p
-                      className={`truncate text-[10px] ${
-                        seat.isWinner
-                          ? "font-semibold text-[#ffe6a0]"
-                          : seat.isActing
-                            ? "text-[#f0d9a8]"
-                            : "text-[#a89070]"
-                      }`}
-                    >
-                      {seat.isWinner && hv.lastPotWon
-                        ? `Won $${hv.lastPotWon}`
-                        : statusLabel}
-                    </p>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </aside>
+      {/* LHS roster — RDR2 */}
+      <aside className="holdem-fp-roster absolute bottom-28 left-2 z-30 w-[11.5rem] sm:bottom-32 sm:left-4 sm:w-[13.5rem]">
+        <ul className="space-y-2">
+          {seats.map((seat) => {
+            const isYou = seat.playerId === playerId;
+            const g = faceGenderForSeat(seat.playerId, isYou, gender);
+            const face = holdemFaceUrl(seat.playerId, g);
+            const status = seatStatus(seat, hv.street, isYou);
+            return (
+              <li
+                key={seat.playerId}
+                className={`holdem-fp-row flex items-center gap-2 ${
+                  seat.isWinner ? "holdem-fp-row-winner" : seat.isActing ? "holdem-fp-row-acting" : ""
+                } ${seat.folded ? "opacity-50" : ""}`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={face} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-[#c4a574]/40 sm:h-10 sm:w-10" />
+                <div className="min-w-0">
+                  <p className="font-serif text-lg leading-none text-white drop-shadow tabular-nums sm:text-xl">
+                    ${seat.stack}
+                  </p>
+                  <p className="truncate text-[11px] text-white/80 drop-shadow">
+                    {isYou ? "You" : seat.name}
+                    {seat.isDealer ? " · D" : ""}
+                  </p>
+                  <p
+                    className={`truncate text-[10px] drop-shadow ${
+                      seat.isWinner ? "text-[#ffe6a0]" : seat.isActing ? "text-[#f5e6c0]" : "text-white/55"
+                    }`}
+                  >
+                    {seat.isWinner && hv.lastPotWon ? `Won $${hv.lastPotWon}` : status}
+                  </p>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </aside>
 
-        {/* Table + HUD */}
-        <div className="order-1 sm:order-2">
-          {/* Top-right community HUD */}
-          <div className="mb-2 flex flex-wrap items-start justify-end gap-3">
-            <div className="holdem-hud rounded-md border border-[#c4a574]/25 bg-black/45 px-2.5 py-2 backdrop-blur-sm">
-              <div className="flex gap-1">
-                {boardSlots.map((c, i) =>
-                  c ? (
-                    <PlayingCard key={`hud-${c}-${i}`} label={c} delayMs={i * 40} />
-                  ) : (
-                    <span
-                      key={`hud-empty-${i}`}
-                      className="inline-flex h-[2.85rem] w-[2.05rem] rounded-[0.4rem] border border-dashed border-[#c4a574]/30 bg-black/25 sm:h-12 sm:w-[2.15rem]"
-                    />
-                  ),
+      {/* Top-right community HUD */}
+      <div className="absolute right-2 top-14 z-30 sm:right-4 sm:top-16">
+        <div className="flex gap-1 drop-shadow-lg">
+          {boardSlots.map((c, i) =>
+            c ? (
+              <PlayingCard key={`hud-${c}-${i}`} label={c} delayMs={i * 40} />
+            ) : (
+              <span
+                key={`empty-${i}`}
+                className="inline-flex h-[2.7rem] w-[1.95rem] rounded-[0.35rem] border border-[#c4a574]/35 bg-black/35 sm:h-11 sm:w-8"
+              />
+            ),
+          )}
+        </div>
+        <p className="mt-1 text-right font-serif text-sm text-white drop-shadow">
+          Pot ${hv.pot}
+          <span className="ml-2 text-[10px] uppercase tracking-widest text-white/55">
+            {hv.street.replace("_", " ")}
+          </span>
+        </p>
+      </div>
+
+      {/* Live table layer over plate */}
+      <div className="holdem-fp-table absolute inset-x-0 top-[12%] z-20 mx-auto h-[52%] w-[92%] max-w-4xl sm:top-[10%] sm:h-[58%]">
+        <div className="holdem-fp-rail absolute inset-[4%_6%_8%] rounded-[50%]">
+          <div className="holdem-fp-felt absolute inset-[7%] rounded-[50%]">
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <div className={`holdem-fp-pot ${flashPot ? "holdem-pot-pulse" : ""}`}>
+                <div className="holdem-fp-chip-pile" aria-hidden>
+                  {[0, 1, 2, 3, 4, 5].map((i) => (
+                    <span key={i} className={`holdem-chip holdem-chip-${i % 3}`} style={{ left: `${20 + i * 9}%`, bottom: i % 2 }} />
+                  ))}
+                </div>
+                <p className="font-serif text-3xl font-semibold text-[#ffe6a0] drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)] sm:text-4xl">
+                  ${hv.pot}
+                </p>
+              </div>
+              <div className="mt-2 flex min-h-[3.2rem] items-end justify-center gap-1.5">
+                {hv.board.length > 0 ? (
+                  hv.board.map((c, i) => (
+                    <PlayingCard key={`${c}-${i}`} label={c} large delayMs={i * 70} tilt={(i - 2) * 1.2} />
+                  ))
+                ) : (
+                  <p className="font-serif text-[11px] uppercase tracking-[0.28em] text-[#cfe3d4]/40">
+                    Waiting for flop
+                  </p>
                 )}
               </div>
-              <p className="mt-1.5 text-right font-serif text-sm text-[#f0d9a8]">
-                Pot ${hv.pot}
-                <span className="ml-2 text-[10px] uppercase tracking-widest text-[#a89070]">
-                  {hv.street.replace("_", " ")}
-                </span>
-              </p>
             </div>
           </div>
+        </div>
 
-          <div className="holdem-scene relative mx-auto w-full max-w-3xl">
-            <div className="holdem-table-wrap relative mx-auto aspect-[5/3.2] w-full">
-              <div className="holdem-table-floor absolute inset-[12%_8%_2%] rounded-[50%]" />
-              <div className="holdem-table-rail absolute inset-[6%] rounded-[50%]">
-                <div className="holdem-table-felt absolute inset-[8%] rounded-[50%]">
-                  <div className="holdem-felt-sheen absolute inset-0 rounded-[50%]" />
-                  <div className="holdem-felt-rim absolute inset-[6%] rounded-[50%]" />
-
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
-                    <div
-                      className={`holdem-pot-chips relative h-8 w-16 ${flashPot ? "holdem-pot-pulse" : ""}`}
-                      aria-hidden
-                    >
-                      {[0, 1, 2, 3, 4].map((i) => (
-                        <span
-                          key={i}
-                          className="holdem-chip absolute left-1/2 h-2.5 w-8 -translate-x-1/2 rounded-full"
-                          style={{ bottom: i * 2.5, zIndex: i + 1, marginLeft: (i - 2) * 3 }}
-                        />
-                      ))}
-                    </div>
-                    <p
-                      className={`font-serif text-2xl font-semibold tabular-nums text-[#ffe6a0] drop-shadow-[0_4px_10px_rgba(0,0,0,0.7)] sm:text-3xl ${flashPot ? "holdem-pot-pulse" : ""}`}
-                    >
-                      ${hv.pot}
-                    </p>
-                    <div className="mt-1 flex min-h-[3rem] flex-wrap items-end justify-center gap-1.5">
-                      {hv.board.length > 0 ? (
-                        hv.board.map((c, i) => (
-                          <PlayingCard key={`${c}-${i}`} label={c} delayMs={i * 70} tilt={(i - 2) * 1.5} />
-                        ))
-                      ) : (
-                        <p className="font-serif text-[11px] uppercase tracking-[0.25em] text-[#9fbfa8]/45">
-                          Waiting for flop
-                        </p>
-                      )}
-                    </div>
-                  </div>
+        {others.map((seat, index) => {
+          const g = faceGenderForSeat(seat.playerId, false, gender);
+          const face = holdemFaceUrl(seat.playerId, g);
+          return (
+            <div
+              key={seat.playerId}
+              className="absolute z-30 flex w-[7rem] flex-col items-center sm:w-32"
+              style={opponentSeatStyle(index, others.length)}
+            >
+              <div className={`holdem-fp-opp ${seat.folded ? "opacity-45" : ""} ${seat.isWinner ? "holdem-fp-opp-winner" : ""}`}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={face} alt="" className="mx-auto h-12 w-12 rounded-full object-cover ring-2 ring-[#c4a574]/45 sm:h-14 sm:w-14" />
+                <p className="mt-1 truncate text-center text-[11px] font-semibold text-white drop-shadow">
+                  {seat.name}
+                </p>
+                <p className="text-center text-[10px] text-[#ffe6a0] drop-shadow">${seat.stack}</p>
+                <div className="mt-1 flex justify-center gap-1">
+                  {seat.folded ? (
+                    <span className="text-[9px] uppercase text-white/50">Folded</span>
+                  ) : seat.cards && seat.cards.length > 0 ? (
+                    seat.cards.slice(0, 2).map((c, i) => (
+                      <PlayingCard key={`${seat.playerId}-${c}-${i}`} label={c} tilt={i === 0 ? -8 : 8} />
+                    ))
+                  ) : (
+                    <>
+                      <PlayingCard hidden tilt={-10} />
+                      <PlayingCard hidden tilt={10} delayMs={30} />
+                    </>
+                  )}
                 </div>
-              </div>
-
-              {others.map((seat, index) => {
-                const g = faceGenderForSeat(seat.playerId, false, gender);
-                const face = holdemFaceUrl(seat.playerId, g);
-                return (
-                  <div
-                    key={seat.playerId}
-                    className="absolute z-20 w-[6.5rem] sm:w-32"
-                    style={tableSeatStyle(index, others.length)}
-                  >
-                    <div
-                      className={`holdem-seat flex flex-col items-center px-1.5 py-1.5 ${
-                        seat.folded ? "holdem-seat-folded" : seat.isActing ? "holdem-seat-acting" : ""
-                      } ${seat.isWinner ? "holdem-seat-winner" : ""}`}
-                    >
-                      <div className="relative">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={face}
-                          alt=""
-                          className="holdem-avatar h-11 w-11 rounded-full object-cover sm:h-12 sm:w-12"
-                        />
-                        {seat.isDealer ? (
-                          <span className="holdem-dealer-btn absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-[#1a1208]">
-                            D
-                          </span>
-                        ) : null}
-                      </div>
-                      <p className="mt-1 max-w-full truncate text-center text-[10px] font-semibold text-[#f4ead4]">
-                        {seat.name}
-                      </p>
-                      <p className="text-[10px] tabular-nums text-[#e6c78a]">${seat.stack}</p>
-                      <div className="mt-0.5 flex gap-0.5">
-                        {seat.folded ? (
-                          <span className="text-[9px] uppercase text-[#a89070]">Folded</span>
-                        ) : seat.cards && seat.cards.length > 0 ? (
-                          seat.cards.slice(0, 2).map((c, i) => (
-                            <PlayingCard
-                              key={`${seat.playerId}-${c}-${i}`}
-                              label={c}
-                              delayMs={i * 50}
-                              tilt={i === 0 ? -8 : 8}
-                            />
-                          ))
-                        ) : (
-                          <>
-                            <PlayingCard hidden delayMs={0} tilt={-10} />
-                            <PlayingCard hidden delayMs={30} tilt={10} />
-                          </>
-                        )}
-                      </div>
-                    </div>
+                {seat.streetBet > 0 && !seat.folded ? (
+                  <div className="holdem-fp-bet-chips mt-1">
+                    <span className="holdem-chip holdem-chip-0" />
+                    <span className="text-[9px] text-[#ffe6a0]">${seat.streetBet}</span>
                   </div>
-                );
-              })}
+                ) : null}
+              </div>
             </div>
+          );
+        })}
+      </div>
+
+      {/* Winner */}
+      {handOver && winnerName ? (
+        <div
+          className={`holdem-fp-winner absolute left-1/2 top-[58%] z-40 w-[min(92%,28rem)] -translate-x-1/2 px-4 py-3 text-center ${
+            youWon ? "holdem-fp-winner-you" : ""
+          }`}
+        >
+          <p className="font-serif text-2xl text-[#ffe6a0] sm:text-3xl">
+            {youWon ? "You win" : `${winnerName} wins`}
+            {hv.lastPotWon ? ` $${hv.lastPotWon}` : ""}
+          </p>
+          {hv.showdownLabel ? <p className="mt-1 text-sm text-[#d8c4a0]">{hv.showdownLabel}</p> : null}
+        </div>
+      ) : null}
+
+      {/* First-person hero cards in hands */}
+      <div className="holdem-fp-hands absolute bottom-0 left-1/2 z-40 flex w-full max-w-xl -translate-x-1/2 flex-col items-center pb-2 pt-10">
+        <div className="holdem-fp-sleeves pointer-events-none absolute inset-x-0 bottom-0 h-28 sm:h-32" aria-hidden />
+        {heroCards.length > 0 ? (
+          <div className="holdem-fp-hero-cards relative mb-2 flex items-end justify-center gap-2 sm:gap-3">
+            {heroCards.map((c, i) => (
+              <PlayingCard
+                key={`hero-${c}-${i}`}
+                label={c}
+                hero
+                delayMs={80 + i * 70}
+                tilt={i === 0 ? -12 : 12}
+              />
+            ))}
           </div>
+        ) : youSeat?.folded ? (
+          <p className="mb-3 font-serif text-sm text-[#a89070]">You folded</p>
+        ) : null}
 
-          {/* Winner banner */}
-          {handOver && winnerName ? (
-            <div className={`holdem-winner-banner mx-auto mt-2 max-w-xl px-3 py-3 text-center ${youWon ? "holdem-winner-you" : ""}`}>
-              <p className="font-serif text-xl text-[#ffe6a0] sm:text-2xl">
-                {youWon ? "You win" : `${winnerName} wins`}
-                {hv.lastPotWon ? ` $${hv.lastPotWon}` : ""}
-              </p>
-              {hv.showdownLabel ? (
-                <p className="mt-0.5 text-sm text-[#d8c4a0]">{hv.showdownLabel}</p>
-              ) : null}
-              {hv.lastHandSummary ? (
-                <p className="mt-1 text-[11px] text-[#a89070]">{hv.lastHandSummary}</p>
-              ) : null}
-            </div>
-          ) : null}
+        {!handOver && hv.isYourAction ? (
+          <p className="mb-2 font-serif text-base tracking-wide text-[#f5e6c0] drop-shadow">
+            Take your turn{secondsLeft != null ? ` · ${secondsLeft}s` : ""}
+          </p>
+        ) : null}
 
-          {/* Hero cards — held at bottom like RDR2 */}
-          {heroCards.length > 0 && !youSeat?.folded ? (
-            <div className="holdem-hero relative z-10 -mt-1 mb-1 flex justify-center gap-2 sm:gap-3">
-              {heroCards.map((c, i) => (
-                <PlayingCard
-                  key={`hero-${c}-${i}`}
-                  label={c}
-                  large
-                  delayMs={90 + i * 80}
-                  tilt={i === 0 ? -10 : 10}
-                />
-              ))}
-            </div>
-          ) : youSeat?.folded ? (
-            <p className="mb-2 text-center font-serif text-sm text-[#a89070]">You folded</p>
-          ) : null}
-
-          {!handOver && hv.isYourAction ? (
-            <p className="mb-2 text-center font-serif text-base tracking-wide text-[#f0d9a8]">
-              Take your turn
-              {secondsLeft != null ? ` · ${secondsLeft}s` : ""}
-            </p>
-          ) : null}
-
-          {/* Actions — bottom right cluster feel */}
-          {hv.isYourAction && !handOver ? (
-            <div className="holdem-actions ml-auto flex max-w-xl flex-wrap items-center justify-end gap-2 px-1 pb-1">
-              {hv.canFold ? (
+        {hv.isYourAction && !handOver ? (
+          <div className="holdem-fp-actions mb-2 flex flex-wrap items-center justify-center gap-2 px-2">
+            {hv.canFold ? (
+              <button
+                type="button"
+                disabled={locked}
+                onClick={() => void post({ action: "fold" })}
+                className="holdem-fp-btn rounded-sm border border-white/20 bg-black/55 px-3 py-2 text-left text-[12px] font-semibold uppercase tracking-wide text-white backdrop-blur-sm disabled:opacity-50"
+              >
+                Fold
+              </button>
+            ) : null}
+            {hv.canCheck ? (
+              <button
+                type="button"
+                disabled={locked}
+                onClick={() => void post({ action: "check" })}
+                className="holdem-fp-btn rounded-sm border border-white/20 bg-black/55 px-3 py-2 text-[12px] font-semibold uppercase tracking-wide text-white backdrop-blur-sm disabled:opacity-50"
+              >
+                Check
+              </button>
+            ) : null}
+            {hv.canCall ? (
+              <button
+                type="button"
+                disabled={locked}
+                onClick={() => void post({ action: "call" })}
+                className="holdem-fp-btn rounded-sm border border-white/20 bg-black/55 px-3 py-2 text-[12px] font-semibold uppercase tracking-wide text-white backdrop-blur-sm disabled:opacity-50"
+              >
+                Call ${hv.toCall}
+              </button>
+            ) : null}
+            {hv.canRaise ? (
+              <>
                 <button
                   type="button"
                   disabled={locked}
-                  onClick={() => void post({ action: "fold" })}
-                  className="holdem-btn rounded border border-red-400/40 bg-gradient-to-b from-[#5a1e1e] to-[#2a0d0d] px-4 py-2.5 text-sm font-semibold text-[#ffd0d0] disabled:opacity-50"
+                  onClick={() => void post({ action: "raise", raiseTo: minRaise })}
+                  className="holdem-fp-btn rounded-sm border border-white/20 bg-black/55 px-3 py-2 text-[12px] font-semibold uppercase tracking-wide text-white backdrop-blur-sm disabled:opacity-50"
                 >
-                  Fold
+                  Raise ${minRaise}
                 </button>
-              ) : null}
-              {hv.canCheck ? (
-                <button
-                  type="button"
-                  disabled={locked}
-                  onClick={() => void post({ action: "check" })}
-                  className="holdem-btn rounded border border-[#c4a574]/35 bg-gradient-to-b from-[#3a2e22] to-[#1c1510] px-4 py-2.5 text-sm font-semibold text-[#f4ead4] disabled:opacity-50"
-                >
-                  Check
-                </button>
-              ) : null}
-              {hv.canCall ? (
-                <button
-                  type="button"
-                  disabled={locked}
-                  onClick={() => void post({ action: "call" })}
-                  className="holdem-btn rounded border border-emerald-700/50 bg-gradient-to-b from-[#2f6b45] to-[#163825] px-4 py-2.5 text-sm font-semibold text-[#e8ffe8] disabled:opacity-50"
-                >
-                  Call ${hv.toCall}
-                </button>
-              ) : null}
-              {hv.canRaise ? (
-                <>
+                <label className="flex items-center gap-1 text-[11px] text-white/80">
+                  <span className="uppercase tracking-wide">Amount</span>
+                  <input
+                    type="number"
+                    min={minRaise}
+                    max={maxRaise}
+                    className="w-14 rounded-sm border border-white/20 bg-black/60 px-1.5 py-1.5 text-white"
+                    value={clampedRaise}
+                    onChange={(e) => {
+                      const n = Number(e.target.value);
+                      if (!Number.isFinite(n)) return;
+                      setRaiseTo(Math.min(Math.max(n, minRaise), maxRaise));
+                    }}
+                  />
                   <button
                     type="button"
                     disabled={locked}
-                    onClick={() => void post({ action: "raise", raiseTo: minRaise })}
-                    className="holdem-btn rounded border border-[#c4a574]/50 bg-gradient-to-b from-[#7a5a28] to-[#3a2a12] px-4 py-2.5 text-sm font-semibold text-[#ffe6a0] disabled:opacity-50"
+                    onClick={() => void post({ action: "raise", raiseTo: clampedRaise })}
+                    className="rounded-sm border border-white/20 bg-black/55 px-2 py-1.5 disabled:opacity-50"
                   >
-                    Raise ${minRaise}
+                    Go
                   </button>
-                  <label className="flex items-center gap-1.5 text-xs text-[#d8c4a0]">
-                    <span className="text-[10px] uppercase tracking-wide text-[#a89070]">Amount</span>
-                    <input
-                      type="number"
-                      min={minRaise}
-                      max={maxRaise}
-                      className="w-16 rounded border border-[#c4a574]/30 bg-black/55 px-2 py-2 text-[#f4ead4]"
-                      value={clampedRaise}
-                      onChange={(e) => {
-                        const n = Number(e.target.value);
-                        if (!Number.isFinite(n)) return;
-                        setRaiseTo(Math.min(Math.max(n, minRaise), maxRaise));
-                      }}
-                    />
-                    <button
-                      type="button"
-                      disabled={locked}
-                      onClick={() => void post({ action: "raise", raiseTo: clampedRaise })}
-                      className="holdem-btn rounded border border-[#c4a574]/35 px-3 py-2 text-[#f4ead4] disabled:opacity-50"
-                    >
-                      Go
-                    </button>
-                  </label>
-                </>
-              ) : null}
-              {hv.canAllIn ? (
-                <button
-                  type="button"
-                  disabled={locked}
-                  onClick={() => void post({ action: "all_in" })}
-                  className="holdem-btn rounded border border-[#e6c78a]/60 bg-gradient-to-b from-[#e6c78a] to-[#a67c2a] px-4 py-2.5 text-sm font-bold text-[#1a1208] disabled:opacity-50"
-                >
-                  All in
-                </button>
-              ) : null}
-            </div>
-          ) : !handOver ? (
-            <p className="pb-2 text-center font-serif text-sm text-[#a89070]">
-              {pending
-                ? "Updating…"
-                : hv.actionOn
-                  ? `Waiting for ${seats.find((s) => s.playerId === hv.actionOn)?.name ?? "opponent"}${
-                      secondsLeft != null ? ` · ${secondsLeft}s` : ""
-                    }…`
-                  : "Waiting…"}
-            </p>
-          ) : null}
+                </label>
+              </>
+            ) : null}
+            {hv.canAllIn ? (
+              <button
+                type="button"
+                disabled={locked}
+                onClick={() => void post({ action: "all_in" })}
+                className="holdem-fp-btn rounded-sm border border-[#e6c78a]/50 bg-[#c4a574]/90 px-3 py-2 text-[12px] font-bold uppercase tracking-wide text-[#1a1208] disabled:opacity-50"
+              >
+                All in
+              </button>
+            ) : null}
+          </div>
+        ) : !handOver ? (
+          <p className="mb-3 text-center text-sm text-white/60 drop-shadow">
+            {pending
+              ? "Updating…"
+              : hv.actionOn
+                ? `Waiting for ${seats.find((s) => s.playerId === hv.actionOn)?.name ?? "opponent"}${
+                    secondsLeft != null ? ` · ${secondsLeft}s` : ""
+                  }…`
+                : "Waiting…"}
+          </p>
+        ) : null}
 
-          {hv.canDealNextHand ? (
-            <button
-              type="button"
-              disabled={locked}
-              onClick={() => void post({ action: "deal" })}
-              className="holdem-btn mx-auto mt-2 block w-full max-w-md rounded border border-[#c4a574]/50 bg-gradient-to-b from-[#c4a574] to-[#8a6a2f] py-3 font-serif text-sm font-bold text-[#1a1208] disabled:opacity-50"
-            >
-              Deal next hand
-            </button>
-          ) : null}
-        </div>
+        {hv.canDealNextHand ? (
+          <button
+            type="button"
+            disabled={locked}
+            onClick={() => void post({ action: "deal" })}
+            className="mb-2 rounded-sm border border-[#c4a574]/60 bg-[#c4a574] px-6 py-2.5 font-serif text-sm font-bold text-[#1a1208] disabled:opacity-50"
+          >
+            Deal next hand
+          </button>
+        ) : null}
       </div>
     </div>
   );

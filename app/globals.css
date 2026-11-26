@@ -258,112 +258,95 @@ body {
   animation: holdem-pot-pulse 0.5s ease-out;
 }
 
-.holdem-saloon {
-  background: #120c08;
-  min-height: min(92dvh, 900px);
+/* First-person saloon (Mockup B) */
+.holdem-fp {
+  background: #0a0705;
 }
 
-.holdem-saloon-bg {
+.holdem-fp-plate {
+  filter: saturate(1.05) contrast(1.08);
+  transform: scale(1.04);
+}
+
+.holdem-fp-grade {
   background:
-    radial-gradient(ellipse at 50% 0%, rgba(180, 120, 50, 0.22), transparent 45%),
-    linear-gradient(180deg, #2a1a10 0%, #16100b 38%, #0b0805 100%),
-    repeating-linear-gradient(
-      90deg,
-      rgba(90, 55, 25, 0.08) 0,
-      rgba(90, 55, 25, 0.08) 2px,
-      transparent 2px,
-      transparent 28px
-    );
+    linear-gradient(180deg, rgba(20, 10, 4, 0.35) 0%, transparent 28%, transparent 55%, rgba(8, 4, 2, 0.55) 100%),
+    radial-gradient(ellipse at 50% 35%, transparent 20%, rgba(0, 0, 0, 0.28) 100%);
 }
 
-.holdem-saloon-lamps {
-  background:
-    radial-gradient(ellipse at 18% 12%, rgba(255, 190, 90, 0.18), transparent 28%),
-    radial-gradient(ellipse at 82% 10%, rgba(255, 190, 90, 0.14), transparent 26%),
-    radial-gradient(ellipse at 50% 100%, rgba(40, 80, 50, 0.12), transparent 40%);
+.holdem-fp-vignette {
+  background: radial-gradient(ellipse at center, transparent 42%, rgba(0, 0, 0, 0.78) 100%);
+  box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.55);
 }
 
-.holdem-saloon-vignette {
-  background: radial-gradient(ellipse at center, transparent 35%, rgba(0, 0, 0, 0.72) 100%);
+.holdem-fp-roster {
   pointer-events: none;
 }
 
-.holdem-roster {
-  border-radius: 0.65rem;
-  border: 1px solid rgba(196, 165, 116, 0.22);
-  background: linear-gradient(180deg, rgba(20, 14, 10, 0.88), rgba(8, 6, 4, 0.92));
-  padding: 0.65rem;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 220, 160, 0.08),
-    0 16px 30px rgba(0, 0, 0, 0.45);
+.holdem-fp-row {
+  padding: 0.2rem 0.35rem;
+  border-radius: 0.35rem;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.45), transparent);
 }
 
-.holdem-roster-row {
-  border-radius: 0.45rem;
-  border: 1px solid transparent;
-  background: linear-gradient(90deg, rgba(40, 28, 16, 0.55), rgba(16, 12, 8, 0.2));
+.holdem-fp-row-acting {
+  background: linear-gradient(90deg, rgba(80, 50, 12, 0.55), transparent);
+  box-shadow: inset 2px 0 0 #e6c78a;
 }
 
-.holdem-roster-acting {
-  border-color: rgba(196, 165, 116, 0.45);
-  background: linear-gradient(90deg, rgba(70, 48, 18, 0.7), rgba(24, 16, 8, 0.35));
-}
-
-.holdem-roster-winner {
-  border-color: rgba(255, 214, 120, 0.65);
-  background: linear-gradient(90deg, rgba(90, 62, 18, 0.85), rgba(30, 20, 8, 0.45));
+.holdem-fp-row-winner {
+  background: linear-gradient(90deg, rgba(100, 70, 16, 0.7), transparent);
+  box-shadow: inset 2px 0 0 #ffe6a0;
   animation: holdem-winner-pulse 1.6s ease-in-out infinite;
 }
 
-.holdem-scene {
-  perspective: 1200px;
+.holdem-fp-table {
+  perspective: 900px;
+  pointer-events: none;
 }
 
-.holdem-table-wrap {
-  transform: rotateX(18deg) scale(0.97);
+.holdem-fp-rail {
+  transform: rotateX(28deg);
   transform-style: preserve-3d;
-}
-
-.holdem-table-floor {
-  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.82), transparent 72%);
-  filter: blur(12px);
-  transform: translateY(22px) scale(1.04);
-}
-
-.holdem-table-rail {
   background:
-    radial-gradient(ellipse at 50% 12%, #d2ad68 0%, #9a6f32 24%, #654318 55%, #3a2410 100%);
+    radial-gradient(ellipse at 50% 10%, #c9a45a 0%, #8a5f28 30%, #4a3014 70%, #2a1a0c 100%);
   box-shadow:
-    inset 0 3px 4px rgba(255, 230, 170, 0.5),
-    inset 0 -14px 22px rgba(0, 0, 0, 0.6),
-    0 22px 42px rgba(0, 0, 0, 0.72),
-    0 3px 0 rgba(255, 220, 150, 0.18);
+    inset 0 3px 5px rgba(255, 230, 170, 0.4),
+    inset 0 -16px 28px rgba(0, 0, 0, 0.55),
+    0 28px 50px rgba(0, 0, 0, 0.55);
+  opacity: 0.92;
 }
 
-.holdem-table-felt {
+.holdem-fp-felt {
   background:
-    radial-gradient(ellipse at 50% 28%, #2a7a4e 0%, #145536 40%, #0a3a24 70%, #062816 100%);
+    radial-gradient(ellipse at 50% 30%, #2f7d52 0%, #145536 42%, #0a3a24 75%, #052616 100%);
   box-shadow:
-    inset 0 0 48px rgba(0, 0, 0, 0.5),
-    inset 0 14px 30px rgba(255, 255, 255, 0.05),
-    0 0 0 1px rgba(0, 0, 0, 0.4);
+    inset 0 0 50px rgba(0, 0, 0, 0.45),
+    inset 0 16px 28px rgba(255, 255, 255, 0.04);
 }
 
-.holdem-felt-sheen {
-  background:
-    radial-gradient(ellipse at 32% 18%, rgba(255, 255, 255, 0.16), transparent 40%),
-    radial-gradient(ellipse at 72% 78%, rgba(0, 0, 0, 0.32), transparent 52%);
-  pointer-events: none;
+.holdem-fp-pot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
 }
 
-.holdem-felt-rim {
-  border: 1px solid rgba(255, 236, 180, 0.14);
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.28);
-  pointer-events: none;
+.holdem-fp-chip-pile {
+  position: relative;
+  width: 5.5rem;
+  height: 1.4rem;
+}
+
+.holdem-fp-chip-pile .holdem-chip {
+  position: absolute;
+  bottom: 0;
+  width: 1.1rem;
+  height: 0.55rem;
 }
 
 .holdem-card-3d {
-  filter: drop-shadow(0 12px 16px rgba(0, 0, 0, 0.5));
+  filter: drop-shadow(0 14px 18px rgba(0, 0, 0, 0.55));
 }
 
 .holdem-card-face {
@@ -371,21 +354,25 @@ body {
     inset 0 1px 0 rgba(255, 255, 255, 0.9),
     inset 0 -2px 4px rgba(0, 0, 0, 0.14),
     0 1px 0 rgba(0, 0, 0, 0.4),
-    0 9px 0 -1px #cfc3ae,
-    0 10px 0 -1px rgba(0, 0, 0, 0.3);
+    0 10px 0 -1px #cfc3ae,
+    0 11px 0 -1px rgba(0, 0, 0, 0.3);
 }
 
 .holdem-card-back {
-  background: linear-gradient(145deg, #4a2f18 0%, #2a180e 55%, #140c08 100%);
+  background: linear-gradient(145deg, #5a3418 0%, #2e180c 55%, #140c08 100%);
   box-shadow:
     inset 0 1px 0 rgba(255, 220, 160, 0.22),
     inset 0 -2px 6px rgba(0, 0, 0, 0.5),
     0 1px 0 rgba(0, 0, 0, 0.45),
-    0 9px 0 -1px #1a100a,
-    0 10px 0 -1px rgba(0, 0, 0, 0.4);
+    0 10px 0 -1px #1a100a,
+    0 11px 0 -1px rgba(0, 0, 0, 0.4);
 }
 
 .holdem-chip {
+  display: inline-block;
+  width: 1rem;
+  height: 0.5rem;
+  border-radius: 999px;
   background:
     radial-gradient(circle at 35% 30%, #ffe08a 0%, #d4af37 38%, #8a6a1f 78%, #5c4512 100%);
   box-shadow:
@@ -395,90 +382,85 @@ body {
   border: 1px solid rgba(255, 236, 180, 0.35);
 }
 
-.holdem-seat {
-  border-radius: 0.85rem;
-  border: 1px solid rgba(196, 165, 116, 0.28);
-  background: linear-gradient(180deg, rgba(32, 22, 14, 0.92), rgba(10, 7, 5, 0.9));
-  box-shadow:
-    0 16px 28px rgba(0, 0, 0, 0.6),
-    inset 0 1px 0 rgba(255, 220, 160, 0.12);
-  backdrop-filter: blur(6px);
+.holdem-chip-0 {
+  background: radial-gradient(circle at 35% 30%, #fff 0%, #e8e8e8 40%, #9a9a9a 100%);
 }
 
-.holdem-seat-folded {
-  opacity: 0.48;
-  filter: grayscale(0.4);
+.holdem-chip-1 {
+  background: radial-gradient(circle at 35% 30%, #ff8a8a 0%, #c62828 45%, #7a1212 100%);
 }
 
-.holdem-seat-acting {
-  border-color: rgba(230, 199, 138, 0.7);
-  box-shadow:
-    0 16px 28px rgba(0, 0, 0, 0.6),
-    0 0 18px rgba(212, 175, 55, 0.35);
+.holdem-chip-2 {
+  background: radial-gradient(circle at 35% 30%, #9ec5ff 0%, #2f5f9a 45%, #1a3358 100%);
 }
 
-.holdem-seat-winner {
-  border-color: rgba(255, 214, 120, 0.85);
+.holdem-fp-opp {
+  filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.65));
+}
+
+.holdem-fp-opp-winner {
   animation: holdem-winner-pulse 1.6s ease-in-out infinite;
+  border-radius: 0.75rem;
 }
 
-.holdem-avatar {
-  border: 2px solid rgba(220, 180, 110, 0.55);
-  box-shadow:
-    0 8px 16px rgba(0, 0, 0, 0.55),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.35);
-  background: #2a1c12;
+.holdem-fp-bet-chips {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
 }
 
-.holdem-dealer-btn {
-  background: linear-gradient(180deg, #ffe08a, #d4af37);
-  box-shadow:
-    0 3px 6px rgba(0, 0, 0, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.55);
-}
-
-.holdem-hero {
-  animation: holdem-hero-float 3.4s ease-in-out infinite;
-  filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.6));
-  transform-origin: bottom center;
-}
-
-.holdem-btn {
-  box-shadow:
-    0 8px 16px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18);
-}
-
-.holdem-winner-banner {
-  border-radius: 0.55rem;
-  border: 1px solid rgba(196, 165, 116, 0.4);
-  background: linear-gradient(180deg, rgba(50, 34, 14, 0.92), rgba(16, 10, 6, 0.95));
-  box-shadow:
-    0 12px 28px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 220, 160, 0.15);
+.holdem-fp-winner {
+  border-radius: 0.4rem;
+  border: 1px solid rgba(196, 165, 116, 0.45);
+  background: linear-gradient(180deg, rgba(40, 26, 10, 0.88), rgba(10, 6, 3, 0.92));
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55);
   animation: holdem-winner-pulse 1.8s ease-in-out infinite;
+  backdrop-filter: blur(4px);
 }
 
-.holdem-winner-you {
-  border-color: rgba(255, 214, 120, 0.75);
-  background: linear-gradient(180deg, rgba(80, 52, 14, 0.95), rgba(24, 14, 6, 0.96));
+.holdem-fp-winner-you {
+  border-color: rgba(255, 214, 120, 0.8);
 }
 
-.holdem-hud {
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+.holdem-fp-hands {
+  pointer-events: none;
+}
+
+.holdem-fp-hands button,
+.holdem-fp-hands input,
+.holdem-fp-hands label {
+  pointer-events: auto;
+}
+
+.holdem-fp-sleeves {
+  background:
+    radial-gradient(ellipse 42% 90% at 18% 100%, rgba(58, 36, 20, 0.95) 0%, rgba(58, 36, 20, 0.7) 40%, transparent 70%),
+    radial-gradient(ellipse 42% 90% at 82% 100%, rgba(58, 36, 20, 0.95) 0%, rgba(58, 36, 20, 0.7) 40%, transparent 70%),
+    linear-gradient(180deg, transparent 0%, rgba(12, 8, 5, 0.55) 55%, rgba(8, 5, 3, 0.85) 100%);
+}
+
+.holdem-fp-hero-cards {
+  animation: holdem-hero-float 3.4s ease-in-out infinite;
+  filter: drop-shadow(0 22px 28px rgba(0, 0, 0, 0.7));
+  z-index: 2;
+}
+
+.holdem-fp-btn {
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .holdem-card-deal,
   .holdem-pot-pulse,
-  .holdem-hero,
-  .holdem-roster-winner,
-  .holdem-seat-winner,
-  .holdem-winner-banner {
+  .holdem-fp-hero-cards,
+  .holdem-fp-row-winner,
+  .holdem-fp-opp-winner,
+  .holdem-fp-winner {
     animation: none !important;
   }
 
-  .holdem-table-wrap {
+  .holdem-fp-rail {
     transform: none;
   }
 }
