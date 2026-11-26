@@ -144,10 +144,9 @@ export function BlackjackClient() {
         </div>
       </header>
 
-      <div className="relative mt-2 flex-1">
+      <div className="mt-2 grid flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_15rem]">
+        <div className="relative min-w-0">
           <BlackjackTable
-            playerId={playerId}
-            hud={<BjSidebar stats={stats} currentBet={human.pendingBet || human.hands[0]?.bet || 0} />}
             state={game}
             banner={
               game.banner &&
@@ -208,8 +207,12 @@ export function BlackjackClient() {
             </section>
           </div>
           ) : null}
-      </div>
+        </div>
 
+        <aside className="hidden flex-col gap-2 lg:flex">
+          <BjSidebar stats={stats} currentBet={human.pendingBet || human.hands[0]?.bet || 0} />
+        </aside>
+      </div>
 
       <div className="mx-auto mt-2 w-full max-w-3xl">
         {game.banner &&
@@ -247,6 +250,9 @@ export function BlackjackClient() {
             ) : null}
           </div>
         ) : null}
+        <aside className="mt-3 flex flex-col gap-2 lg:hidden">
+          <BjSidebar stats={stats} currentBet={human.pendingBet || human.hands[0]?.bet || 0} />
+        </aside>
       </div>
     </div>
   );
@@ -254,7 +260,7 @@ export function BlackjackClient() {
 
 function BjSidebar({ stats, currentBet }: { stats: SessionStats; currentBet: number }) {
   return (
-    <div className="pointer-events-auto flex flex-col gap-2 [&_.bj-panel]:border-[#c4a574]/30 [&_.bj-panel]:bg-black/55 [&_.bj-panel]:shadow-none">
+    <div className="flex flex-col gap-2">
       <StatsPanel stats={stats} currentBet={currentBet} />
       <RulesPanel />
     </div>

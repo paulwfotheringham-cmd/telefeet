@@ -1,142 +1,210 @@
 "use client";
 
 import type { ReactNode } from "react";
-import type { BlackjackGameState } from "@/lib/blackjack/types";
 import { displayScore } from "@/lib/blackjack/hand";
+import type { BlackjackGameState, HandState, SeatState } from "@/lib/blackjack/types";
 import { FeltArcText } from "./felt-arc-text";
 import { PlayingCardView } from "./playing-card";
 import { CardShoe, ChipTray } from "./table-decor";
-import { TableSeat, type SeatLayout } from "./table-seat";
-
-const AI_LAYOUTS: SeatLayout[] = ["ai-0", "ai-1", "ai-2", "ai-3"];
 
 export function BlackjackTable({
   state,
   controls,
   banner,
-  playerId,
-  hud,
 }: {
   state: BlackjackGameState;
   controls?: ReactNode;
   banner?: ReactNode;
-  playerId: string;
-  hud?: ReactNode;
 }) {
   const showHands =
     state.dealer.cards.length > 0 || state.seats.some((s) => s.hands.some((h) => h.cards.length > 0));
-  const showSeats = state.phase !== "setup";
+
   const dealerRevealed = state.dealerRevealed;
   const dealerScore = showHands && state.dealer.cards.length > 0 ? displayScore(state.dealer.cards, dealerRevealed) : null;
 
   const humanSeat = state.seats.find((s) => s.isHuman);
+  const aiSeats = state.seats.filter((s) => !s.isHuman);
   const humanActive =
     state.phase === "playerTurn" && state.seats[state.activeSeatIndex]?.id === humanSeat?.id;
 
-  const aiSeats = state.seats.filter((s) => !s.isHuman);
-
-  const dealerCards = showHands ? (
-    <div className="bj-hand-row bj-hand-row-3d">
-      {state.dealer.cards.map((card, i) => (
-        <PlayingCardView
-          key={card.dealKey ?? `d-${i}`}
-          card={card}
-          delay={i * 95}
-          size="md"
-          tilt={(i - 0.5) * 8}
-          casino3d
-          dropToSeat
-        />
-      ))}
-    </div>
-  ) : null;
+  const aiLayout = ["bj-ai-far-left", "bj-ai-left", "bj-ai-right", "bj-ai-far-right"];
 
   return (
-    <div className="holdem-fp bj-fp relative min-h-[min(92dvh,920px)] w-full overflow-hidden rounded-xl border border-[#5a3d22]/60 pb-28 shadow-[0_40px_100px_-40px_rgba(0,0,0,0.95)] sm:pb-32">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/funquiz/holdem/saloon-plate.jpg"
-        alt=""
-        className="holdem-fp-plate pointer-events-none absolute inset-0 h-full w-full object-cover"
-      />
-      <div className="holdem-fp-grade pointer-events-none absolute inset-0" />
-      <div className="holdem-fp-vignette pointer-events-none absolute inset-0" />
-      <div className="bj-fp-vegas-wash pointer-events-none absolute inset-0" aria-hidden />
-      <div className="bj-fp-plate-mask pointer-events-none absolute inset-0" aria-hidden />
+    <div className="bj-casino-scene">
+      <div className="bj-casino-bokeh" aria-hidden />
+      <div className="bj-casino-vignette" aria-hidden />
 
-      <div className="relative z-30 px-3 pt-3 sm:px-5">
-        <p className="font-serif text-[11px] uppercase tracking-[0.28em] text-[#f0d9a8]/85 drop-shadow">
-          Vegas Blackjack · 5 seats
-        </p>
-      </div>
-
-      {showSeats ? (
-        <aside className="holdem-fp-roster bj-fp-roster absolute bottom-28 left-2 z-30 w-[11.5rem] sm:bottom-32 sm:left-4 sm:w-[13rem]">
-          {hud}
-        </aside>
-      ) : null}
-
-      <div className="holdem-fp-table bj-fp-table absolute inset-x-0 top-[10%] z-20 mx-auto h-[54%] w-[92%] max-w-4xl sm:top-[9%] sm:h-[58%]">
-        <div className="holdem-fp-rail absolute inset-[4%_6%_8%] rounded-[50%]">
-          <div className="holdem-fp-felt absolute inset-[7%] rounded-[50%]">
-            <div className="bj-felt-vignette pointer-events-none absolute inset-0 rounded-[50%]" aria-hidden />
+      <div className="bj-table-stage">
+        <div className="bj-oval-rail bj-casino-rail">
+          <div className="bj-oval-felt bj-casino-felt">
+            <div className="bj-felt-vignette" aria-hidden />
             <div className="bj-felt-arc-wrap">
               <FeltArcText />
             </div>
             <ChipTray />
             <CardShoe />
+
+            <div className="bj-dealer-pit bj-spot">
+              <div className="bj-dealer-figure" aria-hidden />
+              <ScoreBadge label="Dealer" score={dealerScore ?? (showHands ? "—" : "")} />
+              {showHands ? (
+                <div className="bj-hand-row">
+                  {state.dealer.cards.map((card, i) => (
+                    <PlayingCardView
+                      key={card.dealKey ?? `d-${i}`}
+                      card={card}
+                      delay={i * 100}
+                      size="xl"
+                      casino3d
+                      dropToSeat
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="bj-dealer-label">Dealer</p>
+              )}
+            </div>
+
+            {aiSeats.map((seat, index) => (
+              <PlayerSpot
+                key={seat.id}
+                seat={seat}
+                className={`bj-spot ${aiLayout[index] ?? "bj-ai-left"}`}
+                showHands={showHands || seat.pendingBet > 0}
+                showOutcomes={state.phase === "roundComplete"}
+                minimal
+              />
+            ))}
+
+            {humanSeat && state.phase !== "setup" ? (
+              <PlayerSpot
+                seat={humanSeat}
+                className={`bj-spot bj-spot-human-seat bj-player-zone ${humanActive ? "bj-spot-human-active" : ""}`}
+                showHands={showHands || humanSeat.pendingBet > 0}
+                showOutcomes={state.phase === "roundComplete"}
+                showStake={state.phase === "betting"}
+                highlight
+              />
+            ) : null}
+
+            {banner ? <div className="bj-felt-banner">{banner}</div> : null}
+            {controls ? <div className="bj-controls-on-felt">{controls}</div> : null}
           </div>
         </div>
+      </div>
 
-        <TableSeat
-          dealerOnly
-          layout="dealer"
-          playerId={playerId}
-          showHands={showHands}
-          dealerScore={dealerScore}
-          dealerCards={dealerCards}
+      <div className="bj-hero-rail" aria-hidden />
+    </div>
+  );
+}
+
+function PlayerSpot({
+  seat,
+  className,
+  showHands,
+  showOutcomes,
+  showStake,
+  highlight,
+  minimal,
+}: {
+  seat: SeatState;
+  className: string;
+  showHands: boolean;
+  showOutcomes: boolean;
+  showStake?: boolean;
+  highlight?: boolean;
+  minimal?: boolean;
+}) {
+  const scores =
+    seat.hands.length > 0 && seat.hands.some((h) => h.cards.length > 0)
+      ? seat.hands
+          .filter((h) => h.cards.length > 0)
+          .map((h) => displayScore(h.cards, true))
+          .join(" / ")
+      : null;
+  const showBadge = scores !== null;
+
+  return (
+    <section className={className}>
+      {minimal ? <p className="bj-ai-name">{seat.name}</p> : null}
+      {showBadge && !minimal ? (
+        <ScoreBadge
+          label={seat.isHuman ? "You" : seat.name}
+          score={scores!}
+          highlight={highlight}
+          side={seat.isHuman}
         />
+      ) : null}
+      {seat.hands.some((h) => h.cards.length > 0) ? (
+        <HandsRow
+          hands={seat.hands}
+          showOutcomes={showOutcomes}
+          showStake={showStake}
+          size={seat.isHuman ? "xl" : "lg"}
+        />
+      ) : seat.pendingBet > 0 ? (
+        <p className="bj-pending-chip">${seat.pendingBet}</p>
+      ) : minimal && !showHands ? (
+        <span className="bj-side-hand" aria-hidden />
+      ) : null}
+      {minimal && showBadge ? <span className="bj-ai-score tabular-nums">{scores}</span> : null}
+    </section>
+  );
+}
 
-        {aiSeats.map((seat, index) => {
-          const layout = AI_LAYOUTS[index] ?? AI_LAYOUTS[AI_LAYOUTS.length - 1]!;
-          const isActive = state.phase === "playerTurn" && state.activeSeatIndex === state.seats.indexOf(seat);
-          return (
-            <TableSeat
-              key={seat.id}
-              seat={seat}
-              layout={layout}
-              playerId={playerId}
-              hands={seat.hands}
-              showHands={showHands || seat.pendingBet > 0}
-              showOutcomes={state.phase === "roundComplete"}
-              isActive={isActive}
-            />
-          );
-        })}
+function ScoreBadge({
+  label,
+  score,
+  highlight,
+  side,
+}: {
+  label: string;
+  score: string;
+  highlight?: boolean;
+  side?: boolean;
+}) {
+  return (
+    <div className={`bj-score-badge ${side ? "bj-score-badge-side" : ""} ${highlight ? "bj-score-badge-you" : ""}`}>
+      <span className="bj-score-label">{label}</span>
+      <strong className="bj-score-value">{score}</strong>
+    </div>
+  );
+}
 
-        {humanSeat && showSeats ? (
-          <TableSeat
-            seat={humanSeat}
-            layout="hero"
-            playerId={playerId}
-            hands={humanSeat.hands}
-            showHands={showHands || humanSeat.pendingBet > 0}
-            showOutcomes={state.phase === "roundComplete"}
-            showStake={state.phase === "betting"}
-            isActive={humanActive}
-            isHuman
-          />
-        ) : null}
-      </div>
-
-      <div className="holdem-fp-hands bj-fp-hands absolute bottom-0 left-1/2 z-40 flex w-full max-w-2xl -translate-x-1/2 flex-col items-center px-2 pb-3 pt-10 sm:pb-4">
-        <div className="holdem-fp-sleeves pointer-events-none absolute inset-x-0 bottom-0 h-32 sm:h-36" aria-hidden />
-        {banner ? <div className="relative z-[3] mb-2">{banner}</div> : null}
-        {controls ? <div className="relative z-[3] w-full max-w-xl">{controls}</div> : null}
-        {state.phase === "betting" && !showHands ? (
-          <p className="relative z-[2] mt-1 font-serif text-sm text-[#d8c4a0]/85 drop-shadow">Place your bet on your square</p>
-        ) : null}
-      </div>
+function HandsRow({
+  hands,
+  showOutcomes,
+  showStake,
+  size,
+}: {
+  hands: HandState[];
+  showOutcomes: boolean;
+  showStake?: boolean;
+  size: "lg" | "xl";
+}) {
+  return (
+    <div className="bj-hands-row">
+      {hands.map((hand) => (
+        <div key={hand.id} className="bj-hand-cluster">
+          <div className="bj-hand-row">
+            {hand.cards.map((card, i) => (
+              <PlayingCardView
+                key={card.dealKey ?? `${hand.id}-${i}`}
+                card={card}
+                delay={i * 80}
+                size={size}
+                tilt={(i - (hand.cards.length - 1) / 2) * 6}
+                casino3d
+                dropToSeat
+              />
+            ))}
+          </div>
+          {showStake && hand.bet > 0 && !showOutcomes ? <span className="bj-hand-stake">${hand.bet}</span> : null}
+          {showOutcomes && hand.outcomeLabel ? (
+            <span className={`bj-hand-result bj-outcome-${hand.outcome ?? "none"}`}>{hand.outcomeLabel}</span>
+          ) : null}
+        </div>
+      ))}
     </div>
   );
 }
