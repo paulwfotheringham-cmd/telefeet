@@ -12,6 +12,196 @@ body {
   @apply min-h-screen antialiased bg-black text-white;
 }
 
+/* Blackjack */
+.bj-header {
+  @apply flex flex-wrap items-start justify-between gap-4 border-b border-brand-line/80 pb-4;
+}
+.bj-back {
+  @apply text-xs font-medium text-brand-gold transition hover:text-brand-goldHi;
+}
+.bj-profile {
+  @apply flex items-center gap-2 rounded-full border border-brand-line bg-brand-panel/60 px-3 py-2;
+}
+.bj-avatar {
+  @apply flex h-9 w-9 items-center justify-center rounded-full bg-brand-gold/15 text-xs font-bold text-brand-goldHi ring-1 ring-brand-gold/35;
+}
+.bj-table-wrap {
+  @apply overflow-hidden rounded-[2rem] border-4 border-brand-gold/50 p-1 shadow-[0_0_60px_rgba(212,175,55,0.12)];
+}
+.bj-table-felt {
+  @apply relative min-h-[340px] rounded-[1.7rem] px-3 py-6 sm:min-h-[420px] sm:px-8;
+  background: radial-gradient(ellipse 120% 90% at 50% 40%, #1a6b42 0%, #0d4d30 45%, #07341f 100%);
+  box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.35);
+}
+.bj-table-marking {
+  @apply pointer-events-none text-center font-serif text-sm font-bold uppercase tracking-[0.25em] text-brand-gold/90 sm:text-base;
+}
+.bj-table-sub {
+  @apply pointer-events-none mt-1 text-center text-[10px] uppercase tracking-widest text-brand-gold/50 sm:text-xs;
+}
+.bj-dealer-zone {
+  @apply mb-8 flex flex-col items-center gap-3;
+}
+.bj-seats {
+  @apply flex flex-col gap-6;
+}
+.bj-seat {
+  @apply flex flex-col items-center gap-2 rounded-2xl px-2 py-2 transition;
+}
+.bj-seat-human {
+  @apply bg-black/15 ring-1 ring-brand-gold/10;
+}
+.bj-seat-active {
+  @apply ring-2 ring-emerald-400/50 shadow-[0_0_24px_rgba(52,211,153,0.2)];
+}
+.bj-hand-row {
+  @apply flex flex-wrap justify-center gap-2;
+}
+.bj-hands-grid {
+  @apply flex flex-wrap justify-center gap-4;
+}
+.bj-hand-stack {
+  @apply flex flex-col items-center gap-1;
+}
+.bj-hand-bet {
+  @apply text-[10px] font-semibold uppercase tracking-wide text-brand-gold/80;
+}
+.bj-score-pill {
+  @apply inline-flex items-center gap-2 rounded-lg bg-black/50 px-3 py-1 text-xs ring-1 ring-white/10;
+}
+.bj-score-pill .label {
+  @apply uppercase tracking-widest text-slate-400;
+}
+.bj-score-pill .value {
+  @apply font-bold tabular-nums text-white;
+}
+.bj-card {
+  @apply relative h-[4.5rem] w-8 rounded-lg border border-white/25 bg-white shadow-md sm:h-[5.5rem] sm:w-[3.6rem];
+  animation: bj-deal 0.35s ease-out both;
+}
+.bj-card-back {
+  background: linear-gradient(135deg, #1e3a5f 0%, #0f2744 50%, #1a4d7a 100%);
+  box-shadow: inset 0 0 0 2px rgba(212, 175, 55, 0.25);
+}
+.bj-card-back::after {
+  content: "";
+  @apply absolute inset-2 rounded border border-brand-gold/30;
+}
+.bj-card-face {
+  @apply bg-white;
+}
+.bj-card-corner {
+  @apply absolute flex flex-col items-center leading-none;
+  font-size: 0.65rem;
+}
+.bj-card-corner.top {
+  @apply left-1 top-1;
+}
+.bj-card-corner.bottom {
+  @apply bottom-1 right-1 rotate-180;
+}
+.bj-card-center {
+  @apply absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl sm:text-3xl;
+}
+.bj-card .red {
+  @apply text-red-600;
+}
+.bj-card .black {
+  @apply text-slate-900;
+}
+.bj-controls {
+  @apply grid grid-cols-2 gap-2 sm:grid-cols-4;
+}
+.bj-action {
+  @apply flex flex-col items-center justify-center rounded-2xl border border-brand-line bg-brand-panel px-4 py-3 transition hover:border-brand-gold/40;
+}
+.bj-action-hit {
+  @apply border-emerald-400/60 bg-emerald-950/40 shadow-[0_0_20px_rgba(52,211,153,0.15)];
+}
+.bj-action-off {
+  @apply cursor-not-allowed opacity-40;
+}
+.bj-betting {
+  @apply rounded-2xl border border-brand-line bg-brand-panel/80 p-4;
+}
+.bj-bet-control {
+  @apply flex flex-col items-center gap-1;
+}
+.bj-bet-step {
+  @apply flex h-9 w-9 items-center justify-center rounded-full border border-brand-line bg-brand-ink text-lg text-brand-cream hover:border-brand-gold/50 disabled:opacity-40;
+}
+.bj-btn-primary,
+.bj-btn-deal,
+.bj-btn-ghost {
+  @apply rounded-xl px-5 py-2.5 text-sm font-semibold transition disabled:opacity-40;
+}
+.bj-btn-primary {
+  @apply border border-brand-goldLo/60 bg-gradient-to-b from-brand-goldHi to-brand-gold text-brand-ink;
+}
+.bj-btn-deal {
+  @apply border border-emerald-400/50 bg-emerald-900/50 text-emerald-100;
+}
+.bj-btn-ghost {
+  @apply border border-brand-line text-brand-cream hover:bg-brand-panel;
+}
+.bj-chip {
+  @apply relative rounded-full font-bold shadow-md ring-2 ring-white/20 transition hover:scale-105;
+}
+.bj-chip-selected {
+  @apply ring-4 ring-brand-gold shadow-[0_0_16px_rgba(212,175,55,0.45)];
+}
+.bj-panel {
+  @apply rounded-2xl border border-brand-line bg-brand-panel/90 p-4 shadow-card;
+}
+.bj-panel-title {
+  @apply text-xs font-semibold uppercase tracking-[0.2em] text-brand-gold;
+}
+.bj-banner {
+  @apply rounded-xl border border-brand-gold/30 bg-brand-gold/10 px-4 py-2 text-center text-sm font-semibold text-brand-goldHi;
+}
+.bj-mode-btn {
+  @apply rounded-2xl border border-brand-line bg-brand-ink px-4 py-3 transition hover:border-brand-gold/45 hover:bg-brand-panel;
+}
+.bj-outcome {
+  @apply mt-1 text-xs font-bold uppercase tracking-wide;
+}
+.bj-outcome-blackjack,
+.bj-outcome-win,
+.bj-outcome-dealer_bust {
+  @apply text-emerald-300;
+}
+.bj-outcome-lose,
+.bj-outcome-bust {
+  @apply text-red-300;
+}
+.bj-outcome-push {
+  @apply text-brand-goldHi;
+}
+
+@keyframes bj-deal {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 640px) {
+  .bj-table-felt {
+    min-height: 300px;
+  }
+  .bj-seats {
+    gap: 1rem;
+  }
+  .bj-card {
+    height: 4rem;
+    width: 2.5rem;
+  }
+}
+
 @keyframes holdem-card-deal {
   0% {
     opacity: 0;
