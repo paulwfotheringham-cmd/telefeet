@@ -16,6 +16,17 @@ function dealerName(room: QuizRoom, h: HoldemState): string {
   return room.players[seat]?.name ?? "Dealer";
 }
 
+function seatRoleIds(room: QuizRoom, h: HoldemState): { sbId: string | null; bbId: string | null } {
+  const ids = room.players.map((p) => p.id);
+  if (ids.length < 2) return { sbId: null, bbId: null };
+  const n = ids.length;
+  const dealer = ((h.dealerSeat % n) + n) % n;
+  if (n === 2) {
+    return { sbId: ids[dealer]!, bbId: ids[(dealer + 1) % 2]! };
+  }
+  return { sbId: ids[(dealer + 1) % n]!, bbId: ids[(dealer + 2) % n]! };
+}
+
 export function toHoldemClientState(room: QuizRoom, viewerId: string): ClientRoomState {
   const you = room.players.find((p) => p.id === viewerId)!;
   const h = room.holdem!;
@@ -44,7 +55,10 @@ export function toHoldemClientState(room: QuizRoom, viewerId: string): ClientRoo
     }
   }
 
-  const seats: HoldemSeatView[] = room.players.map((player) => {
+  const { sbId, bbId } = seatRoleIds(room, h);
+  const winnerId = h.lastWinnerId ?? null;
+
+  const seats: HoldemSeatView[] = room.players.map((player, index) => {
     const hole = h.holeCards[player.id];
     const reveal = player.id === viewerId || showOppHole;
     return {
@@ -53,6 +67,13 @@ export function toHoldemClientState(room: QuizRoom, viewerId: string): ClientRoo
       stack: h.stacks[player.id] ?? 0,
       isAi: isHoldemAiId(player.id),
       folded: Boolean(h.folded[player.id]),
+      allIn: Boolean(h.allIn[player.id]),
+      streetBet: h.streetBets[player.id] ?? 0,
+      isDealer: index === h.dealerSeat % Math.max(1, room.players.length),
+      isSmallBlind: player.id === sbId,
+      isBigBlind: player.id === bbId,
+      isActing: h.actionOn === player.id,
+      isWinner: winnerId === player.id && h.street === "hand_over",
       cards:
         reveal && hole
           ? [formatCard(hole[0]), formatCard(hole[1])]
@@ -61,6 +82,8 @@ export function toHoldemClientState(room: QuizRoom, viewerId: string): ClientRoo
             : null,
     };
   });
+
+  const winnerSeat = seats.find((s) => s.isWinner) ?? null;
 
   const holdemView: HoldemClientView = {
     street: h.street,
@@ -95,6 +118,9 @@ export function toHoldemClientState(room: QuizRoom, viewerId: string): ClientRoo
     canAllIn: h.actionOn === viewerId && (h.stacks[viewerId] ?? 0) > 0,
     canDealNextHand: room.hostId === viewerId && h.street === "hand_over",
     lastHandSummary: h.lastHandSummary,
+    lastWinnerId: winnerId,
+    lastWinnerName: winnerSeat?.name ?? null,
+    lastPotWon: h.lastPotWon ?? 0,
     showdownLabel,
     smallBlind: h.smallBlind,
     bigBlind: h.bigBlind,
@@ -133,7 +159,7 @@ export function toHoldemClientState(room: QuizRoom, viewerId: string): ClientRoo
     correctIndex: null,
     answerFeedback: null,
     revealEndsAt: null,
-    winnerIds: [],
+    winnerIds: winnerId ? [winnerId] : [],
     you: { id: you.id, name: you.name, score: h.stacks[viewerId] ?? 0, answer: null },
     results: null,
     scorecard: null,

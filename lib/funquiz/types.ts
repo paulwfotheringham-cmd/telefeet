@@ -202,6 +202,13 @@ export type HoldemSeatView = {
   stack: number;
   isAi: boolean;
   folded: boolean;
+  allIn: boolean;
+  streetBet: number;
+  isDealer: boolean;
+  isSmallBlind: boolean;
+  isBigBlind: boolean;
+  isActing: boolean;
+  isWinner: boolean;
   cards: string[] | null;
 };
 
@@ -235,6 +242,9 @@ export type HoldemClientView = {
   canAllIn: boolean;
   canDealNextHand: boolean;
   lastHandSummary: string | null;
+  lastWinnerId: string | null;
+  lastWinnerName: string | null;
+  lastPotWon: number;
   showdownLabel: string | null;
   smallBlind: number;
   bigBlind: number;

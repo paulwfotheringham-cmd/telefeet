@@ -1012,32 +1012,40 @@ export function FunQuizClient() {
   const isCatchphrase = isCatchphraseGameMode(gameMode);
   const isBlockbusters = isBlockbustersGameMode(gameMode);
 
+  const holdemLive = isHoldem && phase !== "lobby";
+
   return (
     <div
-      className={`mx-auto flex min-h-[100dvh] flex-col px-4 py-6 pb-10 ${isMillionaire || isHoldem || isCatchphrase || isBlockbusters ? "max-w-5xl" : "max-w-2xl"}`}
+      className={`mx-auto flex min-h-[100dvh] flex-col ${
+        holdemLive
+          ? "max-w-6xl px-2 py-3 pb-6 sm:px-4"
+          : `px-4 py-6 pb-10 ${isMillionaire || isHoldem || isCatchphrase || isBlockbusters ? "max-w-5xl" : "max-w-2xl"}`
+      }`}
     >
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-violet-300">
-            Room {roomState.code}
-            {isHoldem || isCatchphrase || isBlockbusters ? null : (
-              <>
-                {" "}
-                · {roomState.quizDifficultyTitle} · {roomState.quizCategoryTitle}
-              </>
-            )}{" "}
-            · {gameModeLabel(gameMode)}
-          </p>
-          <h1 className="text-2xl font-bold text-white">Fun Quiz</h1>
-        </div>
-        <button
-          type="button"
-          onClick={leaveRoom}
-          className="rounded-lg border border-white/15 px-3 py-1.5 text-xs text-slate-300 hover:bg-white/5"
-        >
-          Leave
-        </button>
-      </header>
+      {holdemLive ? null : (
+        <header className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-violet-300">
+              Room {roomState.code}
+              {isHoldem || isCatchphrase || isBlockbusters ? null : (
+                <>
+                  {" "}
+                  · {roomState.quizDifficultyTitle} · {roomState.quizCategoryTitle}
+                </>
+              )}{" "}
+              · {gameModeLabel(gameMode)}
+            </p>
+            <h1 className="text-2xl font-bold text-white">Fun Quiz</h1>
+          </div>
+          <button
+            type="button"
+            onClick={leaveRoom}
+            className="rounded-lg border border-white/15 px-3 py-1.5 text-xs text-slate-300 hover:bg-white/5"
+          >
+            Leave
+          </button>
+        </header>
+      )}
 
       {isCatchphrase && phase !== "lobby" ? (
         <CatchphraseStage

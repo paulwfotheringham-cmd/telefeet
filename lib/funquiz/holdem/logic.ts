@@ -193,7 +193,8 @@ function advanceStreet(state: HoldemState, room: QuizRoom): HoldemState {
 }
 
 function awardPotTo(state: HoldemState, room: QuizRoom, winnerId: string, reason: string): HoldemState {
-  const stacks = { ...state.stacks, [winnerId]: (state.stacks[winnerId] ?? 0) + state.pot };
+  const potWon = state.pot;
+  const stacks = { ...state.stacks, [winnerId]: (state.stacks[winnerId] ?? 0) + potWon };
   const name = room.players.find((p) => p.id === winnerId)?.name ?? "Player";
   return {
     ...state,
@@ -201,8 +202,11 @@ function awardPotTo(state: HoldemState, room: QuizRoom, winnerId: string, reason
     pot: 0,
     street: "hand_over",
     actionOn: null,
-    lastHandSummary: `${name} wins ${reason}.`,
-    statusMessage: "Hand complete — host can deal next hand.",
+    actionDeadlineAt: null,
+    lastWinnerId: winnerId,
+    lastPotWon: potWon,
+    lastHandSummary: `${name} wins $${potWon}${reason ? ` — ${reason}` : ""}.`,
+    statusMessage: `${name} takes the pot ($${potWon}).`,
   };
 }
 
@@ -288,6 +292,8 @@ export function dealNewHand(room: QuizRoom): QuizRoom {
     allIn,
     actedThisStreet: {},
     lastHandSummary: null,
+    lastWinnerId: null,
+    lastPotWon: 0,
     statusMessage: "Blinds posted.",
     smallBlind: HOLDEM_SMALL_BLIND,
     bigBlind: HOLDEM_BIG_BLIND,
