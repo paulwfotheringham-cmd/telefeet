@@ -29,6 +29,9 @@ export type HoldemState = {
   bigBlind: number;
   statusMessage: string | null;
   lastHandSummary: string | null;
+  /** Set when a hand ends so the UI can highlight who took the pot. */
+  lastWinnerId: string | null;
+  lastPotWon: number;
   actedThisStreet: Record<string, boolean>;
 };
 
@@ -62,6 +65,8 @@ export function createInitialHoldemState(): HoldemState {
     bigBlind: HOLDEM_BIG_BLIND,
     statusMessage: null,
     lastHandSummary: null,
+    lastWinnerId: null,
+    lastPotWon: 0,
     actedThisStreet: {},
   };
 }
