@@ -27,11 +27,11 @@ body {
 .bj-title-block {
   @apply text-center;
 }
-.bj-brand-kicker {
-  @apply text-[10px] font-semibold uppercase tracking-[0.28em] text-brand-gold/75;
+.bj-title-suit-top {
+  @apply block text-2xl text-brand-gold sm:text-3xl;
 }
 .bj-title {
-  @apply mt-0.5 flex items-center justify-center gap-2 text-2xl font-bold text-white sm:text-3xl;
+  @apply text-3xl font-bold text-white sm:text-4xl;
 }
 .bj-title-suit {
   @apply text-brand-gold;
@@ -53,10 +53,11 @@ body {
   @apply relative mx-auto w-full max-w-[58rem];
 }
 .bj-table-floor {
-  @apply pointer-events-none absolute inset-x-[8%] bottom-2 h-16 rounded-[50%];
-  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.75), transparent 72%);
-  filter: blur(10px);
-  transform: translateY(12px);
+  @apply pointer-events-none absolute inset-x-[14%] bottom-0 h-10 rounded-[50%];
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.55), transparent 70%);
+  filter: blur(14px);
+  transform: translateY(18px);
+  opacity: 0.65;
 }
 .bj-oval-rail {
   @apply relative z-[1] mx-auto w-full px-3 pb-3 pt-3;
@@ -70,11 +71,11 @@ body {
 }
 .bj-oval-felt {
   position: relative;
-  min-height: 520px;
+  min-height: 540px;
   border-radius: 50% / 44%;
   overflow: visible;
-  background: radial-gradient(ellipse 95% 85% at 50% 36%, #2f9a5d 0%, #1a6b42 38%, #0d4a2c 68%, #062818 100%);
-  box-shadow: inset 0 0 70px rgba(0, 0, 0, 0.45);
+  background: radial-gradient(ellipse 90% 78% at 50% 32%, #3cb371 0%, #24824e 32%, #155a35 58%, #0a3822 82%, #051f14 100%);
+  box-shadow: inset 0 0 90px rgba(0, 0, 0, 0.5);
 }
 .bj-felt-vignette {
   pointer-events: none;
@@ -82,39 +83,63 @@ body {
   inset: 0;
   background: radial-gradient(ellipse at center, transparent 38%, rgba(0, 0, 0, 0.55) 100%);
 }
-.bj-felt-markings {
+.bj-felt-arc {
   pointer-events: none;
   position: absolute;
   left: 50%;
-  top: 30%;
+  top: 28%;
   z-index: 1;
-  width: 70%;
-  text-align: center;
-  transform: translateX(-50%) perspective(520px) rotateX(42deg);
-  transform-origin: center center;
+  width: min(84%, 32rem);
+  transform: translateX(-50%);
+  opacity: 0.95;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
 }
-.bj-felt-title {
+.bj-felt-arc-main {
+  fill: #f0d67a;
   font-family: Georgia, "Times New Roman", serif;
-  @apply text-sm font-bold uppercase tracking-[0.22em] text-brand-gold/95 sm:text-base;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
 }
-.bj-felt-sub {
-  @apply mt-1 text-[9px] uppercase tracking-[0.16em] text-brand-gold/45 sm:text-[10px];
+.bj-felt-arc-sub {
+  fill: rgba(232, 199, 102, 0.72);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 7px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+.bj-felt-banner {
+  position: absolute;
+  left: 50%;
+  bottom: 30%;
+  z-index: 5;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.bj-felt-banner .bj-banner-text {
+  @apply rounded-full border border-brand-gold/35 bg-black/70 px-4 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-brand-goldHi;
 }
 .bj-spot {
   @apply absolute z-[2] flex flex-col items-center gap-2;
 }
 .bj-spot-dealer {
-  top: 14%;
+  top: 12%;
   left: 50%;
   transform: translateX(-50%);
 }
 .bj-spot-human,
 .bj-spot-human-seat {
-  bottom: 20%;
+  bottom: 30%;
   left: 50%;
   transform: translateX(-50%);
-  width: min(88%, 26rem);
+  width: min(92%, 30rem);
+}
+.bj-player-zone,
+.bj-seat-zone {
+  @apply flex flex-col items-center gap-2;
+}
+.bj-player-zone {
+  @apply flex-row items-end justify-center gap-4;
 }
 .bj-spot-ai-left {
   bottom: 30%;
@@ -137,13 +162,23 @@ body {
   transition: opacity 0.25s ease;
 }
 .bj-score-badge {
-  @apply flex min-w-[7.5rem] items-center justify-between gap-3 rounded-md border border-white/10 bg-black/55 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-300;
+  @apply flex min-w-[4.5rem] flex-col items-center gap-0.5 rounded-md border border-white/10 bg-black/70 px-3 py-2 text-center;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
 }
-.bj-score-badge strong {
-  @apply text-base font-bold tabular-nums text-white;
+.bj-score-label {
+  @apply text-[9px] font-semibold uppercase tracking-[0.14em] text-slate-400;
+}
+.bj-score-value {
+  @apply text-xl font-bold tabular-nums leading-none text-white sm:text-2xl;
+}
+.bj-score-badge-side {
+  @apply shrink-0 self-center;
+}
+.bj-score-badge-you .bj-score-label {
+  @apply text-brand-gold/80;
 }
 .bj-score-badge-you {
-  @apply border-brand-gold/35 bg-black/65 text-brand-cream;
+  @apply border-brand-gold/30 bg-black/75;
 }
 .bj-hand-row {
   @apply flex justify-center gap-2;
@@ -161,8 +196,14 @@ body {
 .bj-hand-result {
   @apply text-[10px] font-bold uppercase tracking-wide;
 }
-.bj-controls-below {
-  @apply relative z-10 mx-auto mt-3 w-full max-w-xl;
+.bj-controls-on-felt {
+  position: absolute;
+  left: 50%;
+  bottom: 9%;
+  z-index: 6;
+  width: min(88%, 26rem);
+  transform: translateX(-50%);
+  pointer-events: auto;
 }
 .bj-status-banner {
   @apply mt-3 flex justify-center;
@@ -239,28 +280,39 @@ body {
   animation: bj-deal 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 .bj-card-lg {
-  width: 3.65rem;
-  height: 5.35rem;
+  width: 3.85rem;
+  height: 5.65rem;
+}
+.bj-card-xl {
+  width: 4.35rem;
+  height: 6.35rem;
 }
 .bj-card-back {
   background:
-    radial-gradient(circle at 30% 20%, rgba(100, 160, 255, 0.25), transparent 45%),
-    linear-gradient(145deg, #2f5f9c 0%, #132d52 55%, #0a1c38 100%);
+    radial-gradient(circle at 40% 28%, rgba(120, 180, 255, 0.22), transparent 42%),
+    linear-gradient(155deg, #2a5a9e 0%, #163a68 48%, #0c2240 100%);
   box-shadow:
-    inset 0 0 0 2px rgba(212, 175, 55, 0.28),
-    0 10px 16px rgba(0, 0, 0, 0.45);
+    inset 0 0 0 2px rgba(212, 175, 55, 0.32),
+    0 10px 20px rgba(0, 0, 0, 0.5);
 }
 .bj-card-back::before {
   content: "";
   position: absolute;
-  inset: 0.35rem;
-  border-radius: 0.35rem;
-  border: 1px solid rgba(212, 175, 55, 0.35);
-  background: repeating-linear-gradient(
-    45deg,
-    rgba(255, 255, 255, 0.06) 0 3px,
-    transparent 3px 6px
-  );
+  inset: 0.42rem;
+  border-radius: 0.32rem;
+  border: 1px solid rgba(212, 175, 55, 0.42);
+  background:
+    radial-gradient(circle at center, rgba(255, 255, 255, 0.08) 0, transparent 55%),
+    repeating-conic-gradient(from 0deg, rgba(255, 255, 255, 0.04) 0 12deg, transparent 12deg 24deg);
+}
+.bj-card-back::after {
+  content: "♠";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.35rem;
+  color: rgba(212, 175, 55, 0.35);
 }
 .bj-card-face {
   @apply bg-white;
@@ -287,11 +339,12 @@ body {
 .bj-controls {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.5rem;
+  gap: 0.45rem;
 }
 .bj-action {
-  @apply flex min-h-[4.5rem] flex-col items-center justify-center gap-1 rounded-2xl border border-brand-line/80 bg-[#12151c]/95 px-2 py-2.5 text-brand-cream transition;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+  @apply flex min-h-[4.25rem] flex-col items-center justify-center gap-1 rounded-xl border border-white/10 px-2 py-2 text-brand-cream transition;
+  background: rgba(15, 19, 24, 0.92);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.55);
 }
 .bj-action-label {
   @apply text-xs font-bold uppercase tracking-wide;
@@ -314,13 +367,13 @@ body {
   @apply cursor-not-allowed opacity-35;
 }
 .bj-betting-stage {
-  @apply mx-auto w-full max-w-3xl rounded-2xl border border-brand-line/80 bg-[#0c1018]/90 px-4 py-4 shadow-card;
+  @apply mx-auto w-full max-w-3xl px-2 py-3;
 }
 .bj-chip-row {
-  @apply flex flex-wrap justify-center gap-2;
+  @apply mt-3 flex flex-wrap justify-center gap-2.5;
 }
 .bj-bet-pill {
-  @apply mx-auto mt-4 flex max-w-md items-center gap-2 rounded-full border border-brand-line bg-black/50 px-3 py-2;
+  @apply mx-auto flex max-w-md items-center gap-2 rounded-full border border-white/10 bg-black/55 px-3 py-2;
 }
 .bj-bet-pill-label {
   @apply pl-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-muted;
@@ -364,7 +417,10 @@ body {
   @apply rounded-2xl border border-brand-line bg-brand-panel/90 p-4 shadow-card;
 }
 .bj-panel-title {
-  @apply text-xs font-semibold uppercase tracking-[0.2em] text-brand-gold;
+  @apply flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-brand-gold;
+}
+.bj-panel-icon {
+  @apply shrink-0 text-brand-gold;
 }
 .bj-banner {
   @apply rounded-xl border border-brand-gold/30 bg-brand-gold/10 px-4 py-2 text-center text-sm font-semibold text-brand-goldHi;
@@ -432,6 +488,17 @@ body {
   .bj-card-lg {
     width: 2.85rem;
     height: 4.15rem;
+  }
+  .bj-card-xl {
+    width: 3.15rem;
+    height: 4.55rem;
+  }
+  .bj-controls-on-felt {
+    bottom: 9%;
+    width: 94%;
+  }
+  .bj-player-zone {
+    @apply flex-col items-center;
   }
 }
 

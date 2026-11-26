@@ -129,13 +129,10 @@ export function BlackjackClient() {
           ← All Games
         </Link>
         <div className="bj-title-block">
-          <p className="bj-brand-kicker">International Games</p>
-          <h1 className="bj-title">
-            <span aria-hidden className="bj-title-suit">
-              ♠
-            </span>
-            Blackjack
-          </h1>
+          <span aria-hidden className="bj-title-suit-top">
+            ♠
+          </span>
+          <h1 className="bj-title">Blackjack</h1>
           <p className="bj-subtitle">Beat the dealer and get 21</p>
         </div>
         <div className="bj-profile">
@@ -212,7 +209,10 @@ export function BlackjackClient() {
               ) : null
             }
           />
-          {game.banner && game.phase === "betting" ? (
+          {game.banner &&
+          game.phase === "betting" &&
+          !game.banner.startsWith("Bet:") &&
+          game.banner !== "Place your bet" ? (
             <p className="bj-banner" role="status">
               {game.banner}
             </p>

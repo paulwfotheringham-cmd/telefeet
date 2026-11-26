@@ -13,6 +13,15 @@ const RULES = [
   { title: "Payouts", body: "Winning hands pay 1:1. Blackjack pays 3:2. Ties return your bet (push)." },
 ];
 
+function RulesIcon() {
+  return (
+    <svg className="bj-panel-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M12 10v6M12 8h.01" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function RulesPanel() {
   const [open, setOpen] = useState(false);
 
@@ -24,7 +33,10 @@ export function RulesPanel() {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
       >
-        <h2 className="bj-panel-title">Rules</h2>
+        <h2 className="bj-panel-title">
+          <RulesIcon />
+          Rules
+        </h2>
         <span className="text-xs text-brand-gold">{open ? "Hide" : "Show"}</span>
       </button>
       {open ? (

@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { displayScore } from "@/lib/blackjack/hand";
 import type { BlackjackGameState, HandState, SeatState } from "@/lib/blackjack/types";
+import { FeltArcText } from "./felt-arc-text";
 import { PlayingCardView } from "./playing-card";
 import { CardShoe, ChipTray } from "./table-decor";
 
@@ -51,10 +52,7 @@ export function BlackjackTable({
           <ChipTray />
           <CardShoe />
 
-          <div className="bj-felt-markings">
-            <p className="bj-felt-title">Blackjack pays 3 to 2</p>
-            <p className="bj-felt-sub">Dealer hits soft 17 · Insurance pays 2 to 1</p>
-          </div>
+          <FeltArcText />
 
           <section className="bj-spot bj-spot-dealer">
             {showHands ? (
@@ -62,7 +60,7 @@ export function BlackjackTable({
                 <ScoreBadge label="Dealer" score={dealerScore ?? "—"} />
                 <div className="bj-hand-row">
                   {state.dealer.cards.map((card, i) => (
-                    <PlayingCardView key={card.dealKey ?? `d-${i}`} card={card} delay={i * 90} size="lg" />
+                    <PlayingCardView key={card.dealKey ?? `d-${i}`} card={card} delay={i * 90} size="xl" />
                   ))}
                 </div>
               </>
@@ -85,7 +83,7 @@ export function BlackjackTable({
                 : seat.isHuman && seat.pendingBet > 0 && !showHands
                   ? "—"
                   : null;
-            const showBadge = scores !== null;
+            const showBadge = scores !== null && scores !== "—";
 
             return (
               <section
@@ -93,34 +91,52 @@ export function BlackjackTable({
                 className={`bj-spot bj-spot-${spot} ${seat.isHuman ? "bj-spot-human-seat" : ""} ${isActive && seat.isHuman ? "bj-spot-active" : ""} ${humanActive && seat.isHuman ? "bj-spot-human-active" : ""}`}
               >
                 {seat.isHuman && (showHands || humanActive) ? <span className="bj-player-glow" aria-hidden /> : null}
-                {showBadge ? <ScoreBadge label={scoreLabel} score={scores} highlight={seat.isHuman} /> : null}
-                {seat.hands.length > 0 ? (
-                  <HandsRow
-                    hands={seat.hands}
-                    human={seat.isHuman}
-                    active={isActive}
-                    showOutcomes={state.phase === "roundComplete"}
-                  />
-                ) : seat.isHuman && seat.pendingBet > 0 && !showHands ? (
-                  <p className="bj-pending-chip">${seat.pendingBet}</p>
-                ) : null}
+                <div className={seat.isHuman ? "bj-player-zone" : "bj-seat-zone"}>
+                  {showBadge ? (
+                    <ScoreBadge label={scoreLabel} score={scores} highlight={seat.isHuman} align={seat.isHuman ? "side" : "stack"} />
+                  ) : null}
+                  {seat.hands.length > 0 ? (
+                    <HandsRow
+                      hands={seat.hands}
+                      human={seat.isHuman}
+                      active={isActive}
+                      showOutcomes={state.phase === "roundComplete"}
+                      showStake={state.phase === "betting"}
+                    />
+                  ) : seat.isHuman && seat.pendingBet > 0 && !showHands ? (
+                    <p className="bj-pending-chip">${seat.pendingBet}</p>
+                  ) : null}
+                </div>
               </section>
             );
           })}
 
+          {banner ? <div className="bj-felt-banner">{banner}</div> : null}
+          {controls ? <div className="bj-controls-on-felt">{controls}</div> : null}
         </div>
       </div>
-      {banner ? <div className="bj-status-banner">{banner}</div> : null}
-      {controls ? <div className="bj-controls-below">{controls}</div> : null}
+      {banner && !controls ? <div className="bj-status-banner">{banner}</div> : null}
     </div>
   );
 }
 
-function ScoreBadge({ label, score, highlight }: { label: string; score: string; highlight?: boolean }) {
+function ScoreBadge({
+  label,
+  score,
+  highlight,
+  align = "stack",
+}: {
+  label: string;
+  score: string;
+  highlight?: boolean;
+  align?: "stack" | "side";
+}) {
   return (
-    <div className={`bj-score-badge ${highlight ? "bj-score-badge-you" : ""}`}>
-      <span>{label}</span>
-      <strong>{score}</strong>
+    <div
+      className={`bj-score-badge ${align === "side" ? "bj-score-badge-side" : ""} ${highlight ? "bj-score-badge-you" : ""}`}
+    >
+      <span className="bj-score-label">{label}</span>
+      <strong className="bj-score-value">{score}</strong>
     </div>
   );
 }
@@ -130,11 +146,13 @@ function HandsRow({
   human,
   active,
   showOutcomes,
+  showStake,
 }: {
   hands: HandState[];
   human: boolean;
   active: boolean;
   showOutcomes: boolean;
+  showStake?: boolean;
 }) {
   return (
     <div className={`bj-hands-row ${human && active ? "bj-hands-active" : ""}`}>
@@ -146,11 +164,11 @@ function HandsRow({
                 key={card.dealKey ?? `${hand.id}-${i}`}
                 card={card}
                 delay={i * 70}
-                size="lg"
+                size={human ? "xl" : "lg"}
               />
             ))}
           </div>
-          {hand.bet > 0 && !showOutcomes ? <span className="bj-hand-stake">${hand.bet}</span> : null}
+          {showStake && hand.bet > 0 && !showOutcomes ? <span className="bj-hand-stake">${hand.bet}</span> : null}
           {showOutcomes && hand.outcomeLabel ? (
             <span className={`bj-hand-result bj-outcome-${hand.outcome ?? "none"}`}>{hand.outcomeLabel}</span>
           ) : null}

@@ -1,6 +1,6 @@
 "use client";
 
-import { CHIP_DENOMINATIONS, MAX_BET, MIN_BET } from "@/lib/blackjack/constants";
+import { MAX_BET, MIN_BET, TABLE_CHIP_DENOMINATIONS } from "@/lib/blackjack/constants";
 import { CasinoChip } from "./casino-chip";
 
 type Props = {
@@ -32,18 +32,6 @@ export function BettingBar({
 }: Props) {
   return (
     <div className="bj-betting-stage">
-      <div className="bj-chip-row">
-        {CHIP_DENOMINATIONS.map((value) => (
-          <CasinoChip
-            key={value}
-            value={value}
-            selected={selectedChip === value}
-            onClick={() => onSelectChip(value)}
-            size="md"
-          />
-        ))}
-      </div>
-
       <div className="bj-bet-pill">
         <span className="bj-bet-pill-label">Bet</span>
         <button
@@ -68,6 +56,18 @@ export function BettingBar({
         >
           +
         </button>
+      </div>
+
+      <div className="bj-chip-row">
+        {TABLE_CHIP_DENOMINATIONS.map((value) => (
+          <CasinoChip
+            key={value}
+            value={value}
+            selected={selectedChip === value}
+            onClick={() => onSelectChip(value)}
+            size="md"
+          />
+        ))}
       </div>
 
       <p className="bj-bet-hint">
