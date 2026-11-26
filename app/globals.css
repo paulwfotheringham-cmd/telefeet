@@ -521,30 +521,32 @@ body {
   pointer-events: none;
 }
 
-.holdem-gnd-roster li {
-  pointer-events: auto;
+.holdem-gnd-topHud {
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.95);
+}
+
+.holdem-gnd-phase {
+  padding: 0.35rem 0.75rem;
+  border-radius: 0.35rem;
+  background: linear-gradient(180deg, rgba(12, 8, 4, 0.72), rgba(8, 5, 3, 0.55));
+  border: 1px solid rgba(196, 165, 116, 0.25);
+  backdrop-filter: blur(4px);
+  display: inline-block;
 }
 
 .holdem-gnd-roster-active {
-  background: linear-gradient(90deg, rgba(80, 50, 12, 0.5), transparent 85%);
-  border-radius: 0.35rem;
-  padding: 0.15rem 0.25rem;
-  margin-left: -0.25rem;
-  box-shadow: inset 2px 0 0 #e6c78a;
+  outline: 1px solid rgba(230, 199, 138, 0.65);
+  border-radius: 0.2rem;
+  padding: 0.1rem 0.2rem;
+  margin: -0.1rem -0.2rem;
 }
 
 .holdem-gnd-roster-winner {
-  background: linear-gradient(90deg, rgba(100, 70, 16, 0.65), transparent 85%);
-  border-radius: 0.35rem;
-  padding: 0.15rem 0.25rem;
-  margin-left: -0.25rem;
-  box-shadow: inset 2px 0 0 #ffe6a0;
+  outline: 1px solid rgba(255, 230, 160, 0.75);
+  border-radius: 0.2rem;
+  padding: 0.1rem 0.2rem;
+  margin: -0.1rem -0.2rem;
   animation: holdem-winner-pulse 1.6s ease-in-out infinite;
-}
-
-.holdem-gnd-board {
-  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.55));
-  transform: translateX(-50%) perspective(600px) rotateX(12deg);
 }
 
 .holdem-gnd-winner {
@@ -778,10 +780,6 @@ body {
   .holdem-fp-opp-winner,
   .holdem-fp-winner {
     animation: none !important;
-  }
-
-  .holdem-gnd-board {
-    transform: translateX(-50%);
   }
 
   .holdem-fp-rail {
