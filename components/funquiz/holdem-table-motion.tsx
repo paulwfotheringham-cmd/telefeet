@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { HoldemSeatView } from "@/lib/funquiz/types";
 
-/** Table positions aligned to grounded v3 mockup (clockwise from left opponent). */
+/** Seat roster anchors (for dealer btn). */
 const SEAT_ANCHORS = [
   { left: "17%", top: "28%" },
   { left: "24%", top: "36%" },
@@ -12,34 +12,49 @@ const SEAT_ANCHORS = [
   { left: "50%", top: "68%" },
 ] as const;
 
+/** Hand positions on the felt in front of each seat. */
+const SEAT_HAND_ANCHORS = [
+  { left: "21%", top: "41%" },
+  { left: "27%", top: "47%" },
+  { left: "50%", top: "34%" },
+  { left: "73%", top: "47%" },
+  { left: "50%", top: "56%" },
+] as const;
+
 const POT_CENTER = { left: "50%", top: "44%" };
 
-type ChipFlight = {
+const FLOP_CARD_OFFSETS = ["-5.5cqw", "0cqw", "5.5cqw"] as const;
+
+type HandAction = {
   id: string;
-  fromLeft: string;
-  fromTop: string;
+  seatIdx: number;
+  kind: "chip-push" | "muck";
   chipClass: string;
   shiftX: string;
   shiftY: string;
 };
 
-/** Seat index → container shift toward pot center (cqw/cqh). */
-const SEAT_TO_POT_SHIFT: { x: string; y: string }[] = [
-  { x: "33cqw", y: "16cqh" },
-  { x: "26cqw", y: "8cqh" },
-  { x: "0cqw", y: "23cqh" },
-  { x: "-26cqw", y: "8cqh" },
-  { x: "0cqw", y: "-24cqh" },
+const HAND_PUSH_SHIFT: { x: string; y: string }[] = [
+  { x: "28cqw", y: "6cqh" },
+  { x: "22cqw", y: "-2cqh" },
+  { x: "0cqw", y: "10cqh" },
+  { x: "-22cqw", y: "-2cqh" },
+  { x: "0cqw", y: "-10cqh" },
 ];
 
-const DEAL_CARD_SHIFT = { x: "0cqw", y: "47cqh" };
+const HAND_MUCK_SHIFT: { x: string; y: string }[] = [
+  { x: "18cqw", y: "4cqh" },
+  { x: "16cqw", y: "-1cqh" },
+  { x: "0cqw", y: "8cqh" },
+  { x: "-16cqw", y: "-1cqh" },
+  { x: "0cqw", y: "-8cqh" },
+];
 
 type Props = {
   seats: HoldemSeatView[];
   pot: number;
   boardLen: number;
   handNumber: number;
-  /** Scripted preview: auto-play flop, chips, fold. */
   previewScript?: boolean;
 };
 
@@ -63,36 +78,86 @@ function potChipBreakdown(pot: number): { denom: number; count: number; tone: st
   return out;
 }
 
+function HandMotion({
+  action,
+  handLeft,
+  handTop,
+}: {
+  action: HandAction;
+  handLeft: string;
+  handTop: string;
+}) {
+  return (
+    <div
+      className={`holdem-motion-hand-action holdem-motion-hand-action-${action.kind}`}
+      style={
+        {
+          left: handLeft,
+          top: handTop,
+          "--hand-shift-x": action.shiftX,
+          "--hand-shift-y": action.shiftY,
+        } as React.CSSProperties
+      }
+    >
+      <span className="holdem-motion-player-hand" />
+      {action.kind === "chip-push" ? (
+        <span className={`holdem-chip holdem-motion-chip-with-hand ${action.chipClass}`} />
+      ) : (
+        <>
+          <span className="holdem-motion-muck-card-felt holdem-motion-muck-card-felt-a" />
+          <span className="holdem-motion-muck-card-felt holdem-motion-muck-card-felt-b" />
+        </>
+      )}
+    </div>
+  );
+}
+
 export function HoldemTableMotion({ seats, pot, boardLen, handNumber, previewScript }: Props) {
   const [flopDealing, setFlopDealing] = useState(false);
-  const [dealingHole, setDealingHole] = useState(false);
-  const [muckSeats, setMuckSeats] = useState<Set<number>>(new Set());
-  const [flights, setFlights] = useState<ChipFlight[]>([]);
+  const [dealerShuffling, setDealerShuffling] = useState(false);
+  const [handActions, setHandActions] = useState<HandAction[]>([]);
   const [previewPotAmount, setPreviewPotAmount] = useState(0);
   const [dealerButtonSeat, setDealerButtonSeat] = useState(2);
   const [potChipPulse, setPotChipPulse] = useState(0);
   const prevBoard = useRef(0);
   const prevBets = useRef<Record<string, number>>({});
   const prevFolded = useRef<Record<string, boolean>>({});
-  const flightSeq = useRef(0);
+  const betsHydrated = useRef(false);
+  const actionSeq = useRef(0);
 
   const dealerIdx = useMemo(() => {
     const i = seats.findIndex((s) => s.isDealer);
-    return i >= 0 ? i : 0;
+    return i >= 0 ? i : 2;
   }, [seats]);
 
-  const dealerAnchor = SEAT_ANCHORS[dealerIdx % SEAT_ANCHORS.length]!;
+  const dealerHand = SEAT_HAND_ANCHORS[dealerIdx % SEAT_HAND_ANCHORS.length]!;
+
+  const queueHandAction = (seatIdx: number, kind: HandAction["kind"], chipClass = "holdem-chip-red") => {
+    const shift = kind === "muck" ? HAND_MUCK_SHIFT[seatIdx]! : HAND_PUSH_SHIFT[seatIdx]!;
+    actionSeq.current += 1;
+    const id = `hand-${actionSeq.current}`;
+    const action: HandAction = {
+      id,
+      seatIdx,
+      kind,
+      chipClass,
+      shiftX: shift.x,
+      shiftY: shift.y,
+    };
+    setHandActions((list) => [...list, action]);
+    window.setTimeout(() => setHandActions((list) => list.filter((a) => a.id !== id)), 950);
+  };
 
   useEffect(() => {
     if (previewScript) return;
     if (boardLen > prevBoard.current && boardLen >= 3) {
       setFlopDealing(true);
-      const id = window.setTimeout(() => setFlopDealing(false), 950);
+      const id = window.setTimeout(() => setFlopDealing(false), 1100);
       prevBoard.current = boardLen;
       return () => window.clearTimeout(id);
     }
     prevBoard.current = boardLen;
-  }, [boardLen, handNumber]);
+  }, [boardLen, handNumber, previewScript]);
 
   useEffect(() => {
     const nextMuck = new Set<number>();
@@ -104,108 +169,78 @@ export function HoldemTableMotion({ seats, pot, boardLen, handNumber, previewScr
       prevFolded.current[seat.playerId] = seat.folded;
     });
     if (nextMuck.size > 0) {
-      setMuckSeats(nextMuck);
-      const id = window.setTimeout(() => setMuckSeats(new Set()), 900);
-      return () => window.clearTimeout(id);
+      nextMuck.forEach((idx) => queueHandAction(idx, "muck"));
     }
   }, [seats]);
 
   useEffect(() => {
-    const newFlights: ChipFlight[] = [];
+    if (previewScript) return;
+    if (!betsHydrated.current) {
+      seats.forEach((seat) => {
+        prevBets.current[seat.playerId] = seat.streetBet;
+      });
+      betsHydrated.current = true;
+      return;
+    }
     seats.forEach((seat, idx) => {
       const prev = prevBets.current[seat.playerId] ?? 0;
       const delta = seat.streetBet - prev;
       if (delta > 0) {
-        const anchor = SEAT_ANCHORS[idx % SEAT_ANCHORS.length]!;
-        const chipClass =
-          delta >= 25 ? "holdem-chip-blue" : delta >= 5 ? "holdem-chip-red" : "holdem-chip-white";
-        flightSeq.current += 1;
-        const shift = SEAT_TO_POT_SHIFT[idx % SEAT_TO_POT_SHIFT.length] ?? SEAT_TO_POT_SHIFT[0]!;
-        newFlights.push({
-          id: `f-${flightSeq.current}`,
-          fromLeft: anchor.left,
-          fromTop: anchor.top,
-          chipClass,
-          shiftX: shift.x,
-          shiftY: shift.y,
-        });
+        const chipClass = delta >= 25 ? "holdem-chip-blue" : delta >= 5 ? "holdem-chip-red" : "holdem-chip-white";
+        queueHandAction(idx, "chip-push", chipClass);
       }
       prevBets.current[seat.playerId] = seat.streetBet;
     });
-    if (newFlights.length > 0) {
-      setFlights((f) => [...f, ...newFlights]);
-      const id = window.setTimeout(() => {
-        setFlights((f) => f.filter((x) => !newFlights.some((n) => n.id === x.id)));
-      }, 920);
-      return () => window.clearTimeout(id);
-    }
-  }, [seats]);
+  }, [seats, previewScript]);
 
   useEffect(() => {
     if (!previewScript) return;
     prevBets.current = {};
     prevFolded.current = {};
     prevBoard.current = 0;
-    const launchFlight = (seatIdx: number, id: string) => {
-      const anchor = SEAT_ANCHORS[seatIdx % SEAT_ANCHORS.length]!;
-      const shift = SEAT_TO_POT_SHIFT[seatIdx] ?? SEAT_TO_POT_SHIFT[0]!;
-      setFlights((f) => [
-        ...f,
-        {
-          id,
-          fromLeft: anchor.left,
-          fromTop: anchor.top,
-          chipClass: "holdem-chip-red",
-          shiftX: shift.x,
-          shiftY: shift.y,
-        },
-      ]);
-      window.setTimeout(() => setFlights((f) => f.filter((x) => x.id !== id)), 950);
-    };
 
     const steps = [
       () => setDealerButtonSeat(2),
-      () => setDealingHole(true),
-      () => launchFlight(1, "preview-blind"),
+      () => setDealerShuffling(true),
+      () => setDealerShuffling(false),
+      () => queueHandAction(1, "chip-push"),
       () => {
         setPreviewPotAmount(5);
         setPotChipPulse((p) => p + 1);
       },
-      () => launchFlight(0, "preview-bb"),
+      () => queueHandAction(0, "chip-push"),
       () => {
         setPreviewPotAmount(10);
         setPotChipPulse((p) => p + 1);
       },
-      () => launchFlight(4, "preview-call"),
+      () => queueHandAction(4, "chip-push"),
       () => {
         setPreviewPotAmount(17);
         setPotChipPulse((p) => p + 1);
       },
       () => setFlopDealing(true),
-      () => setMuckSeats(new Set([0])),
+      () => queueHandAction(0, "muck"),
       () => setDealerButtonSeat(1),
     ];
     const timers: number[] = [];
     timers.push(window.setTimeout(steps[0]!, 80));
-    timers.push(window.setTimeout(steps[1]!, 200));
-    timers.push(window.setTimeout(() => setDealingHole(false), 900));
+    timers.push(window.setTimeout(steps[1]!, 250));
     timers.push(window.setTimeout(steps[2]!, 1100));
-    timers.push(window.setTimeout(steps[3]!, 1250));
-    timers.push(window.setTimeout(steps[4]!, 1900));
-    timers.push(window.setTimeout(steps[5]!, 2050));
-    timers.push(window.setTimeout(steps[6]!, 2600));
-    timers.push(window.setTimeout(steps[7]!, 2750));
-    timers.push(window.setTimeout(steps[8]!, 3400));
-    timers.push(window.setTimeout(() => setFlopDealing(false), 4400));
-    timers.push(window.setTimeout(steps[9]!, 4800));
-    timers.push(window.setTimeout(() => setMuckSeats(new Set()), 5700));
-    timers.push(window.setTimeout(steps[10]!, 5800));
+    timers.push(window.setTimeout(steps[3]!, 1300));
+    timers.push(window.setTimeout(steps[4]!, 1450));
+    timers.push(window.setTimeout(steps[5]!, 2000));
+    timers.push(window.setTimeout(steps[6]!, 2150));
+    timers.push(window.setTimeout(steps[7]!, 2700));
+    timers.push(window.setTimeout(steps[8]!, 2850));
+    timers.push(window.setTimeout(steps[9]!, 3500));
+    timers.push(window.setTimeout(() => setFlopDealing(false), 4600));
+    timers.push(window.setTimeout(steps[10]!, 5000));
+    timers.push(window.setTimeout(steps[11]!, 5800));
     return () => timers.forEach((t) => window.clearTimeout(t));
   }, [previewScript]);
 
   const displayPot = previewScript ? (pot > 0 ? pot : previewPotAmount) : pot;
   const potStacks = potChipBreakdown(displayPot);
-  const heroAnchor = SEAT_ANCHORS[4]!;
 
   return (
     <div className="holdem-motion holdem-motion-layer pointer-events-none absolute inset-0 z-[25]" aria-hidden>
@@ -216,7 +251,7 @@ export function HoldemTableMotion({ seats, pot, boardLen, handNumber, previewScr
           top: SEAT_ANCHORS[dealerButtonSeat % SEAT_ANCHORS.length]!.top,
         }}
       />
-      {/* Center pot — stacked denoms */}
+
       <div
         className="holdem-motion-pot absolute flex -translate-x-1/2 items-end justify-center gap-1.5"
         style={{ left: POT_CENTER.left, top: POT_CENTER.top }}
@@ -239,36 +274,37 @@ export function HoldemTableMotion({ seats, pot, boardLen, handNumber, previewScr
         ))}
       </div>
 
-      {dealingHole
-        ? [0, 1].map((i) => (
-            <span
-              key={`deal-${i}`}
-              className="holdem-motion-deal-card"
-              style={
-                {
-                  left: dealerAnchor.left,
-                  top: dealerAnchor.top,
-                  "--holdem-shift-x": DEAL_CARD_SHIFT.x,
-                  "--holdem-shift-y": DEAL_CARD_SHIFT.y,
-                  animationDelay: `${i * 120}ms`,
-                } as React.CSSProperties
-              }
-            />
-          ))
-        : null}
+      {dealerShuffling ? (
+        <div
+          className="holdem-motion-hand-action holdem-motion-hand-action-deal"
+          style={{ left: dealerHand.left, top: dealerHand.top, "--hand-shift-x": "4cqw", "--hand-shift-y": "12cqh" } as React.CSSProperties}
+        >
+          <span className="holdem-motion-player-hand holdem-motion-player-hand-dealer" />
+          <span className="holdem-motion-player-hand holdem-motion-player-hand-dealer-b" />
+        </div>
+      ) : null}
 
       {flopDealing ? (
         <>
-          <span
-            className="holdem-motion-dealer-hand"
-            style={{ left: dealerAnchor.left, top: dealerAnchor.top }}
-          />
+          <div
+            className="holdem-motion-hand-action holdem-motion-hand-action-flop-dealer"
+            style={{ left: dealerHand.left, top: dealerHand.top, "--hand-shift-x": "0cqw", "--hand-shift-y": "14cqh" } as React.CSSProperties}
+          >
+            <span className="holdem-motion-player-hand holdem-motion-player-hand-dealer" />
+          </div>
           {previewScript
             ? ["A♠", "K♦", "7♣"].map((label, i) => (
                 <span
                   key={label}
                   className="holdem-motion-board-card"
-                  style={{ left: `${46 + i * 4}%`, top: "36%", animationDelay: `${200 + i * 140}ms` }}
+                  style={
+                    {
+                      left: "50%",
+                      top: "39%",
+                      "--board-to-x": FLOP_CARD_OFFSETS[i],
+                      animationDelay: `${280 + i * 160}ms`,
+                    } as React.CSSProperties
+                  }
                 >
                   {label}
                 </span>
@@ -277,34 +313,11 @@ export function HoldemTableMotion({ seats, pot, boardLen, handNumber, previewScr
         </>
       ) : null}
 
-      {flights.map((f) => (
-        <span
-          key={f.id}
-          className={`holdem-chip holdem-motion-chip-fly ${f.chipClass}`}
-          style={
-            {
-              left: f.fromLeft,
-              top: f.fromTop,
-              "--holdem-shift-x": f.shiftX,
-              "--holdem-shift-y": f.shiftY,
-            } as React.CSSProperties
-          }
-        />
-      ))}
-
-      {Array.from(muckSeats).map((idx) => {
-        const a = SEAT_ANCHORS[idx % SEAT_ANCHORS.length]!;
-        return (
-          <div
-            key={`muck-${idx}`}
-            className="holdem-motion-muck"
-            style={{ left: a.left, top: a.top }}
-          >
-            <span className="holdem-motion-muck-card holdem-motion-muck-a" />
-            <span className="holdem-motion-muck-card holdem-motion-muck-b" />
-          </div>
-        );
+      {handActions.map((action) => {
+        const h = SEAT_HAND_ANCHORS[action.seatIdx % SEAT_HAND_ANCHORS.length]!;
+        return <HandMotion key={action.id} action={action} handLeft={h.left} handTop={h.top} />;
       })}
+
     </div>
   );
 }

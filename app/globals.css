@@ -647,109 +647,114 @@ body {
   }
 }
 
-.holdem-motion-dealer-hand {
+.holdem-motion-hand-action {
   position: absolute;
-  width: 4.5rem;
-  height: 3.25rem;
+  z-index: 26;
+  width: 0;
+  height: 0;
   transform: translate(-50%, -50%);
-  border-radius: 40% 55% 45% 50%;
-  background: radial-gradient(ellipse at 40% 40%, rgba(72, 48, 32, 0.55) 0%, rgba(40, 24, 14, 0.35) 65%, transparent 100%);
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.45);
-  animation: holdem-dealer-reach-flop 0.95s ease-in-out forwards;
 }
 
-@keyframes holdem-dealer-reach-flop {
+.holdem-motion-hand-action-chip-push,
+.holdem-motion-hand-action-muck {
+  animation: holdem-hand-reach-felt 0.92s cubic-bezier(0.33, 0.9, 0.4, 1) forwards;
+}
+
+.holdem-motion-hand-action-deal {
+  animation: holdem-hand-deal-riffle 0.85s ease-in-out forwards;
+}
+
+.holdem-motion-hand-action-flop-dealer {
+  animation: holdem-hand-reach-felt 1.05s ease-in-out forwards;
+}
+
+@keyframes holdem-hand-reach-felt {
   0% {
-    opacity: 0.2;
-    transform: translate(-50%, -50%) scale(0.85);
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(var(--hand-start-rot, -6deg)) scale(0.92);
   }
-  35% {
-    opacity: 0.85;
-    transform: translate(20%, 30%) scale(1);
-  }
-  70% {
-    opacity: 0.7;
-    transform: translate(55%, 75%) scale(0.95);
+  18% {
+    opacity: 0.9;
   }
   100% {
     opacity: 0;
-    transform: translate(70%, 90%) scale(0.9);
+    transform: translate(calc(-50% + var(--hand-shift-x, 0cqw)), calc(-50% + var(--hand-shift-y, 0cqh)))
+      rotate(var(--hand-end-rot, 4deg)) scale(0.98);
   }
 }
 
-.holdem-motion-chip-fly {
-  position: absolute;
-  animation: holdem-chip-to-pot 0.88s cubic-bezier(0.25, 0.85, 0.35, 1) forwards;
-  transform: translate(-50%, -50%);
-  z-index: 26;
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45));
-}
-
-@keyframes holdem-chip-to-pot {
-  0% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1.05);
-  }
+@keyframes holdem-hand-deal-riffle {
+  0%,
   100% {
-    opacity: 0.35;
-    transform: translate(calc(-50% + var(--holdem-shift-x, 0cqw)), calc(-50% + var(--holdem-shift-y, 0cqh)))
-      scale(0.88);
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(-4deg);
+  }
+  25% {
+    opacity: 0.85;
+    transform: translate(calc(-50% + 2cqw), calc(-50% + 4cqh)) rotate(6deg);
+  }
+  55% {
+    opacity: 0.75;
+    transform: translate(calc(-50% - 3cqw), calc(-50% + 8cqh)) rotate(-8deg);
+  }
+  80% {
+    opacity: 0.5;
+    transform: translate(calc(-50% + 1cqw), calc(-50% + 10cqh)) rotate(3deg);
   }
 }
 
-.holdem-motion-muck {
+.holdem-motion-player-hand {
   position: absolute;
-  width: 2.5rem;
-  height: 2.5rem;
-  transform: translate(-50%, -50%);
+  left: 0;
+  top: 0;
+  display: block;
+  width: 3.4rem;
+  height: 2.15rem;
+  transform: translate(-72%, -55%);
+  transform-origin: 78% 88%;
+  border-radius: 48% 42% 38% 52%;
+  background:
+    radial-gradient(ellipse at 32% 28%, rgba(214, 176, 132, 0.92) 0%, rgba(168, 118, 78, 0.88) 55%, rgba(92, 58, 34, 0.75) 100%);
+  box-shadow:
+    inset -5px -8px 14px rgba(48, 28, 16, 0.35),
+    0 6px 14px rgba(0, 0, 0, 0.35);
 }
 
-.holdem-motion-muck-card {
+.holdem-motion-player-hand-dealer {
+  width: 3.75rem;
+  height: 2.35rem;
+  filter: saturate(0.92);
+}
+
+.holdem-motion-player-hand-dealer-b {
+  transform: translate(-28%, -40%) rotate(18deg) scale(0.92);
+  opacity: 0.75;
+}
+
+.holdem-motion-chip-with-hand {
   position: absolute;
-  width: 1.1rem;
-  height: 1.5rem;
+  left: 0;
+  top: 0;
+  transform: translate(-95%, -15%);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.holdem-motion-muck-card-felt {
+  position: absolute;
+  width: 1.35rem;
+  height: 1.85rem;
   border-radius: 0.2rem;
   background: linear-gradient(145deg, #5a3418 0%, #2e180c 55%, #140c08 100%);
   border: 1px solid rgba(196, 165, 116, 0.35);
-  animation: holdem-muck-drop 0.85s ease-in forwards;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.35);
 }
 
-.holdem-motion-muck-a {
-  left: 0;
-  top: 0;
-  rotate: -14deg;
+.holdem-motion-muck-card-felt-a {
+  transform: translate(-120%, -20%) rotate(-16deg);
 }
 
-.holdem-motion-muck-b {
-  left: 0.9rem;
-  top: 0.1rem;
-  rotate: 12deg;
-  animation-delay: 0.08s;
-}
-
-.holdem-motion-deal-card {
-  position: absolute;
-  width: 2rem;
-  height: 2.75rem;
-  border-radius: 0.22rem;
-  background: linear-gradient(160deg, #f8f4ea 0%, #e8dcc8 40%, #cbb896 100%);
-  border: 1px solid rgba(90, 52, 24, 0.45);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
-  animation: holdem-deal-to-seat 0.72s ease-out both;
-  transform: translate(-50%, -50%);
-  z-index: 27;
-}
-
-@keyframes holdem-deal-to-seat {
-  0% {
-    opacity: 0.95;
-    transform: translate(-50%, -50%) scale(0.88) rotate(-10deg);
-  }
-  100% {
-    opacity: 0.9;
-    transform: translate(calc(-50% + var(--holdem-shift-x, 0cqw)), calc(-50% + var(--holdem-shift-y, 0cqh)))
-      scale(1) rotate(4deg);
-  }
+.holdem-motion-muck-card-felt-b {
+  transform: translate(-75%, -25%) rotate(10deg);
 }
 
 .holdem-motion-board-card {
@@ -765,33 +770,18 @@ body {
   background: linear-gradient(160deg, #f8f4ea 0%, #e8dcc8 40%, #cbb896 100%);
   border: 1px solid rgba(90, 52, 24, 0.5);
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
-  animation: holdem-flop-card-drop 0.72s cubic-bezier(0.34, 1.2, 0.48, 1) both;
+  animation: holdem-flop-card-slide 0.7s cubic-bezier(0.25, 0.9, 0.35, 1) both;
   z-index: 26;
 }
 
-@keyframes holdem-flop-card-drop {
+@keyframes holdem-flop-card-slide {
   0% {
     opacity: 0;
-    transform: translate(-50%, -140%) scale(0.7) rotate(-18deg);
-  }
-  70% {
-    opacity: 1;
-    transform: translate(-50%, -42%) scale(1.04) rotate(4deg);
+    transform: translate(calc(-50% + var(--board-to-x, 0cqw)), calc(-50% + 6cqh)) scale(0.82) rotate(-14deg);
   }
   100% {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1) rotate(0deg);
-  }
-}
-
-@keyframes holdem-muck-drop {
-  0% {
-    opacity: 0.9;
-    transform: translateY(0) rotate(var(--holdem-muck-tilt, -14deg));
-  }
-  100% {
-    opacity: 0.35;
-    transform: translateY(28px) rotate(calc(var(--holdem-muck-tilt, -14deg) + 8deg));
+    transform: translate(calc(-50% + var(--board-to-x, 0cqw)), -50%) scale(1) rotate(0deg);
   }
 }
 
@@ -997,11 +987,8 @@ body {
   .holdem-fp-row-winner,
   .holdem-fp-opp-winner,
   .holdem-fp-winner,
-  .holdem-motion-dealer-hand,
-  .holdem-motion-chip-fly,
-  .holdem-motion-muck-card,
+  .holdem-motion-hand-action,
   .holdem-motion-pot-chip,
-  .holdem-motion-deal-card,
   .holdem-motion-board-card {
     animation: none !important;
   }
