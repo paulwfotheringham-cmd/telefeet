@@ -1225,7 +1225,7 @@ export function FunQuizClient() {
         </section>
       ) : null}
 
-      {!isMillionaire && !isCatchphrase && !isBlockbusters && phase === "question" && !question && roomState.statusMessage ? (
+      {!isMillionaire && !isHoldem && !isCatchphrase && !isBlockbusters && phase === "question" && !question && roomState.statusMessage ? (
         <section className="mt-8 flex flex-1 flex-col items-center justify-center rounded-3xl border border-white/10 bg-slate-900/70 p-8 text-center">
           <p className="text-lg text-slate-200">{roomState.statusMessage}</p>
           {you.answer !== null ? (
@@ -1234,7 +1234,7 @@ export function FunQuizClient() {
         </section>
       ) : null}
 
-      {!isMillionaire && !isCatchphrase && !isBlockbusters && phase === "question" && question ? (
+      {!isMillionaire && !isHoldem && !isCatchphrase && !isBlockbusters && phase === "question" && question ? (
         <section className="mt-6 flex flex-1 flex-col">
           <div className="mb-3 flex items-center justify-between text-xs text-slate-400">
             <span>{question.category}</span>
