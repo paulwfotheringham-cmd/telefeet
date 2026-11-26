@@ -386,6 +386,8 @@ export function FunQuizClient() {
     difficulty?: QuizDifficulty | null;
     category?: QuizCategoryId | null;
     questionCount?: 25 | 50;
+    /** Solo Hold'em: skip waiting room and deal immediately. */
+    autoStart?: boolean;
   }) => {
     const mode = choice?.mode ?? pendingMode;
     const difficulty = choice ? (choice.difficulty ?? QUIZ_DIFFICULTY_INTERMEDIATE) : selectedDifficulty;
@@ -420,6 +422,7 @@ export function FunQuizClient() {
           quizDifficulty: isStandalone ? QUIZ_DIFFICULTY_INTERMEDIATE : difficulty,
           quizCategory: isStandalone ? QUIZ_CATEGORY_GENERAL_KNOWLEDGE : category,
           questionCount: choice?.questionCount ?? 50,
+          autoStart: choice?.autoStart === true,
         }),
       });
       const state = await parseState(res);
@@ -937,16 +940,25 @@ export function FunQuizClient() {
                     title="Single player"
                     detail={
                       instantMode === GAME_MODE_TEXAS_HOLDEM
-                        ? "You versus two AI players at the table."
+                        ? "Straight to the table vs two AI players."
                         : "Open a table. A second player still joins before it starts."
                     }
                     disabled={busy}
-                    onClick={() => void createRoom({ mode: instantMode })}
+                    onClick={() =>
+                      void createRoom({
+                        mode: instantMode,
+                        autoStart: instantMode === GAME_MODE_TEXAS_HOLDEM,
+                      })
+                    }
                   />
                   <WideChoice
                     image={instantCover}
                     title="Play together"
-                    detail="Share one table."
+                    detail={
+                      instantMode === GAME_MODE_TEXAS_HOLDEM
+                        ? "Share a code and wait for a friend, then start heads-up."
+                        : "Share one table."
+                    }
                     disabled={busy}
                     onClick={() => void createRoom({ mode: instantMode })}
                   />

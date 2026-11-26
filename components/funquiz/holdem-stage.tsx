@@ -30,7 +30,7 @@ type SeatView = {
 };
 
 function cardColor(label: string): string {
-  return label.includes("♥") || label.includes("♦") ? "text-red-500" : "text-slate-900";
+  return label.includes("♥") || label.includes("♦") ? "text-red-600" : "text-slate-900";
 }
 
 function PlayingCard({
@@ -38,48 +38,65 @@ function PlayingCard({
   hidden,
   large,
   delayMs = 0,
+  tilt = 0,
 }: {
   label?: string;
   hidden?: boolean;
   large?: boolean;
   delayMs?: number;
+  tilt?: number;
 }) {
-  const size = large ? "h-20 w-[3.4rem] sm:h-24 sm:w-16" : "h-12 w-9 sm:h-14 sm:w-10";
+  const size = large
+    ? "h-[5.5rem] w-[3.9rem] sm:h-28 sm:w-20"
+    : "h-[3.15rem] w-[2.25rem] sm:h-14 sm:w-10";
+  const style: CSSProperties = {
+    animationDelay: `${delayMs}ms`,
+    transform: `rotate(${tilt}deg)`,
+  };
+
   if (hidden || !label) {
     return (
-      <span
-        className={`holdem-card-deal inline-flex ${size} items-center justify-center rounded-md border border-white/20 bg-gradient-to-br from-indigo-950 via-slate-900 to-black shadow-lg`}
-        style={{ animationDelay: `${delayMs}ms` }}
-      >
-        <span className="h-[70%] w-[70%] rounded-sm border border-amber-300/30 bg-[repeating-linear-gradient(135deg,#1e293b_0_4px,#0f172a_4px_8px)]" />
+      <span className={`holdem-card-deal holdem-card-3d inline-flex ${size}`} style={style}>
+        <span className="holdem-card-face holdem-card-back relative flex h-full w-full items-center justify-center overflow-hidden rounded-[0.55rem]">
+          <span className="absolute inset-[3px] rounded-[0.4rem] border border-amber-200/25 bg-[repeating-linear-gradient(135deg,#1e3a5f_0_3px,#0b1a2e_3px_6px)]" />
+          <span className="relative z-[1] h-5 w-5 rounded-full border border-amber-300/40 bg-gradient-to-br from-amber-200/30 to-transparent sm:h-6 sm:w-6" />
+        </span>
       </span>
     );
   }
+
   const rank = label.slice(0, -1);
   const suit = label.slice(-1);
   return (
-    <span
-      className={`holdem-card-deal inline-flex ${size} flex-col items-start justify-between rounded-md border border-white/70 bg-gradient-to-b from-white to-slate-100 px-1 py-0.5 shadow-lg`}
-      style={{ animationDelay: `${delayMs}ms` }}
-    >
-      <span className={`font-serif text-[11px] font-bold leading-none sm:text-sm ${cardColor(label)}`}>
-        {rank}
-        {suit}
+    <span className={`holdem-card-deal holdem-card-3d inline-flex ${size}`} style={style}>
+      <span className="holdem-card-face relative flex h-full w-full flex-col items-start justify-between overflow-hidden rounded-[0.55rem] bg-gradient-to-br from-white via-[#f7f4ef] to-[#e8e2d8] px-1 py-0.5 sm:px-1.5 sm:py-1">
+        <span className={`font-serif text-[11px] font-bold leading-none sm:text-sm ${cardColor(label)}`}>
+          {rank}
+          {suit}
+        </span>
+        <span className={`self-center font-serif text-xl leading-none sm:text-3xl ${cardColor(label)}`}>
+          {suit}
+        </span>
+        <span
+          className={`self-end rotate-180 font-serif text-[11px] font-bold leading-none sm:text-sm ${cardColor(label)}`}
+        >
+          {rank}
+          {suit}
+        </span>
       </span>
-      <span className={`self-end font-serif text-base leading-none sm:text-xl ${cardColor(label)}`}>{suit}</span>
     </span>
   );
 }
 
 function ChipStack({ amount }: { amount: number }) {
-  const n = Math.min(5, Math.max(1, Math.round(amount / 100)));
+  const n = Math.min(6, Math.max(1, Math.round(amount / 80)));
   return (
-    <div className="relative mx-auto h-6 w-10">
+    <div className="relative mx-auto h-7 w-11" aria-hidden>
       {Array.from({ length: n }, (_, i) => (
         <span
           key={i}
-          className="absolute left-1/2 h-2.5 w-8 -translate-x-1/2 rounded-full border border-amber-100/40 bg-gradient-to-b from-amber-300 to-amber-600 shadow"
-          style={{ bottom: i * 3 }}
+          className="holdem-chip absolute left-1/2 h-2.5 w-9 -translate-x-1/2 rounded-full"
+          style={{ bottom: i * 3.5, zIndex: i + 1 }}
         />
       ))}
     </div>
@@ -89,14 +106,14 @@ function ChipStack({ amount }: { amount: number }) {
 /** Place seats around an oval: you at bottom, others across the top arc. */
 function seatStyle(index: number, total: number, isYou: boolean): CSSProperties {
   if (isYou || total <= 1) {
-    return { left: "50%", top: "86%", transform: "translate(-50%, -50%)" };
+    return { left: "50%", top: "90%", transform: "translate(-50%, -50%)" };
   }
   const others = total - 1;
-  const otherIndex = index; // among non-you seats we remap outside
+  const otherIndex = index;
   const t = others === 1 ? 0.5 : otherIndex / (others - 1);
-  const angle = Math.PI * (0.15 + t * 0.7); // top arc
-  const x = 50 + Math.cos(angle) * 38;
-  const y = 48 - Math.sin(angle) * 32;
+  const angle = Math.PI * (0.18 + t * 0.64);
+  const x = 50 + Math.cos(angle) * 40;
+  const y = 42 - Math.sin(angle) * 30;
   return { left: `${x}%`, top: `${y}%`, transform: "translate(-50%, -50%)" };
 }
 
@@ -127,7 +144,6 @@ export function HoldemStage({
     return () => window.clearTimeout(id);
   }, [hv?.pot, hv?.handNumber, hv?.street]);
 
-  // Live countdown from server deadline.
   useEffect(() => {
     if (!hv?.actionDeadlineAt || !hv.actionOn || hv.street === "hand_over") {
       setSecondsLeft(null);
@@ -141,7 +157,6 @@ export function HoldemStage({
     return () => window.clearInterval(id);
   }, [hv?.actionDeadlineAt, hv?.actionOn, hv?.street]);
 
-  // Poll while a hand is live so AI turns and turn timeouts apply.
   useEffect(() => {
     if (!hv?.actionOn || hv.street === "hand_over") return;
     let cancelled = false;
@@ -186,6 +201,7 @@ export function HoldemStage({
   const youSeat = seats.find((s) => s.playerId === playerId);
   const others = seats.filter((s) => s.playerId !== playerId);
   const orderedForLayout = [...others, ...(youSeat ? [youSeat] : [])];
+  const heroCards = youSeat && !youSeat.folded && youSeat.cards && youSeat.cards.length > 0 ? youSeat.cards : null;
 
   const locked = pending || busy;
 
@@ -193,14 +209,11 @@ export function HoldemStage({
     setPending(true);
     onError("");
     try {
-      const res = await fetch(
-        `/api/funquiz/room/${encodeURIComponent(roomState.code)}/holdem`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ playerId, ...body }),
-        },
-      );
+      const res = await fetch(`/api/funquiz/room/${encodeURIComponent(roomState.code)}/holdem`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ playerId, ...body }),
+      });
       const data = (await res.json()) as { state?: ClientRoomState; error?: string };
       if (!res.ok) throw new Error(data.error ?? "Request failed");
       if (data.state) onRefreshState(data.state);
@@ -221,18 +234,13 @@ export function HoldemStage({
   const dealerId = seats[dealerSeatIndex]?.playerId ?? roomState.players[dealerSeatIndex]?.id;
 
   return (
-    <div className="holdem-stage relative mt-4 overflow-hidden rounded-[1.75rem] border border-amber-500/20 bg-[#120c08] shadow-[0_0_60px_-20px_rgba(212,175,55,0.35)]">
-      <div
-        className="pointer-events-none absolute inset-0 opacity-40"
-        style={{
-          backgroundImage:
-            "radial-gradient(ellipse at 50% 30%, rgba(212,175,55,0.12), transparent 55%), url(\"data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 30h60M30 0v60' stroke='%23d4af37' stroke-opacity='.05'/%3E%3C/svg%3E\")",
-        }}
-      />
+    <div className="holdem-stage relative mt-4 overflow-hidden rounded-[1.75rem] border border-amber-500/25 bg-[#0a0705] shadow-[0_30px_80px_-30px_rgba(0,0,0,0.9)]">
+      <div className="holdem-stage-glow pointer-events-none absolute inset-0" />
+      <div className="holdem-stage-grid pointer-events-none absolute inset-0 opacity-30" />
 
       <header className="relative z-10 flex flex-wrap items-start justify-between gap-3 px-4 pt-4 sm:px-6">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-amber-300/90">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-amber-300/90">
             Texas Hold&apos;em · Hand #{hv.handNumber}
           </p>
           <p className="mt-1 text-sm text-amber-50/80">
@@ -244,17 +252,17 @@ export function HoldemStage({
         <div className="flex flex-wrap items-center gap-2">
           {secondsLeft != null && hv.actionOn ? (
             <div
-              className={`rounded-full border px-3 py-1.5 text-sm font-bold tabular-nums ${
+              className={`rounded-full border px-3 py-1.5 text-sm font-bold tabular-nums shadow-lg ${
                 secondsLeft <= 10
-                  ? "border-red-400/60 bg-red-950/70 text-red-100"
-                  : "border-amber-300/40 bg-black/50 text-amber-100"
+                  ? "border-red-400/60 bg-red-950/80 text-red-100"
+                  : "border-amber-300/40 bg-black/60 text-amber-100"
               }`}
               aria-live="polite"
             >
               {secondsLeft}s
             </div>
           ) : null}
-          <div className="rounded-full border border-white/10 bg-black/40 p-1 text-[11px]">
+          <div className="rounded-full border border-white/10 bg-black/50 p-1 text-[11px] shadow-inner">
             <button
               type="button"
               onClick={() => onGender("male")}
@@ -273,96 +281,117 @@ export function HoldemStage({
         </div>
       </header>
 
-      {/* Oval table */}
-      <div className="relative z-10 mx-auto mt-2 aspect-[5/3.4] w-full max-w-3xl px-2 pb-2 sm:px-4">
-        <div className="holdem-table absolute inset-[8%] rounded-[50%] border-[10px] border-[#8a6a2f] bg-[radial-gradient(ellipse_at_center,#1a5c3a_0%,#0d3d28_55%,#082819_100%)] shadow-[inset_0_0_40px_rgba(0,0,0,0.55),0_20px_50px_rgba(0,0,0,0.55)]">
-          <div className="absolute inset-[6%] rounded-[50%] border border-amber-200/10" />
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-            <p
-              className={`text-xs font-semibold uppercase tracking-[0.3em] text-amber-100/50 ${flashPot ? "holdem-pot-pulse" : ""}`}
-            >
-              Pot
-            </p>
-            <p className={`text-3xl font-bold tabular-nums text-amber-200 drop-shadow ${flashPot ? "holdem-pot-pulse" : ""}`}>
-              ${hv.pot}
-            </p>
-            <div className="mt-1 flex flex-wrap justify-center gap-1.5">
-              {hv.board.length > 0 ? (
-                hv.board.map((c, i) => <PlayingCard key={`${c}-${i}`} label={c} delayMs={i * 80} />)
-              ) : (
-                <p className="text-[11px] uppercase tracking-widest text-emerald-100/40">Waiting for flop</p>
-              )}
-            </div>
-            {roomState.statusMessage ? (
-              <p className="holdem-banner mt-2 max-w-[80%] truncate rounded-full bg-black/45 px-3 py-1 text-center text-[11px] text-emerald-50">
-                {roomState.statusMessage}
-              </p>
-            ) : null}
-          </div>
-        </div>
+      <div className="holdem-scene relative z-10 mx-auto mt-1 w-full max-w-3xl px-2 pb-1 sm:px-4">
+        <div className="holdem-table-wrap relative mx-auto aspect-[5/3.35] w-full">
+          {/* Soft floor shadow under the oval */}
+          <div className="holdem-table-floor absolute inset-[10%_6%_4%] rounded-[50%]" />
 
-        {orderedForLayout.map((seat) => {
-          const isYou = seat.playerId === playerId;
-          const otherIndex = isYou ? 0 : others.findIndex((o) => o.playerId === seat.playerId);
-          const style = seatStyle(isYou ? 0 : Math.max(0, otherIndex), seats.length, isYou);
-          const g = faceGenderForSeat(seat.playerId, isYou, gender);
-          const face = holdemFaceUrl(seat.playerId, g);
-          const acting = hv.actionOn === seat.playerId;
-          return (
-            <div key={seat.playerId} className="absolute z-20 w-[7.5rem] sm:w-36" style={style}>
-              <div
-                className={`flex flex-col items-center rounded-2xl border px-2 py-2 backdrop-blur-sm transition ${
-                  seat.folded
-                    ? "border-white/5 bg-black/50 opacity-55"
-                    : acting
-                      ? "holdem-acting border-amber-300/70 bg-black/70"
-                      : "border-white/15 bg-black/55"
-                }`}
-              >
-                <div className="relative">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={face}
-                    alt=""
-                    className="h-12 w-12 rounded-full border-2 border-amber-200/40 bg-slate-800 object-cover shadow-lg sm:h-14 sm:w-14"
-                  />
-                  {dealerId === seat.playerId ? (
-                    <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-amber-300 text-[10px] font-bold text-black shadow">
-                      D
-                    </span>
-                  ) : null}
-                </div>
-                <p className="mt-1 max-w-full truncate text-center text-[11px] font-semibold text-white">
-                  {isYou ? "You" : seat.name}
-                  {seat.isAi ? " · AI" : ""}
+          {/* Wood rail + felt */}
+          <div className="holdem-table-rail absolute inset-[7%] rounded-[50%]">
+            <div className="holdem-table-felt absolute inset-[7%] rounded-[50%]">
+              <div className="holdem-felt-sheen absolute inset-0 rounded-[50%]" />
+              <div className="holdem-felt-rim absolute inset-[5%] rounded-[50%]" />
+
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5">
+                <p
+                  className={`text-[10px] font-semibold uppercase tracking-[0.35em] text-amber-100/45 ${flashPot ? "holdem-pot-pulse" : ""}`}
+                >
+                  Pot
                 </p>
-                <ChipStack amount={seat.stack} />
-                <p className="text-[10px] tabular-nums text-amber-100/80">${seat.stack}</p>
-                <div className="mt-1 flex gap-1">
-                  {seat.folded ? (
-                    <span className="text-[10px] uppercase text-slate-400">Folded</span>
-                  ) : isYou && seat.cards && seat.cards.length > 0 ? (
-                    seat.cards.map((c, i) => <PlayingCard key={c} label={c} large={false} delayMs={i * 60} />)
-                  ) : seat.cards && seat.cards.length > 0 ? (
-                    seat.cards.map((c, i) => <PlayingCard key={c} label={c} delayMs={i * 60} />)
+                <p
+                  className={`text-3xl font-bold tabular-nums text-amber-200 drop-shadow-[0_4px_12px_rgba(0,0,0,0.65)] sm:text-4xl ${flashPot ? "holdem-pot-pulse" : ""}`}
+                >
+                  ${hv.pot}
+                </p>
+                <div className="mt-1 flex min-h-[3.2rem] flex-wrap items-end justify-center gap-1.5 sm:min-h-[3.6rem]">
+                  {hv.board.length > 0 ? (
+                    hv.board.map((c, i) => (
+                      <PlayingCard key={`${c}-${i}`} label={c} delayMs={i * 80} tilt={(i - 2) * 2} />
+                    ))
                   ) : (
-                    <>
-                      <PlayingCard hidden delayMs={0} />
-                      <PlayingCard hidden delayMs={40} />
-                    </>
+                    <p className="text-[11px] uppercase tracking-[0.22em] text-emerald-100/35">Waiting for flop</p>
                   )}
                 </div>
+                {roomState.statusMessage ? (
+                  <p className="holdem-banner mt-1 max-w-[78%] truncate rounded-full border border-white/10 bg-black/55 px-3 py-1 text-center text-[11px] text-emerald-50 shadow-lg backdrop-blur-sm">
+                    {roomState.statusMessage}
+                  </p>
+                ) : null}
               </div>
             </div>
-          );
-        })}
+          </div>
+
+          {orderedForLayout.map((seat) => {
+            const isYou = seat.playerId === playerId;
+            const otherIndex = isYou ? 0 : others.findIndex((o) => o.playerId === seat.playerId);
+            const style = seatStyle(isYou ? 0 : Math.max(0, otherIndex), seats.length, isYou);
+            const g = faceGenderForSeat(seat.playerId, isYou, gender);
+            const face = holdemFaceUrl(seat.playerId, g);
+            const acting = hv.actionOn === seat.playerId;
+            return (
+              <div key={seat.playerId} className="absolute z-20 w-[7.75rem] sm:w-36" style={style}>
+                <div
+                  className={`holdem-seat flex flex-col items-center px-2 py-2 ${
+                    seat.folded ? "holdem-seat-folded" : acting ? "holdem-seat-acting holdem-acting" : ""
+                  }`}
+                >
+                  <div className="relative">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={face}
+                      alt=""
+                      className="holdem-avatar h-12 w-12 rounded-full object-cover sm:h-14 sm:w-14"
+                    />
+                    {dealerId === seat.playerId ? (
+                      <span className="holdem-dealer-btn absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-black">
+                        D
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="mt-1 max-w-full truncate text-center text-[11px] font-semibold text-white drop-shadow">
+                    {isYou ? "You" : seat.name}
+                    {seat.isAi ? " · AI" : ""}
+                  </p>
+                  <ChipStack amount={seat.stack} />
+                  <p className="text-[10px] font-semibold tabular-nums text-amber-100/90">${seat.stack}</p>
+
+                  {/* Opponents only: hole cards here. Your two cards render once below as the hero hand. */}
+                  {!isYou ? (
+                    <div className="mt-1 flex gap-1">
+                      {seat.folded ? (
+                        <span className="text-[10px] uppercase tracking-wide text-slate-400">Folded</span>
+                      ) : seat.cards && seat.cards.length > 0 ? (
+                        seat.cards.slice(0, 2).map((c, i) => (
+                          <PlayingCard key={`${seat.playerId}-${c}-${i}`} label={c} delayMs={i * 60} tilt={i === 0 ? -6 : 6} />
+                        ))
+                      ) : (
+                        <>
+                          <PlayingCard hidden delayMs={0} tilt={-8} />
+                          <PlayingCard hidden delayMs={40} tilt={8} />
+                        </>
+                      )}
+                    </div>
+                  ) : seat.folded ? (
+                    <span className="mt-1 text-[10px] uppercase tracking-wide text-slate-400">Folded</span>
+                  ) : null}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Your big hole cards */}
-      {youSeat && !youSeat.folded && youSeat.cards && youSeat.cards.length > 0 ? (
-        <div className="relative z-10 -mt-2 mb-3 flex justify-center gap-2">
-          {youSeat.cards.map((c, i) => (
-            <PlayingCard key={`hero-${c}`} label={c} large delayMs={100 + i * 90} />
+      {/* Exactly two hero hole cards */}
+      {heroCards ? (
+        <div className="holdem-hero relative z-10 -mt-3 mb-2 flex justify-center gap-2 sm:-mt-4 sm:mb-3 sm:gap-3">
+          {heroCards.slice(0, 2).map((c, i) => (
+            <PlayingCard
+              key={`hero-${c}-${i}`}
+              label={c}
+              large
+              delayMs={100 + i * 90}
+              tilt={i === 0 ? -8 : 8}
+            />
           ))}
         </div>
       ) : null}
@@ -388,7 +417,7 @@ export function HoldemStage({
                 type="button"
                 disabled={locked}
                 onClick={() => void post({ action: "fold" })}
-                className="rounded-full border border-red-400/50 bg-red-950/50 px-5 py-2.5 text-sm font-semibold text-red-100 disabled:opacity-50"
+                className="holdem-btn rounded-full border border-red-400/50 bg-gradient-to-b from-red-800/80 to-red-950/90 px-5 py-2.5 text-sm font-semibold text-red-50 disabled:opacity-50"
               >
                 Fold
               </button>
@@ -398,7 +427,7 @@ export function HoldemStage({
                 type="button"
                 disabled={locked}
                 onClick={() => void post({ action: "check" })}
-                className="rounded-full border border-white/20 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+                className="holdem-btn rounded-full border border-white/20 bg-gradient-to-b from-white/15 to-white/5 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
               >
                 Check
               </button>
@@ -408,7 +437,7 @@ export function HoldemStage({
                 type="button"
                 disabled={locked}
                 onClick={() => void post({ action: "call" })}
-                className="rounded-full bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-black shadow disabled:opacity-50"
+                className="holdem-btn rounded-full bg-gradient-to-b from-emerald-400 to-emerald-600 px-5 py-2.5 text-sm font-semibold text-black shadow-lg disabled:opacity-50"
               >
                 Call ${hv.toCall}
               </button>
@@ -419,7 +448,7 @@ export function HoldemStage({
                   type="button"
                   disabled={locked}
                   onClick={() => void post({ action: "raise", raiseTo: minRaise })}
-                  className="rounded-full border border-amber-300/60 bg-amber-500/20 px-5 py-2.5 text-sm font-semibold text-amber-50 disabled:opacity-50"
+                  className="holdem-btn rounded-full border border-amber-300/50 bg-gradient-to-b from-amber-500/40 to-amber-800/40 px-5 py-2.5 text-sm font-semibold text-amber-50 disabled:opacity-50"
                 >
                   Raise ${minRaise}
                 </button>
@@ -428,7 +457,7 @@ export function HoldemStage({
                     type="number"
                     min={minRaise}
                     max={maxRaise}
-                    className="w-16 rounded-lg border border-white/15 bg-black/50 px-2 py-2 text-white"
+                    className="w-16 rounded-lg border border-white/15 bg-black/60 px-2 py-2 text-white shadow-inner"
                     value={clampedRaise}
                     onChange={(e) => {
                       const n = Number(e.target.value);
@@ -441,7 +470,7 @@ export function HoldemStage({
                     type="button"
                     disabled={locked}
                     onClick={() => void post({ action: "raise", raiseTo: clampedRaise })}
-                    className="rounded-full border border-white/20 px-3 py-2 text-slate-100 disabled:opacity-50"
+                    className="holdem-btn rounded-full border border-white/20 px-3 py-2 text-slate-100 disabled:opacity-50"
                   >
                     Go
                   </button>
@@ -453,7 +482,7 @@ export function HoldemStage({
                 type="button"
                 disabled={locked}
                 onClick={() => void post({ action: "all_in" })}
-                className="rounded-full bg-gradient-to-r from-amber-300 to-yellow-400 px-5 py-2.5 text-sm font-bold text-black shadow disabled:opacity-50"
+                className="holdem-btn rounded-full bg-gradient-to-b from-amber-200 to-yellow-500 px-5 py-2.5 text-sm font-bold text-black shadow-lg disabled:opacity-50"
               >
                 All in
               </button>
@@ -479,7 +508,7 @@ export function HoldemStage({
           type="button"
           disabled={locked}
           onClick={() => void post({ action: "deal" })}
-          className="relative z-10 mx-4 mb-3 w-[calc(100%-2rem)] rounded-full bg-gradient-to-r from-emerald-400 to-teal-300 py-3 text-sm font-bold text-black disabled:opacity-50"
+          className="holdem-btn relative z-10 mx-4 mb-3 w-[calc(100%-2rem)] rounded-full bg-gradient-to-b from-emerald-300 to-teal-500 py-3 text-sm font-bold text-black shadow-lg disabled:opacity-50"
         >
           Deal next hand
         </button>
