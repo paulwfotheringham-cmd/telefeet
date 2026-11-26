@@ -347,11 +347,16 @@ export function FunQuizClient() {
   useEffect(() => {
     if (screen !== "game" || !code) return;
     poll();
+    const holdemLive =
+      roomState?.gameMode === GAME_MODE_TEXAS_HOLDEM &&
+      (roomState.phase === "question" ||
+        roomState.phase === "finished" ||
+        Boolean(roomState.holdemView));
     const inActiveRound =
       roomState?.phase === "question" ||
       roomState?.phase === "reveal" ||
       roomState?.phase === "discussion";
-    const pollMs = inActiveRound ? 1000 : 3000;
+    const pollMs = holdemLive ? 400 : inActiveRound ? 1000 : 3000;
     const id = setInterval(poll, pollMs);
     return () => clearInterval(id);
   }, [screen, code, poll, roomState?.phase]);
@@ -1083,7 +1088,7 @@ export function FunQuizClient() {
               : `${you.name} & ${opponent?.name ?? "Partner"} · play together`}
           </p>
         </div>
-      ) : !isMillionaire && !isCatchphrase && !isBlockbusters ? (
+      ) : !isMillionaire && !isHoldem && !isCatchphrase && !isBlockbusters ? (
         <div className="mt-4 grid grid-cols-2 gap-3">
           {[you, opponent].filter(Boolean).map((p) => (
             <div
