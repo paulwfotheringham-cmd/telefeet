@@ -1,5 +1,7 @@
 "use client";
 
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { HoldemTableMotion } from "@/components/funquiz/holdem-table-motion";
 import type { HoldemSeatView } from "@/lib/funquiz/types";
 
@@ -84,7 +86,10 @@ const DEMO_SEATS: HoldemSeatView[] = [
   },
 ];
 
-export default function HoldemMotionPreviewPage() {
+function HoldemMotionPreviewInner() {
+  const searchParams = useSearchParams();
+  const runId = searchParams.get("run") ?? "default";
+
   return (
     <main className="min-h-screen bg-black p-4">
       <section className="holdem-gnd relative mx-auto max-w-6xl overflow-hidden rounded-lg shadow-2xl">
@@ -95,9 +100,24 @@ export default function HoldemMotionPreviewPage() {
             <img src={GROUNDED_JPG} alt="" className="h-full w-full object-cover" draggable={false} />
           </picture>
           <div className="holdem-gnd-shade pointer-events-none absolute inset-0" aria-hidden />
-          <HoldemTableMotion seats={DEMO_SEATS} pot={0} boardLen={0} handNumber={1} previewScript />
+          <HoldemTableMotion
+            key={runId}
+            seats={DEMO_SEATS}
+            pot={0}
+            boardLen={0}
+            handNumber={1}
+            previewScript
+          />
         </div>
       </section>
     </main>
+  );
+}
+
+export default function HoldemMotionPreviewPage() {
+  return (
+    <Suspense fallback={null}>
+      <HoldemMotionPreviewInner />
+    </Suspense>
   );
 }
