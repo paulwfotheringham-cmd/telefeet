@@ -17,24 +17,36 @@ export function CasinoChip({
   selected,
   onClick,
   size = "md",
+  displayOnly,
 }: {
-  value: ChipDenomination;
+  value: ChipDenomination | number;
   selected?: boolean;
   onClick?: () => void;
   size?: "sm" | "md";
+  displayOnly?: boolean;
 }) {
   const style = CHIP_STYLES[value] ?? CHIP_STYLES[25]!;
-  const dim = size === "sm" ? "h-10 w-10 text-[10px]" : "h-12 w-12 text-xs";
+  const dim = size === "sm" ? "h-9 w-9 text-[10px]" : "h-12 w-12 text-xs";
+  const className = `bj-chip ${dim} ${selected ? "bj-chip-selected" : ""}`;
+  const chipStyle = {
+    background: `radial-gradient(circle at 35% 30%, ${style.ring}, ${style.bg})`,
+    color: style.text,
+  };
+
+  if (displayOnly) {
+    return (
+      <span className={className} style={chipStyle} aria-hidden>
+        {value}
+      </span>
+    );
+  }
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`bj-chip ${dim} ${selected ? "bj-chip-selected" : ""}`}
-      style={{
-        background: `radial-gradient(circle at 35% 30%, ${style.ring}, ${style.bg})`,
-        color: style.text,
-      }}
+      className={className}
+      style={chipStyle}
       aria-pressed={selected}
       aria-label={`$${value} chip`}
     >

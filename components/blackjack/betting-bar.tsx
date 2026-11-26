@@ -31,36 +31,50 @@ export function BettingBar({
   onDeal,
 }: Props) {
   return (
-    <div className="bj-betting">
-      <div className="flex flex-wrap items-center justify-center gap-2">
+    <div className="bj-betting-stage">
+      <div className="bj-chip-row">
         {CHIP_DENOMINATIONS.map((value) => (
           <CasinoChip
             key={value}
             value={value}
             selected={selectedChip === value}
             onClick={() => onSelectChip(value)}
-            size="sm"
+            size="md"
           />
         ))}
       </div>
 
-      <div className="mt-4 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-        <BetControl
-          label="Bet"
-          amount={pendingBet}
-          onMinus={onRemove}
-          onPlus={onAdd}
+      <div className="bj-bet-pill">
+        <span className="bj-bet-pill-label">Bet</span>
+        <button
+          type="button"
+          className="bj-bet-pill-btn"
           disabled={disabled || betPlaced}
-        />
-        <div className="text-center text-xs text-brand-muted sm:text-left">
-          <p>
-            Min ${MIN_BET} · Max ${MAX_BET}
-          </p>
-          <p className="mt-0.5 text-brand-cream/80">Balance ${balance}</p>
+          onClick={onRemove}
+          aria-label="Decrease bet"
+        >
+          −
+        </button>
+        <div className="bj-bet-pill-center">
+          <CasinoChip value={selectedChip} size="sm" displayOnly />
+          <span className="bj-bet-pill-amount">{pendingBet}</span>
         </div>
+        <button
+          type="button"
+          className="bj-bet-pill-btn"
+          disabled={disabled || betPlaced}
+          onClick={onAdd}
+          aria-label="Increase bet"
+        >
+          +
+        </button>
       </div>
 
-      <div className="mt-4 flex flex-wrap justify-center gap-2">
+      <p className="bj-bet-hint">
+        Min ${MIN_BET} · Max ${MAX_BET} · Balance ${balance}
+      </p>
+
+      <div className="bj-bet-actions">
         <button type="button" className="bj-btn-ghost" disabled={disabled || betPlaced} onClick={onClear}>
           Clear bet
         </button>
@@ -75,38 +89,9 @@ export function BettingBar({
           </button>
         ) : (
           <button type="button" className="bj-btn-deal" disabled={disabled} onClick={onDeal}>
-            Deal
+            Deal cards
           </button>
         )}
-      </div>
-    </div>
-  );
-}
-
-function BetControl({
-  label,
-  amount,
-  onMinus,
-  onPlus,
-  disabled,
-}: {
-  label: string;
-  amount: number;
-  onMinus: () => void;
-  onPlus: () => void;
-  disabled: boolean;
-}) {
-  return (
-    <div className="bj-bet-control">
-      <span className="text-[10px] font-semibold uppercase tracking-widest text-brand-gold">{label}</span>
-      <div className="flex items-center gap-3">
-        <button type="button" className="bj-bet-step" disabled={disabled} onClick={onMinus} aria-label="Decrease bet">
-          −
-        </button>
-        <span className="min-w-[4rem] text-center text-lg font-bold tabular-nums text-white">${amount}</span>
-        <button type="button" className="bj-bet-step" disabled={disabled} onClick={onPlus} aria-label="Increase bet">
-          +
-        </button>
       </div>
     </div>
   );
