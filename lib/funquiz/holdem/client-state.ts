@@ -2,7 +2,13 @@ import { categoryTitle } from "../categories";
 import { difficultyTitle } from "../difficulties";
 import { formatCard } from "./cards";
 import { handLabel, bestHandScore } from "./eval";
-import { isHoldemAiId, type HoldemState } from "./types";
+import {
+  HOLDEM_MAX_RAISE,
+  HOLDEM_STARTING_STACK,
+  HOLDEM_TURN_MS,
+  isHoldemAiId,
+  type HoldemState,
+} from "./types";
 import type { ClientRoomState, HoldemClientView, HoldemSeatView, QuizRoom } from "../types";
 
 function dealerName(room: QuizRoom, h: HoldemState): string {
@@ -24,6 +30,12 @@ export function toHoldemClientState(room: QuizRoom, viewerId: string): ClientRoo
   const board = h.board.map(formatCard);
   const toCall = Math.max(0, h.currentBet - (h.streetBets[viewerId] ?? 0));
   const minRaise = h.currentBet + h.lastRaiseSize;
+  const maxRaise = Math.max(minRaise, h.currentBet + HOLDEM_MAX_RAISE);
+  const deadline = h.actionDeadlineAt ?? null;
+  const turnSecondsLeft =
+    deadline != null && h.actionOn && h.street !== "hand_over"
+      ? Math.max(0, Math.ceil((deadline - Date.now()) / 1000))
+      : null;
 
   let showdownLabel: string | null = null;
   if (h.street === "showdown" || h.street === "hand_over") {
@@ -67,19 +79,28 @@ export function toHoldemClientState(room: QuizRoom, viewerId: string): ClientRoo
     seats,
     toCall,
     minRaise,
+    maxRaise,
     currentBet: h.currentBet,
     actionOn: h.actionOn,
+    actionDeadlineAt: deadline,
+    turnSecondsLeft,
     isYourAction: h.actionOn === viewerId,
     canFold: h.actionOn === viewerId && h.street !== "hand_over",
     canCheck: h.actionOn === viewerId && toCall === 0,
     canCall: h.actionOn === viewerId && toCall > 0,
-    canRaise: h.actionOn === viewerId && (h.stacks[viewerId] ?? 0) > toCall,
+    canRaise:
+      h.actionOn === viewerId &&
+      (h.stacks[viewerId] ?? 0) > toCall &&
+      minRaise <= maxRaise,
     canAllIn: h.actionOn === viewerId && (h.stacks[viewerId] ?? 0) > 0,
     canDealNextHand: room.hostId === viewerId && h.street === "hand_over",
     lastHandSummary: h.lastHandSummary,
     showdownLabel,
     smallBlind: h.smallBlind,
     bigBlind: h.bigBlind,
+    startingStack: HOLDEM_STARTING_STACK,
+    maxRaiseSize: HOLDEM_MAX_RAISE,
+    turnLimitSeconds: Math.round(HOLDEM_TURN_MS / 1000),
   };
 
   return {

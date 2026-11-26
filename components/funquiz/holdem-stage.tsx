@@ -72,7 +72,7 @@ function PlayingCard({
 }
 
 function ChipStack({ amount }: { amount: number }) {
-  const n = Math.min(5, Math.max(1, Math.round(amount / 200)));
+  const n = Math.min(5, Math.max(1, Math.round(amount / 100)));
   return (
     <div className="relative mx-auto h-6 w-10">
       {Array.from({ length: n }, (_, i) => (
@@ -114,6 +114,7 @@ export function HoldemStage({
   const [pending, setPending] = useState(false);
   const [gender, setGender] = useState<HoldemFaceGender>("male");
   const [flashPot, setFlashPot] = useState(false);
+  const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
 
   useEffect(() => {
     setGender(readFaceGender());
@@ -126,9 +127,23 @@ export function HoldemStage({
     return () => window.clearTimeout(id);
   }, [hv?.pot, hv?.handNumber, hv?.street]);
 
-  // Keep the table snappy while an AI is thinking — poll the room hard.
+  // Live countdown from server deadline.
   useEffect(() => {
-    if (!hv?.actionOn || hv.actionOn === playerId || hv.street === "hand_over") return;
+    if (!hv?.actionDeadlineAt || !hv.actionOn || hv.street === "hand_over") {
+      setSecondsLeft(null);
+      return;
+    }
+    const tick = () => {
+      setSecondsLeft(Math.max(0, Math.ceil((hv.actionDeadlineAt! - Date.now()) / 1000)));
+    };
+    tick();
+    const id = window.setInterval(tick, 250);
+    return () => window.clearInterval(id);
+  }, [hv?.actionDeadlineAt, hv?.actionOn, hv?.street]);
+
+  // Poll while a hand is live so AI turns and turn timeouts apply.
+  useEffect(() => {
+    if (!hv?.actionOn || hv.street === "hand_over") return;
     let cancelled = false;
     const tick = async () => {
       try {
@@ -143,7 +158,8 @@ export function HoldemStage({
       }
     };
     void tick();
-    const id = window.setInterval(() => void tick(), 350);
+    const ms = hv.actionOn === playerId ? 1000 : 350;
+    const id = window.setInterval(() => void tick(), ms);
     return () => {
       cancelled = true;
       window.clearInterval(id);
@@ -151,6 +167,10 @@ export function HoldemStage({
   }, [hv?.actionOn, hv?.street, playerId, roomState.code, onRefreshState]);
 
   if (!hv) return null;
+
+  const minRaise = hv.minRaise;
+  const maxRaise = hv.maxRaise ?? hv.minRaise + (hv.maxRaiseSize ?? 25);
+  const clampedRaise = Math.min(Math.max(raiseTo ?? minRaise, minRaise), maxRaise);
 
   const seats: SeatView[] = hv.seats?.length
     ? hv.seats
@@ -216,11 +236,24 @@ export function HoldemStage({
             Texas Hold&apos;em · Hand #{hv.handNumber}
           </p>
           <p className="mt-1 text-sm text-amber-50/80">
-            Blinds {hv.smallBlind}/{hv.bigBlind} ·{" "}
+            Blinds ${hv.smallBlind}/${hv.bigBlind} · Start ${hv.startingStack ?? 500} · Max raise $
+            {hv.maxRaiseSize ?? 25} ·{" "}
             <span className="uppercase text-amber-200">{hv.street.replace("_", " ")}</span>
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {secondsLeft != null && hv.actionOn ? (
+            <div
+              className={`rounded-full border px-3 py-1.5 text-sm font-bold tabular-nums ${
+                secondsLeft <= 10
+                  ? "border-red-400/60 bg-red-950/70 text-red-100"
+                  : "border-amber-300/40 bg-black/50 text-amber-100"
+              }`}
+              aria-live="polite"
+            >
+              {secondsLeft}s
+            </div>
+          ) : null}
           <div className="rounded-full border border-white/10 bg-black/40 p-1 text-[11px]">
             <button
               type="button"
@@ -251,7 +284,7 @@ export function HoldemStage({
               Pot
             </p>
             <p className={`text-3xl font-bold tabular-nums text-amber-200 drop-shadow ${flashPot ? "holdem-pot-pulse" : ""}`}>
-              {hv.pot}
+              ${hv.pot}
             </p>
             <div className="mt-1 flex flex-wrap justify-center gap-1.5">
               {hv.board.length > 0 ? (
@@ -304,7 +337,7 @@ export function HoldemStage({
                   {seat.isAi ? " · AI" : ""}
                 </p>
                 <ChipStack amount={seat.stack} />
-                <p className="text-[10px] tabular-nums text-amber-100/80">{seat.stack}</p>
+                <p className="text-[10px] tabular-nums text-amber-100/80">${seat.stack}</p>
                 <div className="mt-1 flex gap-1">
                   {seat.folded ? (
                     <span className="text-[10px] uppercase text-slate-400">Folded</span>
@@ -339,76 +372,93 @@ export function HoldemStage({
       ) : null}
 
       {hv.isYourAction && hv.street !== "hand_over" ? (
-        <div className="relative z-10 flex flex-wrap items-center justify-center gap-2 px-4 pb-4">
-          {hv.canFold ? (
-            <button
-              type="button"
-              disabled={locked}
-              onClick={() => void post({ action: "fold" })}
-              className="rounded-full border border-red-400/50 bg-red-950/50 px-5 py-2.5 text-sm font-semibold text-red-100 disabled:opacity-50"
+        <div className="relative z-10 space-y-2 px-4 pb-4">
+          {secondsLeft != null ? (
+            <p
+              className={`text-center text-xs font-semibold uppercase tracking-widest ${
+                secondsLeft <= 10 ? "text-red-300" : "text-amber-200/80"
+              }`}
             >
-              Fold
-            </button>
+              Your shot · {secondsLeft}s left
+            </p>
           ) : null}
-          {hv.canCheck ? (
-            <button
-              type="button"
-              disabled={locked}
-              onClick={() => void post({ action: "check" })}
-              className="rounded-full border border-white/20 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
-            >
-              Check
-            </button>
-          ) : null}
-          {hv.canCall ? (
-            <button
-              type="button"
-              disabled={locked}
-              onClick={() => void post({ action: "call" })}
-              className="rounded-full bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-black shadow disabled:opacity-50"
-            >
-              Call {hv.toCall}
-            </button>
-          ) : null}
-          {hv.canRaise ? (
-            <>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {hv.canFold ? (
               <button
                 type="button"
                 disabled={locked}
-                onClick={() => void post({ action: "raise", raiseTo: hv.minRaise })}
-                className="rounded-full border border-amber-300/60 bg-amber-500/20 px-5 py-2.5 text-sm font-semibold text-amber-50 disabled:opacity-50"
+                onClick={() => void post({ action: "fold" })}
+                className="rounded-full border border-red-400/50 bg-red-950/50 px-5 py-2.5 text-sm font-semibold text-red-100 disabled:opacity-50"
               >
-                Raise {hv.minRaise}
+                Fold
               </button>
-              <label className="flex items-center gap-1.5 text-xs text-slate-300">
-                <input
-                  type="number"
-                  min={hv.minRaise}
-                  className="w-16 rounded-lg border border-white/15 bg-black/50 px-2 py-2 text-white"
-                  value={raiseTo ?? hv.minRaise}
-                  onChange={(e) => setRaiseTo(Number(e.target.value))}
-                />
+            ) : null}
+            {hv.canCheck ? (
+              <button
+                type="button"
+                disabled={locked}
+                onClick={() => void post({ action: "check" })}
+                className="rounded-full border border-white/20 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+              >
+                Check
+              </button>
+            ) : null}
+            {hv.canCall ? (
+              <button
+                type="button"
+                disabled={locked}
+                onClick={() => void post({ action: "call" })}
+                className="rounded-full bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-black shadow disabled:opacity-50"
+              >
+                Call ${hv.toCall}
+              </button>
+            ) : null}
+            {hv.canRaise ? (
+              <>
                 <button
                   type="button"
                   disabled={locked}
-                  onClick={() => void post({ action: "raise", raiseTo: raiseTo ?? hv.minRaise })}
-                  className="rounded-full border border-white/20 px-3 py-2 text-slate-100 disabled:opacity-50"
+                  onClick={() => void post({ action: "raise", raiseTo: minRaise })}
+                  className="rounded-full border border-amber-300/60 bg-amber-500/20 px-5 py-2.5 text-sm font-semibold text-amber-50 disabled:opacity-50"
                 >
-                  Go
+                  Raise ${minRaise}
                 </button>
-              </label>
-            </>
-          ) : null}
-          {hv.canAllIn ? (
-            <button
-              type="button"
-              disabled={locked}
-              onClick={() => void post({ action: "all_in" })}
-              className="rounded-full bg-gradient-to-r from-amber-300 to-yellow-400 px-5 py-2.5 text-sm font-bold text-black shadow disabled:opacity-50"
-            >
-              All in
-            </button>
-          ) : null}
+                <label className="flex items-center gap-1.5 text-xs text-slate-300">
+                  <input
+                    type="number"
+                    min={minRaise}
+                    max={maxRaise}
+                    className="w-16 rounded-lg border border-white/15 bg-black/50 px-2 py-2 text-white"
+                    value={clampedRaise}
+                    onChange={(e) => {
+                      const n = Number(e.target.value);
+                      if (!Number.isFinite(n)) return;
+                      setRaiseTo(Math.min(Math.max(n, minRaise), maxRaise));
+                    }}
+                  />
+                  <span className="text-[10px] text-slate-500">max ${maxRaise}</span>
+                  <button
+                    type="button"
+                    disabled={locked}
+                    onClick={() => void post({ action: "raise", raiseTo: clampedRaise })}
+                    className="rounded-full border border-white/20 px-3 py-2 text-slate-100 disabled:opacity-50"
+                  >
+                    Go
+                  </button>
+                </label>
+              </>
+            ) : null}
+            {hv.canAllIn ? (
+              <button
+                type="button"
+                disabled={locked}
+                onClick={() => void post({ action: "all_in" })}
+                className="rounded-full bg-gradient-to-r from-amber-300 to-yellow-400 px-5 py-2.5 text-sm font-bold text-black shadow disabled:opacity-50"
+              >
+                All in
+              </button>
+            ) : null}
+          </div>
         </div>
       ) : (
         <p className="relative z-10 pb-3 text-center text-sm text-slate-400">
@@ -417,7 +467,9 @@ export function HoldemStage({
             : pending
               ? "Updating…"
               : hv.actionOn
-                ? `Waiting for ${seats.find((seat) => seat.playerId === hv.actionOn)?.name ?? "opponent"}…`
+                ? `Waiting for ${seats.find((seat) => seat.playerId === hv.actionOn)?.name ?? "opponent"}${
+                    secondsLeft != null ? ` · ${secondsLeft}s` : ""
+                  }…`
                 : "Waiting…"}
         </p>
       )}
