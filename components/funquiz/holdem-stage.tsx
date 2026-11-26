@@ -307,8 +307,8 @@ export function HoldemStage({
         </div>
 
         {/* LHS stack readouts — text only (mockup art already has portraits) */}
-        <aside className="holdem-gnd-roster pointer-events-none absolute left-[14%] top-[19%] z-30 w-[5.5rem] sm:left-[15%] sm:top-[18%] sm:w-24">
-          <ul className="flex flex-col gap-[2.05rem] sm:gap-[2.35rem]">
+        <aside className="holdem-gnd-roster pointer-events-none absolute left-[13%] top-[9%] z-30 w-[6.25rem] sm:left-[14%] sm:top-[8%] sm:w-28">
+          <ul className="flex flex-col gap-[1.35rem] sm:gap-[1.5rem]">
             {seats.map((seat) => {
               const isYou = seat.playerId === playerId;
               const status = seatStatus(seat, hv.street, isYou);
@@ -319,11 +319,14 @@ export function HoldemStage({
                     seat.isWinner ? "holdem-gnd-roster-winner" : seat.isActing ? "holdem-gnd-roster-active" : ""
                   } ${seat.folded ? "opacity-50" : ""}`}
                 >
-                  <p className="font-serif text-base leading-none text-white tabular-nums drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] sm:text-lg">
+                  <p className="truncate text-[9px] font-medium text-white/85 drop-shadow sm:text-[10px]">
+                    {isYou ? "You" : seat.name.replace(/^AI /, "")}
+                  </p>
+                  <p className="font-serif text-sm leading-none text-white tabular-nums drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] sm:text-base">
                     ${seat.stack}
                   </p>
                   <p
-                    className={`mt-0.5 text-[9px] leading-tight sm:text-[10px] ${
+                    className={`mt-0.5 text-[8px] leading-tight sm:text-[9px] ${
                       seat.isWinner ? "text-[#ffe6a0]" : seat.isActing ? "text-[#f5e0b0]" : "text-white/70"
                     }`}
                   >

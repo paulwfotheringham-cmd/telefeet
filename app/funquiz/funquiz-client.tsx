@@ -946,7 +946,7 @@ export function FunQuizClient() {
                     title="Single player"
                     detail={
                       instantMode === GAME_MODE_TEXAS_HOLDEM
-                        ? "Straight to the table vs two AI players."
+                        ? "Straight to a five-handed table vs four AI players."
                         : "Open a table. A second player still joins before it starts."
                     }
                     disabled={busy}
@@ -1148,7 +1148,7 @@ export function FunQuizClient() {
             <p className="mt-2 text-sm text-slate-300">
               {isCatchphrase
                 ? "Picture clues reveal square by square — buzz in and guess the hidden phrase (+2 per correct answer)."
-                : "Poker with blinds and a rotating dealer. Start alone to seat two AI opponents, or wait for a friend for heads-up."}
+                : "Poker with blinds and a rotating dealer. Start alone for you plus four AI opponents, or wait for a friend for heads-up."}
             </p>
           ) : isBlockbusters ? (
             <>
@@ -1205,7 +1205,7 @@ export function FunQuizClient() {
             {!canStartGame ? (
               <li className="text-slate-500">Waiting for player 2…</li>
             ) : isHoldem && players.length === 1 ? (
-              <li className="text-slate-500">Two AI players will join when you start.</li>
+              <li className="text-slate-500">Four AI players will join when you start (five-handed).</li>
             ) : null}
           </ul>
           {isHost ? (

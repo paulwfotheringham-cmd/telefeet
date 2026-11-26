@@ -230,7 +230,7 @@ export function startGame(room: QuizRoom, playerId: string): QuizRoom {
   }
 
   if (room.gameMode === GAME_MODE_TEXAS_HOLDEM) {
-    // Lone host gets two AI seats; two humans stay heads-up.
+    // Lone host gets four AI seats (five-handed); two humans stay heads-up.
     return startHoldemGame(initHoldemOnCreate(room));
   }
 

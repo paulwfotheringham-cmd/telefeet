@@ -1,8 +1,8 @@
 export type HoldemStreet = "preflop" | "flop" | "turn" | "river" | "showdown" | "hand_over";
 
-/** Single-player tables seat this many AI opponents beside the human. */
-export const HOLDEM_AI_COUNT = 2;
-export const HOLDEM_AI_NAMES = ["AI River", "AI Bluff"] as const;
+/** Single-player tables seat this many AI opponents beside the human (five-handed with you). */
+export const HOLDEM_AI_COUNT = 4;
+export const HOLDEM_AI_NAMES = ["AI River", "AI Bluff", "AI Dusty", "AI Coyote"] as const;
 
 export function isHoldemAiId(playerId: string): boolean {
   return playerId.startsWith("ai-holdem-");
