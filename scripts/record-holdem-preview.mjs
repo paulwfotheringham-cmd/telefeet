@@ -44,7 +44,7 @@ for (const t of [0.4, 1.3, 2.6, 3.8, 5.0]) {
 }
 
 const meanDiff = execSync(
-  `python3 -c "from PIL import ImageChops, Image; a=Image.open('${FRAME_DIR}/t-0_4.png').convert('RGB'); b=Image.open('${FRAME_DIR}/t-2_6.png').convert('RGB'); d=ImageChops.difference(a,b); print(sum(d.getdata())//3)"`,
+  `python3 -c "from PIL import ImageChops, Image; a=Image.open('${FRAME_DIR}/t-0_4.png').convert('RGB'); b=Image.open('${FRAME_DIR}/t-2_6.png').convert('RGB'); d=ImageChops.difference(a,b); print(sum(d.getdata(), ()))"`,
   { encoding: "utf8" }
 ).trim();
 const motionDetected = Number.parseFloat(meanDiff) > 50000;
