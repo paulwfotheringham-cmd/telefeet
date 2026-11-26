@@ -49,6 +49,98 @@ body {
 .bj-avatar {
   @apply flex h-9 w-9 items-center justify-center rounded-full bg-brand-gold/15 text-xs font-bold text-brand-goldHi ring-1 ring-brand-gold/35;
 }
+/* Blackjack — cinematic stage (Saloon Hold'em parity) */
+.bj-fp {
+  background: #0a0705;
+}
+.bj-fp-casino {
+  background: radial-gradient(ellipse 110% 70% at 50% -8%, #1c2a3d 0%, #0c1018 38%, #050505 100%);
+}
+.bj-fp-spotlight {
+  background: radial-gradient(ellipse 58% 42% at 50% 38%, rgba(255, 220, 150, 0.11), transparent 72%);
+}
+.bj-fp-grade {
+  background:
+    linear-gradient(180deg, rgba(20, 10, 4, 0.4) 0%, transparent 24%, transparent 52%, rgba(8, 4, 2, 0.62) 100%),
+    radial-gradient(ellipse at 50% 38%, transparent 18%, rgba(0, 0, 0, 0.32) 100%);
+}
+.bj-fp-vignette {
+  background: radial-gradient(ellipse at center, transparent 38%, rgba(0, 0, 0, 0.82) 100%);
+  box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.55);
+}
+.bj-fp-table {
+  perspective: 900px;
+  pointer-events: none;
+}
+.bj-fp-rail {
+  pointer-events: none;
+  opacity: 1;
+}
+.bj-fp-felt {
+  pointer-events: none;
+}
+.bj-fp .holdem-fp-rail {
+  opacity: 1;
+}
+.bj-felt-arc-wrap {
+  pointer-events: none;
+  position: absolute;
+  left: 50%;
+  top: 22%;
+  z-index: 2;
+  width: 72%;
+  transform: translateX(-50%);
+}
+.bj-fp-dealer {
+  filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.55));
+}
+.bj-fp-ai-left {
+  left: 14%;
+  top: 52%;
+  transform: translateY(-50%);
+}
+.bj-fp-ai-right {
+  right: 14%;
+  top: 52%;
+  transform: translateY(-50%);
+}
+.bj-fp-hands {
+  pointer-events: none;
+}
+.bj-fp-hands button,
+.bj-fp-hands .bj-controls {
+  pointer-events: auto;
+}
+.holdem-card-3d.bj-card-lg {
+  display: inline-flex;
+  height: 4.6rem;
+  width: 3.25rem;
+}
+.holdem-card-3d.bj-card-xl {
+  display: inline-flex;
+  height: 5.2rem;
+  width: 3.65rem;
+}
+.holdem-card-3d.bj-card-hero {
+  display: inline-flex;
+  height: 6.4rem;
+  width: 4.5rem;
+}
+@media (min-width: 640px) {
+  .holdem-card-3d.bj-card-hero {
+    height: 8.2rem;
+    width: 5.7rem;
+  }
+}
+.bj-hand-row-3d {
+  @apply flex items-end justify-center gap-2;
+}
+.bj-fp-sidebar .bj-panel {
+  border-color: rgba(196, 165, 116, 0.35);
+  background: rgba(12, 8, 5, 0.72);
+  backdrop-filter: blur(6px);
+}
+
 .bj-scene {
   @apply relative mx-auto w-full max-w-[58rem];
 }
@@ -213,9 +305,9 @@ body {
 }
 .bj-chip-tray {
   position: absolute;
-  top: 20%;
-  left: 13%;
-  z-index: 2;
+  top: 16%;
+  left: 14%;
+  z-index: 3;
   width: 3.5rem;
   height: 2.2rem;
   border-radius: 0.35rem;
@@ -242,9 +334,9 @@ body {
 }
 .bj-card-shoe {
   position: absolute;
-  top: 19%;
-  right: 12%;
-  z-index: 2;
+  top: 15%;
+  right: 13%;
+  z-index: 3;
   width: 3.25rem;
   height: 3.5rem;
   border-radius: 0.35rem;

@@ -144,51 +144,13 @@ export function BlackjackClient() {
         </div>
       </header>
 
-      {showSetup ? (
-        <section className="bj-setup mx-auto mt-8 w-full max-w-xl rounded-3xl border border-brand-line bg-brand-panel/80 p-6 shadow-card">
-          <h2 className="text-lg font-semibold text-brand-cream">Choose how to play</h2>
-          <p className="mt-2 text-sm text-brand-muted">Virtual chips only — starting bankroll ${STARTING_BALANCE}.</p>
-          <label className="mt-4 block text-sm text-brand-muted">
-            Your name
-            <input
-              value={playerName}
-              onChange={(e) => setPlayerName(e.target.value)}
-              className="mt-1 w-full rounded-xl border border-brand-line bg-brand-ink px-3 py-2 text-brand-cream"
-            />
-          </label>
-          <div className="mt-6 grid gap-3">
-            <ModeButton
-              title="Solo vs dealer"
-              detail="Just you and the house."
-              onClick={() => startMode("solo", 0)}
-            />
-            <ModeButton
-              title="Table with AI guests"
-              detail="You plus up to 2 AI players sharing the dealer."
-              onClick={() => startMode("withAi", 2)}
-            />
-            <ModeButton
-              title="Play separate (host table)"
-              detail="Host the table and add up to 2 AI players before each round."
-              onClick={() => startMode("hostTable", 0)}
-            />
-          </div>
-        </section>
-      ) : null}
-
-      {game.mode === "hostTable" && game.phase === "betting" ? (
-        <HostAiBar count={game.aiSeatCount} onChange={(c) => dispatchAction({ type: "SET_AI_COUNT", count: c })} />
-      ) : null}
-
-      <div className="mt-2 grid flex-1 gap-4 lg:grid-cols-[1fr_240px]">
-        <div className="flex flex-col gap-3">
+      <div className="mt-2 grid flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_13.5rem]">
+        <div className="relative min-w-0">
           <BlackjackTable
             state={game}
             banner={
               game.banner &&
-              (game.phase === "playerTurn" ||
-                game.phase === "roundComplete" ||
-                game.phase === "dealerTurn") ? (
+              (game.phase === "playerTurn" || game.phase === "roundComplete" || game.phase === "dealerTurn") ? (
                 <p role="status" className="bj-banner-text">
                   {game.banner}
                 </p>
@@ -209,47 +171,102 @@ export function BlackjackClient() {
               ) : null
             }
           />
-          {game.banner &&
-          game.phase === "betting" &&
-          !game.banner.startsWith("Bet:") &&
-          game.banner !== "Place your bet" ? (
-            <p className="bj-banner" role="status">
-              {game.banner}
-            </p>
-          ) : null}
-          {showBetting ? (
-            <BettingBar
-              pendingBet={human.pendingBet}
-              balance={human.balance}
-              selectedChip={chip}
-              betPlaced={human.betPlaced}
-              disabled={human.balance < MIN_BET}
-              onSelectChip={(n) => dispatchAction({ type: "SELECT_CHIP", amount: n })}
-              onAdd={() => dispatchAction({ type: "ADD_BET" })}
-              onRemove={() => dispatchAction({ type: "REMOVE_BET" })}
-              onClear={() => dispatchAction({ type: "CLEAR_BET" })}
-              onPlaceBet={() => dispatchAction({ type: "PLACE_BET" })}
-              onDeal={() => dispatchAction({ type: "DEAL" })}
-            />
-          ) : null}
-          {game.phase === "roundComplete" ? (
-            <div className="flex flex-wrap justify-center gap-2">
-              <button type="button" className="bj-btn-deal" onClick={() => dispatchAction({ type: "NEW_ROUND" })}>
-                New round
-              </button>
-              {stats.balance < MIN_BET ? (
-                <button type="button" className="bj-btn-primary" onClick={() => dispatchAction({ type: "RESET_SESSION" })}>
-                  Reset to ${STARTING_BALANCE}
-                </button>
-              ) : null}
-            </div>
+
+          {showSetup ? (
+          <div className="absolute inset-0 z-[60] flex items-center justify-center rounded-xl bg-black/50 p-4 backdrop-blur-sm">
+            <section className="bj-setup pointer-events-auto w-full max-w-xl rounded-3xl border border-[#c4a574]/35 bg-[#14100c]/95 p-6 shadow-[0_24px_80px_rgba(0,0,0,0.75)]">
+              <h2 className="font-serif text-xl font-semibold text-[#f0d9a8]">Take a seat</h2>
+              <p className="mt-2 text-sm text-[#d8c4a0]/80">
+                Virtual chips only — starting bankroll ${STARTING_BALANCE}.
+              </p>
+              <label className="mt-4 block text-sm text-[#d8c4a0]/75">
+                Your name
+                <input
+                  value={playerName}
+                  onChange={(e) => setPlayerName(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-[#5a3d22]/60 bg-black/40 px-3 py-2 text-[#f2ebe0]"
+                />
+              </label>
+              <div className="mt-6 grid gap-3">
+                <ModeButton
+                  title="Solo vs dealer"
+                  detail="Just you and the house."
+                  onClick={() => startMode("solo", 0)}
+                />
+                <ModeButton
+                  title="Table with AI guests"
+                  detail="You plus up to 2 AI players sharing the dealer."
+                  onClick={() => startMode("withAi", 2)}
+                />
+                <ModeButton
+                  title="Play separate (host table)"
+                  detail="Host the table and add up to 2 AI players before each round."
+                  onClick={() => startMode("hostTable", 0)}
+                />
+              </div>
+            </section>
+          </div>
           ) : null}
         </div>
-        <aside className="flex flex-col gap-3">
-          <StatsPanel stats={stats} currentBet={human.pendingBet || human.hands[0]?.bet || 0} />
-          <RulesPanel />
+
+        <aside className="hidden flex-col gap-2 lg:flex">
+          <BjSidebar stats={stats} currentBet={human.pendingBet || human.hands[0]?.bet || 0} />
         </aside>
       </div>
+
+      {game.mode === "hostTable" && game.phase === "betting" ? (
+        <HostAiBar count={game.aiSeatCount} onChange={(c) => dispatchAction({ type: "SET_AI_COUNT", count: c })} />
+      ) : null}
+
+      <div className="mx-auto mt-2 w-full max-w-3xl">
+        {game.banner &&
+        game.phase === "betting" &&
+        !game.banner.startsWith("Bet:") &&
+        game.banner !== "Place your bet" ? (
+          <p className="bj-banner" role="status">
+            {game.banner}
+          </p>
+        ) : null}
+        {showBetting ? (
+          <BettingBar
+            pendingBet={human.pendingBet}
+            balance={human.balance}
+            selectedChip={chip}
+            betPlaced={human.betPlaced}
+            disabled={human.balance < MIN_BET}
+            onSelectChip={(n) => dispatchAction({ type: "SELECT_CHIP", amount: n })}
+            onAdd={() => dispatchAction({ type: "ADD_BET" })}
+            onRemove={() => dispatchAction({ type: "REMOVE_BET" })}
+            onClear={() => dispatchAction({ type: "CLEAR_BET" })}
+            onPlaceBet={() => dispatchAction({ type: "PLACE_BET" })}
+            onDeal={() => dispatchAction({ type: "DEAL" })}
+          />
+        ) : null}
+        {game.phase === "roundComplete" ? (
+          <div className="flex flex-wrap justify-center gap-2 pb-4">
+            <button type="button" className="bj-btn-deal" onClick={() => dispatchAction({ type: "NEW_ROUND" })}>
+              New round
+            </button>
+            {stats.balance < MIN_BET ? (
+              <button type="button" className="bj-btn-primary" onClick={() => dispatchAction({ type: "RESET_SESSION" })}>
+                Reset to ${STARTING_BALANCE}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+        <aside className="bj-fp-sidebar-mobile mt-3 flex flex-col gap-2 sm:hidden">
+          <BjSidebar stats={stats} currentBet={human.pendingBet || human.hands[0]?.bet || 0} />
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+function BjSidebar({ stats, currentBet }: { stats: SessionStats; currentBet: number }) {
+  return (
+    <div className="pointer-events-auto flex flex-col gap-2">
+      <StatsPanel stats={stats} currentBet={currentBet} />
+      <RulesPanel />
     </div>
   );
 }
