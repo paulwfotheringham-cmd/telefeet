@@ -521,12 +521,15 @@ body {
   pointer-events: none;
 }
 
-/* Hide baked LHS avatar column in grounded plate */
-.holdem-gnd-roster-mask {
-  background:
-    linear-gradient(90deg, rgba(6, 4, 2, 0.94) 0%, rgba(10, 7, 4, 0.9) 68%, transparent 100%),
-    linear-gradient(180deg, rgba(8, 5, 3, 0.5) 0%, transparent 12%, transparent 88%, rgba(8, 5, 3, 0.35) 100%);
-  clip-path: polygon(0 0, 34% 0, 34% 58%, 0 58%);
+/* Soften baked portrait roster in plate (lower-left) without a heavy left bar */
+.holdem-gnd-baked-portraits-smear {
+  left: 0;
+  top: 41%;
+  width: 32%;
+  height: 37%;
+  backdrop-filter: blur(12px) saturate(1.08);
+  background: rgba(24, 16, 10, 0.12);
+  mask-image: linear-gradient(90deg, #000 0%, #000 72%, transparent 100%);
 }
 
 /* Hide decorative Q/K in plate; live hole cards render above */
@@ -534,10 +537,16 @@ body {
   background: radial-gradient(ellipse 52% 42% at 50% 92%, rgba(9, 6, 4, 0.97) 0%, rgba(9, 6, 4, 0.85) 55%, transparent 78%);
 }
 
-.holdem-gnd-roster {
-  padding: 0.35rem 0.5rem;
-  border-radius: 0.35rem;
-  background: linear-gradient(90deg, rgba(8, 5, 3, 0.55), rgba(8, 5, 3, 0.15));
+.holdem-gnd-roster-panel {
+  left: 2.5%;
+  top: 4.5%;
+  width: min(30vw, 10.75rem);
+  padding: 0.55rem 0.7rem;
+  border-radius: 0.4rem;
+  border: 1px solid rgba(196, 165, 116, 0.32);
+  background: rgba(10, 7, 4, 0.78);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
 }
 
 .holdem-gnd-topHud {

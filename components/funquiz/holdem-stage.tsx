@@ -80,6 +80,11 @@ function PlayingCard({
   );
 }
 
+function rosterDisplayName(isYou: boolean, aiNumber: number | null): string {
+  if (isYou) return "Player one";
+  return `AI player ${aiNumber ?? 1}`;
+}
+
 function seatStatus(seat: HoldemSeatView, street: string, isYou: boolean): string {
   if (seat.isWinner && street === "hand_over") return "Winner";
   if (seat.folded) return "Folded";
@@ -236,8 +241,8 @@ export function HoldemStage({
           />
         </picture>
         <div className="holdem-gnd-shade pointer-events-none absolute inset-0" aria-hidden />
-        {/* Covers baked portrait roster in plate art — one live column only */}
-        <div className="holdem-gnd-roster-mask pointer-events-none absolute inset-0 z-[22]" aria-hidden />
+        {/* Light smear over baked portrait column only — saloon art stays visible */}
+        <div className="holdem-gnd-baked-portraits-smear pointer-events-none absolute z-[22]" aria-hidden />
         <HoldemTableMotion
           seats={seats}
           pot={hv.pot}
@@ -326,12 +331,15 @@ export function HoldemStage({
           </>
         ) : null}
 
-        <aside className="holdem-gnd-roster pointer-events-none absolute left-[9%] top-[7.5%] z-30 w-[min(28vw,10.5rem)] sm:left-[10%] sm:top-[7%] sm:w-44">
-          <ul className="flex flex-col gap-[1.05rem] sm:gap-[1.15rem]">
-            {seats.map((seat) => {
+        <aside className="holdem-gnd-roster holdem-gnd-roster-panel pointer-events-none absolute z-30">
+          <ul className="flex flex-col gap-2">
+            {(() => {
+              let aiNumber = 0;
+              return seats.map((seat) => {
               const isYou = seat.playerId === playerId;
               const status = seatStatus(seat, hv.street, isYou);
-              const label = seat.name.trim() || (isYou ? "You" : "Player");
+              if (!isYou) aiNumber += 1;
+              const label = rosterDisplayName(isYou, isYou ? null : aiNumber);
               return (
                 <li
                   key={seat.playerId}
@@ -354,7 +362,8 @@ export function HoldemStage({
                   </p>
                 </li>
               );
-            })}
+            });
+            })()}
           </ul>
         </aside>
 
