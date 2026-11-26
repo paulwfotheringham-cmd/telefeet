@@ -95,7 +95,12 @@ export function BlackjackTable({
                 {seat.isHuman && (showHands || humanActive) ? <span className="bj-player-glow" aria-hidden /> : null}
                 {showBadge ? <ScoreBadge label={scoreLabel} score={scores} highlight={seat.isHuman} /> : null}
                 {seat.hands.length > 0 ? (
-                  <HandsRow hands={seat.hands} human={seat.isHuman} active={isActive} />
+                  <HandsRow
+                    hands={seat.hands}
+                    human={seat.isHuman}
+                    active={isActive}
+                    showOutcomes={state.phase === "roundComplete"}
+                  />
                 ) : seat.isHuman && seat.pendingBet > 0 && !showHands ? (
                   <p className="bj-pending-chip">${seat.pendingBet}</p>
                 ) : null}
@@ -103,10 +108,10 @@ export function BlackjackTable({
             );
           })}
 
-          {controls ? <div className="bj-control-dock">{controls}</div> : null}
-          {banner ? <div className="bj-table-banner">{banner}</div> : null}
         </div>
       </div>
+      {banner ? <div className="bj-status-banner">{banner}</div> : null}
+      {controls ? <div className="bj-controls-below">{controls}</div> : null}
     </div>
   );
 }
@@ -124,10 +129,12 @@ function HandsRow({
   hands,
   human,
   active,
+  showOutcomes,
 }: {
   hands: HandState[];
   human: boolean;
   active: boolean;
+  showOutcomes: boolean;
 }) {
   return (
     <div className={`bj-hands-row ${human && active ? "bj-hands-active" : ""}`}>
@@ -143,8 +150,8 @@ function HandsRow({
               />
             ))}
           </div>
-          {hand.bet > 0 ? <span className="bj-hand-stake">${hand.bet}</span> : null}
-          {hand.outcomeLabel ? (
+          {hand.bet > 0 && !showOutcomes ? <span className="bj-hand-stake">${hand.bet}</span> : null}
+          {showOutcomes && hand.outcomeLabel ? (
             <span className={`bj-hand-result bj-outcome-${hand.outcome ?? "none"}`}>{hand.outcomeLabel}</span>
           ) : null}
         </div>

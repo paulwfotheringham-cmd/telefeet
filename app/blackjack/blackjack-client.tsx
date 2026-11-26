@@ -188,7 +188,10 @@ export function BlackjackClient() {
           <BlackjackTable
             state={game}
             banner={
-              game.banner && game.phase !== "betting" ? (
+              game.banner &&
+              (game.phase === "playerTurn" ||
+                game.phase === "roundComplete" ||
+                game.phase === "dealerTurn") ? (
                 <p role="status" className="bj-banner-text">
                   {game.banner}
                 </p>
