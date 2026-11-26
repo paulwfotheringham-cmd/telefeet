@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function BlackjackPage() {
   return (
-    <div className="bj-fp-casino min-h-[100dvh]">
+    <div className="min-h-[100dvh] bg-[#05070a]">
       <BlackjackClient />
     </div>
   );

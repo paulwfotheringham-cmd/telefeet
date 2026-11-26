@@ -3,12 +3,10 @@
 import type { ReactNode } from "react";
 import { displayScore } from "@/lib/blackjack/hand";
 import type { BlackjackGameState, HandState, SeatState } from "@/lib/blackjack/types";
-import { FeltArcText } from "./felt-arc-text";
-import { FeltBetCircles } from "./felt-bet-circles";
 import { PlayingCardView } from "./playing-card";
-import { CardShoe, ChipTray } from "./table-decor";
 
-const AI_LAYOUT = ["bj-seat-0", "bj-seat-1", "bj-seat-3", "bj-seat-4"] as const;
+/** Hotspot classes for 5 player seats along the curved rail (photo plate). */
+const AI_LAYOUT = ["bj-live-seat-0", "bj-live-seat-1", "bj-live-seat-3", "bj-live-seat-4"] as const;
 
 export function BlackjackTable({
   state,
@@ -35,103 +33,71 @@ export function BlackjackTable({
     (humanSeat?.pendingBet ?? 0) || (humanSeat?.hands.reduce((sum, h) => sum + h.bet, 0) ?? 0);
 
   return (
-    <div className="bj-casino-scene">
-      <div className="bj-room" aria-hidden>
-        <span className="bj-room-glow" />
-        <span className="bj-bokeh b1" />
-        <span className="bj-bokeh b2" />
-        <span className="bj-bokeh b3" />
-        <span className="bj-bokeh b4" />
-        <span className="bj-bokeh b5" />
-        <span className="bj-bokeh b6" />
-        <span className="bj-bokeh b7" />
-        <span className="bj-bokeh b8" />
-        <span className="bj-bokeh b9" />
-        <span className="bj-bokeh b10" />
-        <span className="bj-bokeh b11" />
-        <span className="bj-bokeh b12" />
-      </div>
-      <div className="bj-room-vignette" aria-hidden />
+    <div className="bj-live">
+      {/* Photoreal first-person table from the user’s reference video */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/funquiz/blackjack/casino-pov-plate.jpg"
+        alt=""
+        className="bj-live-plate"
+        draggable={false}
+      />
+      <div className="bj-live-grade" aria-hidden />
+      <div className="bj-live-vignette" aria-hidden />
 
-      <div className="bj-table-stage">
-        <div className="bj-halfmoon">
-          <div className="bj-halfmoon-rim" aria-hidden />
-          <div className="bj-halfmoon-felt">
-            <div className="bj-felt-light" aria-hidden />
-            <div className="bj-felt-arc-wrap">
-              <FeltArcText />
-            </div>
-            <FeltBetCircles />
-            <ChipTray />
-            <CardShoe />
+      {/* Soft felt scrubs hide baked-in photo cards/chips so live hands read cleanly */}
+      <div className="bj-scrub bj-scrub-dealer" aria-hidden />
+      <div className="bj-scrub bj-scrub-hero" aria-hidden />
+      <div className="bj-scrub bj-scrub-left" aria-hidden />
+      <div className="bj-scrub bj-scrub-right" aria-hidden />
 
-            <div className="bj-dealer-pit">
-              <div className="bj-dealer-figure" aria-hidden>
-                <span className="bj-dealer-hair" />
-                <span className="bj-dealer-face" />
-                <span className="bj-dealer-collar" />
-                <span className="bj-dealer-bow" />
-                <span className="bj-dealer-vest" />
+      <div className="bj-live-stage">
+        <div className="bj-live-dealer">
+          {showHands ? (
+            <>
+              <ScoreBadge label="Dealer" score={dealerScore ?? "—"} />
+              <div className="bj-hand-row">
+                {state.dealer.cards.map((card, i) => (
+                  <PlayingCardView
+                    key={card.dealKey ?? `d-${i}`}
+                    card={card}
+                    delay={i * 90}
+                    size="lg"
+                    casino3d
+                    dropToSeat
+                  />
+                ))}
               </div>
-              {showHands ? (
-                <>
-                  <ScoreBadge label="Dealer" score={dealerScore ?? "—"} />
-                  <div className="bj-hand-row">
-                    {state.dealer.cards.map((card, i) => (
-                      <PlayingCardView
-                        key={card.dealKey ?? `d-${i}`}
-                        card={card}
-                        delay={i * 100}
-                        size="lg"
-                        casino3d
-                        dropToSeat
-                      />
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <p className="bj-dealer-label">Dealer</p>
-              )}
-            </div>
-
-            {aiSeats.map((seat, index) => (
-              <PlayerSpot
-                key={seat.id}
-                seat={seat}
-                className={`bj-seat ${AI_LAYOUT[index] ?? "bj-seat-1"}`}
-                showOutcomes={state.phase === "roundComplete"}
-                size="sm"
-                minimal
-              />
-            ))}
-
-            {humanSeat && state.phase !== "setup" ? (
-              <PlayerSpot
-                seat={humanSeat}
-                className={`bj-seat bj-seat-2 ${humanActive ? "bj-seat-active" : ""}`}
-                showOutcomes={state.phase === "roundComplete"}
-                showStake={state.phase === "betting" || heroBet > 0}
-                size="xl"
-                highlight
-              />
-            ) : null}
-
-            {banner ? <div className="bj-felt-banner">{banner}</div> : null}
-            {controls ? <div className="bj-controls-on-felt">{controls}</div> : null}
-          </div>
-          <div className="bj-black-rail" aria-hidden />
+            </>
+          ) : (
+            <p className="bj-live-quiet">Dealer</p>
+          )}
         </div>
-      </div>
 
-      <div className="bj-pov" aria-hidden>
-        <span className="bj-pov-arm left">
-          <span className="bj-pov-sleeve" />
-          <span className="bj-pov-hand" />
-        </span>
-        <span className="bj-pov-arm right">
-          <span className="bj-pov-sleeve" />
-          <span className="bj-pov-hand" />
-        </span>
+        {aiSeats.map((seat, index) => (
+          <PlayerSpot
+            key={seat.id}
+            seat={seat}
+            className={`bj-live-seat ${AI_LAYOUT[index] ?? "bj-live-seat-1"}`}
+            showOutcomes={state.phase === "roundComplete"}
+            size="sm"
+            compact
+          />
+        ))}
+
+        {humanSeat && state.phase !== "setup" ? (
+          <PlayerSpot
+            seat={humanSeat}
+            className={`bj-live-seat bj-live-seat-2 ${humanActive ? "bj-live-seat-active" : ""}`}
+            showOutcomes={state.phase === "roundComplete"}
+            showStake={state.phase === "betting" || heroBet > 0}
+            size="xl"
+            highlight
+          />
+        ) : null}
+
+        {banner ? <div className="bj-live-banner">{banner}</div> : null}
+        {controls ? <div className="bj-live-controls">{controls}</div> : null}
       </div>
     </div>
   );
@@ -143,7 +109,7 @@ function PlayerSpot({
   showOutcomes,
   showStake,
   highlight,
-  minimal,
+  compact,
   size,
 }: {
   seat: SeatState;
@@ -151,7 +117,7 @@ function PlayerSpot({
   showOutcomes: boolean;
   showStake?: boolean;
   highlight?: boolean;
-  minimal?: boolean;
+  compact?: boolean;
   size: "sm" | "lg" | "xl";
 }) {
   const scores =
@@ -167,25 +133,15 @@ function PlayerSpot({
   return (
     <section className={className}>
       {scores ? (
-        <ScoreBadge
-          label={seat.isHuman ? "You" : seat.name}
-          score={scores}
-          highlight={highlight}
-          compact={minimal}
-        />
-      ) : minimal ? (
-        <p className="bj-ai-name">{seat.name}</p>
+        <ScoreBadge label={seat.isHuman ? "You" : seat.name} score={scores} highlight={highlight} compact={compact} />
+      ) : compact ? (
+        <p className="bj-live-quiet">{seat.name}</p>
       ) : null}
 
       {hasCards ? (
         <HandsRow hands={seat.hands} showOutcomes={showOutcomes} showStake={showStake} size={size} />
       ) : seat.pendingBet > 0 ? (
         <p className="bj-pending-chip">${seat.pendingBet}</p>
-      ) : minimal ? (
-        <span className="bj-side-hands" aria-hidden>
-          <span />
-          <span />
-        </span>
       ) : null}
     </section>
   );

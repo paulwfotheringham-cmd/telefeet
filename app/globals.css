@@ -212,6 +212,148 @@ body {
   transform-style: preserve-3d;
 }
 
+/* Photoreal first-person blackjack (plate from user reference video) */
+.bj-live {
+  @apply relative mx-auto w-full max-w-[72rem] overflow-hidden rounded-xl;
+  min-height: min(78vh, 760px);
+  border: 1px solid rgba(212, 175, 55, 0.22);
+  box-shadow: 0 40px 100px -40px rgba(0, 0, 0, 0.95);
+  background: #05070a;
+}
+.bj-live-plate {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+  object-position: center 42%;
+}
+.bj-live-grade {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(180deg, rgba(8, 6, 4, 0.35) 0%, transparent 18%, transparent 58%, rgba(4, 3, 2, 0.55) 100%),
+    radial-gradient(ellipse at 50% 40%, transparent 35%, rgba(0, 0, 0, 0.28) 100%);
+}
+.bj-live-vignette {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.55);
+}
+.bj-scrub {
+  pointer-events: none;
+  position: absolute;
+  z-index: 2;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(22, 98, 52, 0.78) 0%, rgba(16, 78, 42, 0.45) 50%, transparent 78%);
+  filter: blur(6px);
+  opacity: 0.85;
+}
+.bj-scrub-dealer {
+  left: 42%;
+  top: 34%;
+  width: 16%;
+  height: 14%;
+}
+.bj-scrub-hero {
+  left: 40%;
+  top: 58%;
+  width: 20%;
+  height: 16%;
+}
+.bj-scrub-left {
+  left: 8%;
+  top: 52%;
+  width: 18%;
+  height: 18%;
+}
+.bj-scrub-right {
+  right: 8%;
+  top: 52%;
+  width: 18%;
+  height: 18%;
+}
+.bj-live-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+.bj-live-stage .bj-live-controls,
+.bj-live-stage .bj-live-seat-2 {
+  pointer-events: auto;
+}
+.bj-live-dealer {
+  position: absolute;
+  top: 28%;
+  left: 50%;
+  z-index: 4;
+  display: flex;
+  width: min(42%, 18rem);
+  transform: translateX(-50%);
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+.bj-live-seat {
+  @apply absolute z-[4] flex flex-col items-center gap-1;
+}
+.bj-live-seat-0 {
+  left: 6%;
+  top: 48%;
+  width: 6rem;
+}
+.bj-live-seat-1 {
+  left: 22%;
+  top: 58%;
+  width: 6rem;
+}
+.bj-live-seat-2 {
+  left: 50%;
+  top: 62%;
+  width: min(92%, 20rem);
+  transform: translateX(-50%);
+}
+.bj-live-seat-3 {
+  right: 22%;
+  top: 58%;
+  width: 6rem;
+}
+.bj-live-seat-4 {
+  right: 6%;
+  top: 48%;
+  width: 6rem;
+}
+.bj-live-seat-active .bj-score-badge-you {
+  box-shadow: 0 0 18px rgba(52, 211, 153, 0.4);
+}
+.bj-live-quiet {
+  @apply rounded bg-black/55 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-white/70 backdrop-blur-sm;
+}
+.bj-live-banner {
+  position: absolute;
+  left: 50%;
+  top: 22%;
+  z-index: 6;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.bj-live-controls {
+  position: absolute;
+  left: 50%;
+  bottom: 4%;
+  z-index: 8;
+  width: min(92%, 26rem);
+  transform: translateX(-50%);
+  pointer-events: auto;
+}
+
 /* Casino POV — first-person semicircle table matching reference video */
 .bj-casino-scene {
   @apply relative mx-auto w-full max-w-[68rem] overflow-hidden;
