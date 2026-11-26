@@ -5,6 +5,8 @@ import { holdemApplyAction, isHoldemAiId } from "../lib/funquiz/holdem/logic";
 import { QUIZ_CATEGORY_GENERAL_KNOWLEDGE } from "../lib/funquiz/categories";
 import { QUIZ_DIFFICULTY_INTERMEDIATE } from "../lib/funquiz/difficulties";
 import { compareScores, bestHandScore } from "../lib/funquiz/holdem/eval";
+import { formatCard } from "../lib/funquiz/holdem/cards";
+import { dealNewHand } from "../lib/funquiz/holdem/logic";
 
 assert.ok(compareScores(bestHandScore([0, 1, 2, 3, 4]), bestHandScore([8, 9, 10, 11, 12])) !== 0);
 
@@ -51,6 +53,28 @@ assert.ok(compareScores(bestHandScore([0, 1, 2, 3, 4]), bestHandScore([8, 9, 10,
     assert.ok(solo.holdem);
   }
   assert.equal(Object.keys(solo.holdem!.holeCards).length, 5);
+}
+
+{
+  let room = createRoom(
+    "host",
+    "Host",
+    "PKDL",
+    GAME_MODE_TEXAS_HOLDEM,
+    QUIZ_CATEGORY_GENERAL_KNOWLEDGE,
+    QUIZ_DIFFICULTY_INTERMEDIATE,
+  );
+  room = startGame(room, "host");
+  const first = room.holdem!.holeCards.host!.map(formatCard).join(" ");
+  room = { ...room, holdem: { ...room.holdem!, street: "hand_over" as const } };
+  room = dealNewHand(room);
+  const second = room.holdem!.holeCards.host!.map(formatCard).join(" ");
+  assert.notEqual(first, second, "consecutive deals should shuffle a new hand for the host");
+  const allIds: number[] = [];
+  for (const pair of Object.values(room.holdem!.holeCards)) {
+    allIds.push(...pair);
+  }
+  assert.equal(new Set(allIds).size, allIds.length, "no duplicate cards across hole hands");
 }
 
 console.log("funquiz-holdem.test.ts OK");

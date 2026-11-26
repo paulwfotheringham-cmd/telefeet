@@ -1,6 +1,6 @@
 import { GAME_MODE_TEXAS_HOLDEM } from "../constants";
 import type { QuizPlayer, QuizRoom } from "../types";
-import { freshDeck, shuffleDeck } from "./cards";
+import { dealHoleCards, freshDeck, shuffleDeck } from "./cards";
 import { bestHandScore, compareScores, handLabel } from "./eval";
 import {
   createInitialHoldemState,
@@ -279,13 +279,14 @@ export function dealNewHand(room: QuizRoom): QuizRoom {
     };
   }
   holdem.handNumber += 1;
-  const deck = shuffleDeck(freshDeck());
-  const holeCards: Record<string, [number, number]> = {};
+  let deck = shuffleDeck(freshDeck());
+  const dealt = dealHoleCards(deck, ids);
+  deck = dealt.deck;
+  const holeCards = dealt.holeCards;
   const streetBets: Record<string, number> = {};
   const folded: Record<string, boolean> = {};
   const allIn: Record<string, boolean> = {};
   for (const id of ids) {
-    holeCards[id] = [deck.pop()!, deck.pop()!];
     streetBets[id] = 0;
     folded[id] = false;
     allIn[id] = false;

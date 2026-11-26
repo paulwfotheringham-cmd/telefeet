@@ -3,6 +3,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import type { ClientRoomState, HoldemSeatView } from "@/lib/funquiz/types";
 import { readFaceGender, writeFaceGender, type HoldemFaceGender } from "@/lib/funquiz/holdem/faces";
+import { HoldemTableMotion } from "@/components/funquiz/holdem-table-motion";
 
 const GROUNDED_WEBP = "/funquiz/holdem/holdem-rdr2-mockup-v3-grounded.webp";
 const GROUNDED_JPG = "/funquiz/holdem/holdem-rdr2-mockup-v3-grounded.jpg";
@@ -235,6 +236,12 @@ export function HoldemStage({
           />
         </picture>
         <div className="holdem-gnd-shade pointer-events-none absolute inset-0" aria-hidden />
+        <HoldemTableMotion
+          seats={seats}
+          pot={hv.pot}
+          boardLen={hv.board.length}
+          handNumber={hv.handNumber}
+        />
 
         {/* Gender / leave — low chrome */}
         <div className="absolute right-2 top-2 z-40 flex gap-1.5 sm:right-3 sm:top-3">
