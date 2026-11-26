@@ -144,9 +144,10 @@ export function BlackjackClient() {
         </div>
       </header>
 
-      <div className="mt-2 grid flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_13.5rem]">
-        <div className="relative min-w-0">
+      <div className="relative mt-2 flex-1">
           <BlackjackTable
+            playerId={playerId}
+            hud={<BjSidebar stats={stats} currentBet={human.pendingBet || human.hands[0]?.bet || 0} />}
             state={game}
             banner={
               game.banner &&
@@ -190,33 +191,25 @@ export function BlackjackClient() {
               <div className="mt-6 grid gap-3">
                 <ModeButton
                   title="Solo vs dealer"
-                  detail="Just you and the house."
+                  detail="You plus 4 AI guests — full five-seat table."
                   onClick={() => startMode("solo", 0)}
                 />
                 <ModeButton
                   title="Table with AI guests"
-                  detail="You plus up to 2 AI players sharing the dealer."
-                  onClick={() => startMode("withAi", 2)}
+                  detail="Same five-seat table: you and four AI players."
+                  onClick={() => startMode("withAi", 0)}
                 />
                 <ModeButton
                   title="Play separate (host table)"
-                  detail="Host the table and add up to 2 AI players before each round."
+                  detail="Host a five-seat table (extra humans join as we add multiplayer)."
                   onClick={() => startMode("hostTable", 0)}
                 />
               </div>
             </section>
           </div>
           ) : null}
-        </div>
-
-        <aside className="hidden flex-col gap-2 lg:flex">
-          <BjSidebar stats={stats} currentBet={human.pendingBet || human.hands[0]?.bet || 0} />
-        </aside>
       </div>
 
-      {game.mode === "hostTable" && game.phase === "betting" ? (
-        <HostAiBar count={game.aiSeatCount} onChange={(c) => dispatchAction({ type: "SET_AI_COUNT", count: c })} />
-      ) : null}
 
       <div className="mx-auto mt-2 w-full max-w-3xl">
         {game.banner &&
@@ -254,9 +247,6 @@ export function BlackjackClient() {
             ) : null}
           </div>
         ) : null}
-        <aside className="bj-fp-sidebar-mobile mt-3 flex flex-col gap-2 sm:hidden">
-          <BjSidebar stats={stats} currentBet={human.pendingBet || human.hands[0]?.bet || 0} />
-        </aside>
       </div>
     </div>
   );
@@ -264,7 +254,7 @@ export function BlackjackClient() {
 
 function BjSidebar({ stats, currentBet }: { stats: SessionStats; currentBet: number }) {
   return (
-    <div className="pointer-events-auto flex flex-col gap-2">
+    <div className="pointer-events-auto flex flex-col gap-2 [&_.bj-panel]:border-[#c4a574]/30 [&_.bj-panel]:bg-black/55 [&_.bj-panel]:shadow-none">
       <StatsPanel stats={stats} currentBet={currentBet} />
       <RulesPanel />
     </div>
@@ -277,24 +267,6 @@ function ModeButton({ title, detail, onClick }: { title: string; detail: string;
       <span className="block font-semibold text-brand-cream">{title}</span>
       <span className="mt-1 block text-sm text-brand-muted">{detail}</span>
     </button>
-  );
-}
-
-function HostAiBar({ count, onChange }: { count: number; onChange: (n: number) => void }) {
-  return (
-    <div className="mt-3 flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-brand-line bg-brand-panel/60 px-4 py-3 text-sm">
-      <span className="text-brand-muted">AI seats at table:</span>
-      {[0, 1, 2].map((n) => (
-        <button
-          key={n}
-          type="button"
-          onClick={() => onChange(n)}
-          className={`rounded-full px-3 py-1 ${count === n ? "bg-brand-gold/20 text-brand-goldHi ring-1 ring-brand-gold" : "text-brand-cream ring-1 ring-brand-line"}`}
-        >
-          {n}
-        </button>
-      ))}
-    </div>
   );
 }
 

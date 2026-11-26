@@ -140,6 +140,63 @@ body {
   background: rgba(12, 8, 5, 0.72);
   backdrop-filter: blur(6px);
 }
+.bj-fp-vegas-wash {
+  background: radial-gradient(ellipse 70% 50% at 50% 32%, rgba(255, 210, 130, 0.12), transparent 65%);
+}
+.bj-fp-roster {
+  pointer-events: none;
+}
+.bj-fp-roster > div {
+  pointer-events: auto;
+}
+.bj-seat-square {
+  @apply mt-1 flex min-h-[3.25rem] min-w-[4.5rem] items-center justify-center rounded-md border border-[#c4a574]/25;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0.45));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+.bj-seat-square-active {
+  border-color: rgba(52, 211, 153, 0.45);
+  box-shadow:
+    inset 0 0 0 1px rgba(52, 211, 153, 0.25),
+    0 0 18px rgba(52, 211, 153, 0.18);
+}
+.bj-seat-square-hero {
+  min-height: 3.75rem;
+  min-width: 5.5rem;
+}
+.bj-seat-square-dealer {
+  min-height: 3rem;
+  min-width: 4.5rem;
+}
+.bj-seat-placeholder {
+  @apply text-[9px] uppercase tracking-wider text-[#cfe3d4]/35;
+}
+.bj-seat-bet {
+  @apply flex items-center gap-1;
+}
+.bj-seat-acting .bj-seat-face {
+  @apply ring-[#ffe6a0];
+  box-shadow: 0 0 12px rgba(212, 175, 55, 0.35);
+}
+.holdem-card-3d.bj-card-md {
+  display: inline-flex;
+  height: 3.15rem;
+  width: 2.2rem;
+}
+@keyframes bj-card-drop {
+  0% {
+    opacity: 0;
+    transform: translateY(-48px) translateZ(36px) rotateX(38deg) scale(0.86);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotateX(0deg) scale(1);
+  }
+}
+.bj-card-drop {
+  animation: bj-card-drop 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  transform-style: preserve-3d;
+}
 
 .bj-scene {
   @apply relative mx-auto w-full max-w-[58rem];

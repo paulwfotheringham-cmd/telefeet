@@ -1,4 +1,12 @@
-import { AI_NAMES, DEALER_HITS_SOFT_17, MAX_BET, MIN_BET, STARTING_BALANCE } from "./constants";
+import {
+  AI_NAMES,
+  DEALER_HITS_SOFT_17,
+  MAX_BET,
+  MIN_BET,
+  aiSeatsForHumanCount,
+  STARTING_BALANCE,
+  TABLE_SEAT_COUNT,
+} from "./constants";
 import { drawCard, freshDeck, sameSplitRank } from "./deck";
 import { dealerShouldHit, handTotals } from "./hand";
 import { aiDecisionForHand } from "./ai";
@@ -42,11 +50,13 @@ export function createInitialState(
   const seats: SeatState[] = [
     makeSeat(humanId, humanName || "You", true, stats.balance),
   ];
-  for (let i = 0; i < aiCount; i++) {
+  const humanCount = seats.filter((s) => s.isHuman).length;
+  const finalAi = aiSeatsForHumanCount(humanCount);
+  for (let i = 0; i < finalAi; i++) {
     seats.push(
       makeSeat(
         `ai-${i}`,
-        AI_NAMES[i] ?? `AI ${i + 1}`,
+        AI_NAMES[i] ?? `Guest ${i + 1}`,
         false,
         STARTING_BALANCE,
       ),
@@ -55,7 +65,7 @@ export function createInitialState(
   return {
     phase: phaseOverride ?? "setup",
     mode,
-    aiSeatCount: aiCount,
+    aiSeatCount: finalAi,
     seats,
     dealer: { cards: [] },
     deck: [],
@@ -334,22 +344,19 @@ export function blackjackReducer(
 ): BlackjackGameState {
   switch (action.type) {
     case "SET_MODE": {
-      const aiCount = action.aiCount ?? 0;
       const stats = defaultStatsFromState(state);
       return createInitialState(
         state.humanSeatId,
         humanSeat(state).name,
         stats,
         action.mode,
-        aiCount,
+        0,
         "betting",
       );
     }
     case "SET_AI_COUNT": {
-      if (state.phase !== "betting") return state;
-      const count = Math.min(2, Math.max(0, action.count));
-      const stats = defaultStatsFromState(state);
-      return createInitialState(state.humanSeatId, humanSeat(state).name, stats, state.mode, count, "betting");
+      // Table always holds TABLE_SEAT_COUNT players; AI fill is derived from human count.
+      return state;
     }
     case "SELECT_CHIP":
       setSelectedChipGlobal(action.amount);

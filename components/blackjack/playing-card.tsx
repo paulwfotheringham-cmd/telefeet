@@ -18,27 +18,38 @@ export function PlayingCardView({
   size = "md",
   tilt = 0,
   casino3d = false,
+  dropToSeat = false,
 }: {
   card: Card;
   className?: string;
   delay?: number;
-  size?: "md" | "lg" | "xl" | "hero";
+  size?: "sm" | "md" | "lg" | "xl" | "hero";
   tilt?: number;
   casino3d?: boolean;
+  /** Animate deal from shoe onto the seat square (Hold'em-style drop). */
+  dropToSeat?: boolean;
 }) {
-  const sizeClass = size === "hero"
-    ? "bj-card-hero"
-    : size === "xl"
-      ? "bj-card-xl"
-      : size === "lg"
-        ? "bj-card-lg"
-        : "";
+  const sizeClass =
+    size === "hero"
+      ? "bj-card-hero"
+      : size === "xl"
+        ? "bj-card-xl"
+        : size === "lg"
+          ? "bj-card-lg"
+          : size === "md"
+            ? "bj-card-md"
+            : size === "sm"
+              ? "bj-card-sm"
+              : "";
   const style: CSSProperties = {
     animationDelay: `${delay}ms`,
     transform: `rotate(${tilt}deg)`,
   };
 
-  const shell = casino3d ? `holdem-card-deal holdem-card-3d ${sizeClass}` : `bj-card ${sizeClass}`;
+  const dropClass = dropToSeat ? "bj-card-drop" : "";
+  const shell = casino3d
+    ? `holdem-card-deal holdem-card-3d ${dropClass} ${sizeClass}`
+    : `bj-card ${sizeClass}`;
   const faceShell = casino3d ? "holdem-card-face" : "bj-card-face";
   const backShell = casino3d ? "holdem-card-face holdem-card-back" : "bj-card-back";
 
