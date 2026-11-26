@@ -657,7 +657,7 @@ body {
 
 .holdem-motion-hand-action-chip-push,
 .holdem-motion-hand-action-muck {
-  animation: holdem-hand-reach-felt 0.92s cubic-bezier(0.33, 0.9, 0.4, 1) forwards;
+  animation: holdem-hand-reach-felt 1.05s cubic-bezier(0.33, 0.9, 0.4, 1) forwards;
 }
 
 .holdem-motion-hand-action-deal {
@@ -708,8 +708,8 @@ body {
   left: 0;
   top: 0;
   display: block;
-  width: 3.4rem;
-  height: 2.15rem;
+  width: 4rem;
+  height: 2.45rem;
   transform: translate(-72%, -55%);
   transform-origin: 78% 88%;
   border-radius: 48% 42% 38% 52%;
