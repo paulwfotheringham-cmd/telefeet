@@ -180,6 +180,7 @@ const QUIZ_HOME: { id: QuizCategoryId; title: string; image: string }[] = [
 
 const GAME_TILES: FunQuizTile[] = [
   { id: "millionaire", title: "Who wants to be a Millionaire", image: "/funquiz/covers/cover-millionaire.jpg" },
+  { id: "blackjack", title: "Blackjack", href: "/blackjack", image: "/funquiz/covers/cover-blackjack.jpg" },
   { id: "holdem", title: "Texas Hold-em", image: "/funquiz/covers/cover-holdem.jpg" },
   { id: "catchphrase", title: "Catchphrase", image: "/funquiz/covers/cover-catchphrase.jpg" },
   { id: "blockbusters", title: "Blockbusters", image: "/funquiz/covers/cover-blockbusters.jpg" },
@@ -757,14 +758,19 @@ export function FunQuizClient() {
                     key={tile.id}
                     image={tile.image}
                     title={tile.title}
-                    onClick={() => {
-                      setPickedGame(tile.id);
-                      setPickedTitle(tile.title);
-                      setSelectedCategory(null);
-                      setSelectedDifficulty(null);
-                      setBoardStep("play");
-                      setError(null);
-                    }}
+                    href={tile.href}
+                    onClick={
+                      tile.href
+                        ? undefined
+                        : () => {
+                            setPickedGame(tile.id);
+                            setPickedTitle(tile.title);
+                            setSelectedCategory(null);
+                            setSelectedDifficulty(null);
+                            setBoardStep("play");
+                            setError(null);
+                          }
+                    }
                   />
                 ))}
               </div>
