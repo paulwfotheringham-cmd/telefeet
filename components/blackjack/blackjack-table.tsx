@@ -52,7 +52,7 @@ export function BlackjackTable({
   ) : null;
 
   return (
-    <div className="holdem-fp bj-fp relative min-h-[min(90dvh,880px)] w-full overflow-hidden rounded-xl border border-[#5a3d22]/60 shadow-[0_40px_100px_-40px_rgba(0,0,0,0.95)]">
+    <div className="holdem-fp bj-fp relative min-h-[min(92dvh,920px)] w-full overflow-hidden rounded-xl border border-[#5a3d22]/60 pb-28 shadow-[0_40px_100px_-40px_rgba(0,0,0,0.95)] sm:pb-32">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/funquiz/holdem/saloon-plate.jpg"
@@ -62,6 +62,7 @@ export function BlackjackTable({
       <div className="holdem-fp-grade pointer-events-none absolute inset-0" />
       <div className="holdem-fp-vignette pointer-events-none absolute inset-0" />
       <div className="bj-fp-vegas-wash pointer-events-none absolute inset-0" aria-hidden />
+      <div className="bj-fp-plate-mask pointer-events-none absolute inset-0" aria-hidden />
 
       <div className="relative z-30 px-3 pt-3 sm:px-5">
         <p className="font-serif text-[11px] uppercase tracking-[0.28em] text-[#f0d9a8]/85 drop-shadow">

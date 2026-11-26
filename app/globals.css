@@ -86,9 +86,9 @@ body {
   pointer-events: none;
   position: absolute;
   left: 50%;
-  top: 22%;
+  top: 18%;
   z-index: 2;
-  width: 72%;
+  width: 76%;
   transform: translateX(-50%);
 }
 .bj-fp-dealer {
@@ -142,6 +142,11 @@ body {
 }
 .bj-fp-vegas-wash {
   background: radial-gradient(ellipse 70% 50% at 50% 32%, rgba(255, 210, 130, 0.12), transparent 65%);
+}
+.bj-fp-plate-mask {
+  background:
+    radial-gradient(ellipse 48% 38% at 50% 40%, rgba(8, 5, 3, 0.72), transparent 72%),
+    linear-gradient(180deg, transparent 58%, rgba(8, 5, 3, 0.75) 88%);
 }
 .bj-fp-roster {
   pointer-events: none;
@@ -246,7 +251,7 @@ body {
 .bj-felt-arc-main {
   fill: #f0d67a;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 700;
   letter-spacing: 0.16em;
 }

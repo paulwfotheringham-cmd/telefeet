@@ -11,12 +11,12 @@ export type SeatLayout = "dealer" | "hero" | "ai-0" | "ai-1" | "ai-2" | "ai-3";
 
 /** Five player spots around the semicircle (hero = bottom center). */
 export const SEAT_LAYOUT_STYLE: Record<SeatLayout, CSSProperties> = {
-  dealer: { left: "50%", top: "6%", transform: "translateX(-50%)" },
-  hero: { left: "50%", top: "70%", transform: "translate(-50%, 0)" },
-  "ai-0": { left: "8%", top: "54%" },
-  "ai-1": { left: "28%", top: "64%" },
-  "ai-2": { right: "28%", top: "64%", left: "auto" },
-  "ai-3": { right: "8%", top: "54%", left: "auto" },
+  dealer: { left: "50%", top: "10%", transform: "translateX(-50%)" },
+  hero: { left: "50%", top: "74%", transform: "translate(-50%, 0)" },
+  "ai-0": { left: "6%", top: "48%" },
+  "ai-1": { left: "22%", top: "58%" },
+  "ai-2": { right: "22%", top: "58%", left: "auto" },
+  "ai-3": { right: "6%", top: "48%", left: "auto" },
 };
 
 export function TableSeat({
@@ -81,19 +81,23 @@ export function TableSeat({
         ? "—"
         : null;
 
+  const compact = seat.isHuman && hasCards;
+
   return (
     <div
       className={`bj-seat bj-seat-${layout} absolute z-30 flex w-[7.5rem] flex-col items-center sm:w-32 ${isActive ? "bj-seat-acting" : ""}`}
       style={SEAT_LAYOUT_STYLE[layout]}
     >
-      <div className={`holdem-fp-opp ${!hasCards && showHands ? "opacity-90" : ""}`}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={face} alt="" className="bj-seat-face mx-auto h-10 w-10 rounded-full object-cover ring-2 ring-[#c4a574]/45 sm:h-11 sm:w-11" />
-        <p className="mt-0.5 truncate text-center text-[10px] font-semibold text-white drop-shadow">{seat.name}</p>
-        {!seat.isHuman ? (
-          <p className="text-center text-[9px] text-[#ffe6a0] drop-shadow tabular-nums">${seat.balance}</p>
-        ) : null}
-      </div>
+      {compact ? null : (
+        <div className={`holdem-fp-opp ${!hasCards && showHands ? "opacity-90" : ""}`}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={face} alt="" className="bj-seat-face mx-auto h-10 w-10 rounded-full object-cover ring-2 ring-[#c4a574]/45 sm:h-11 sm:w-11" />
+          <p className="mt-0.5 truncate text-center text-[10px] font-semibold text-white drop-shadow">{seat.name}</p>
+          {!seat.isHuman ? (
+            <p className="text-center text-[9px] text-[#ffe6a0] drop-shadow tabular-nums">${seat.balance}</p>
+          ) : null}
+        </div>
+      )}
       {score && score !== "—" ? <ScoreBadge label={seat.isHuman ? "You" : seat.name} score={score} highlight={isHuman} /> : null}
       <div className={`bj-seat-square ${isHuman ? "bj-seat-square-hero" : ""} ${isActive ? "bj-seat-square-active" : ""}`}>
         {hasCards && hands ? (
