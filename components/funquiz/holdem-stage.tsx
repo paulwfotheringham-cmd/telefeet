@@ -331,38 +331,30 @@ export function HoldemStage({
           </>
         ) : null}
 
-        <aside className="holdem-gnd-roster holdem-gnd-roster-panel pointer-events-none absolute z-30">
-          <ul className="flex flex-col gap-2">
+        <aside className="holdem-gnd-roster-rail pointer-events-none absolute z-30" aria-label="Players">
+          <ul className="holdem-gnd-roster-lines">
             {(() => {
               let aiNumber = 0;
               return seats.map((seat) => {
-              const isYou = seat.playerId === playerId;
-              const status = seatStatus(seat, hv.street, isYou);
-              if (!isYou) aiNumber += 1;
-              const label = rosterDisplayName(isYou, isYou ? null : aiNumber);
-              return (
-                <li
-                  key={seat.playerId}
-                  className={`holdem-gnd-roster-slot text-left ${
-                    seat.isWinner ? "holdem-gnd-roster-winner" : seat.isActing ? "holdem-gnd-roster-active" : ""
-                  } ${seat.folded ? "opacity-55" : ""}`}
-                >
-                  <p className="truncate font-serif text-[10px] font-semibold tracking-wide text-[#f5e6c0] drop-shadow sm:text-[11px]">
-                    {label}
-                  </p>
-                  <p className="font-serif text-sm leading-none text-white tabular-nums drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] sm:text-base">
-                    ${seat.stack}
-                  </p>
-                  <p
-                    className={`mt-0.5 text-[8px] leading-tight sm:text-[9px] ${
-                      seat.isWinner ? "text-[#ffe6a0]" : seat.isActing ? "text-[#f5e0b0]" : "text-white/75"
-                    }`}
+                const isYou = seat.playerId === playerId;
+                const status = seatStatus(seat, hv.street, isYou);
+                if (!isYou) aiNumber += 1;
+                const label = rosterDisplayName(isYou, isYou ? null : aiNumber);
+                const meta =
+                  seat.isWinner && hv.lastPotWon ? `+$${hv.lastPotWon}` : status;
+                return (
+                  <li
+                    key={seat.playerId}
+                    className={`holdem-gnd-roster-line ${
+                      seat.isWinner ? "holdem-gnd-roster-winner" : seat.isActing ? "holdem-gnd-roster-active" : ""
+                    } ${seat.folded ? "opacity-50" : ""}`}
                   >
-                    {seat.isWinner && hv.lastPotWon ? `+$${hv.lastPotWon}` : status}
-                  </p>
-                </li>
-              );
-            });
+                    <span className="holdem-gnd-roster-name">{label}</span>
+                    <span className="holdem-gnd-roster-stack tabular-nums">${seat.stack}</span>
+                    {meta ? <span className="holdem-gnd-roster-meta">{meta}</span> : null}
+                  </li>
+                );
+              });
             })()}
           </ul>
         </aside>
