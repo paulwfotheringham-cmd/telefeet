@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ResultsLogoutButton } from "@/components/games311/results-logout-button";
 
 const NAV = [
   { href: "/results", label: "Overview" },
@@ -41,7 +40,6 @@ export function ResultsShell({
               );
             })}
           </nav>
-          <ResultsLogoutButton />
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
