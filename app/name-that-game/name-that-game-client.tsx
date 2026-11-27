@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useMatchScore } from "@/lib/funquiz/use-match-score";
 import { createClient } from "@/lib/supabase/client";
-import { formatRoomCodeSpaced, isValidRoomCode, normalizeRoomCode } from "@/lib/funquiz/room-code";
+import { isValidRoomCode, normalizeRoomCode } from "@/lib/funquiz/room-code";
+import { ShareRoomCode } from "@/components/funquiz/share-room-code";
 import type { GameClientState } from "@/lib/name-that-game/room";
 import {
   GAME_ERAS,
@@ -620,22 +621,7 @@ export function NameThatGameClient() {
           <p className="mt-1 text-sm text-slate-300">
             Level: <strong className="text-violet-200">{roomState.levelTitle}</strong>
           </p>
-          <p className="mt-2 text-sm text-slate-300">
-            Share code{" "}
-            <span className="select-none font-mono text-lg tracking-[0.2em] text-violet-200">
-              {formatRoomCodeSpaced(roomState.code)}
-            </span>
-            <button
-              type="button"
-              className="ml-2 rounded-lg border border-violet-400/40 px-2 py-0.5 text-xs text-violet-200"
-              onClick={() => {
-                const link = `${window.location.origin}/name-that-game?join=${roomState.code}`;
-                void navigator.clipboard?.writeText(link);
-              }}
-            >
-              Copy link
-            </button>
-          </p>
+          <ShareRoomCode code={roomState.code} joinPath="/name-that-game" />
           <ul className="mt-4 space-y-2 text-sm text-slate-200">
             {roomState.players.map((player) => (
               <li key={player.id} className="flex items-center gap-2">

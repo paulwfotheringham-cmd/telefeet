@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type PointerEvent } from "react";
 import { useMatchScore } from "@/lib/funquiz/use-match-score";
-import { formatRoomCodeSpaced, isValidRoomCode, normalizeRoomCode } from "@/lib/funquiz/room-code";
+import { isValidRoomCode, normalizeRoomCode } from "@/lib/funquiz/room-code";
+import { ShareRoomCode } from "@/components/funquiz/share-room-code";
 import type { Stroke } from "@/lib/draw-the-flower/drawing";
 import type { DrawClientState } from "@/lib/draw-the-flower/room";
 import { openRoomByCode } from "@/lib/room-directory";
@@ -146,7 +147,6 @@ export function DrawTheFlowerClient() {
   const [strokes, setStrokes] = useState<Stroke[]>([]);
   const [color, setColor] = useState(COLORS[0] ?? "#0f172a");
   const [size, setSize] = useState(SIZES[1] ?? 8);
-  const [copied, setCopied] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -443,26 +443,23 @@ export function DrawTheFlowerClient() {
       {roomState.phase === "lobby" ? (
         <section className="mt-8 rounded-3xl border border-white/10 bg-slate-900/70 p-6">
           <h2 className="text-lg font-semibold text-white">Waiting room</h2>
-          <p className="mt-2 text-sm text-slate-300">
-            Share code{" "}
-            <span className="font-mono tracking-[0.2em] text-pink-200">{formatRoomCodeSpaced(roomState.code)}</span>
-          </p>
-          <p className="mt-2 text-sm text-slate-400">
-            {roomState.mode === "single" ? "You are playing on your own. Press start when you are ready." : "Invite up to 3 friends with that code (4 players max). They join on Fun Quiz or this page."}
-          </p>
-          <button
-            type="button"
-            onClick={() => {
-              const url = `${window.location.origin}/draw-the-flower?join=${roomState.code}`;
-              void navigator.clipboard.writeText(url).then(() => {
-                setCopied(true);
-                window.setTimeout(() => setCopied(false), 2000);
-              });
-            }}
-            className="mt-3 rounded-lg border border-white/15 px-3 py-1.5 text-xs text-slate-200"
-          >
-            {copied ? "Link copied" : "Copy invite link"}
-          </button>
+          {roomState.mode === "single" ? (
+            <p className="mt-2 text-sm text-slate-400">
+              You are playing on your own. Press start when you are ready.
+            </p>
+          ) : (
+            <>
+              <p className="mt-2 text-sm text-slate-400">
+                Invite up to 3 friends with this code (4 players max). They can join on Fun Quiz or this page.
+              </p>
+              <ShareRoomCode
+                code={roomState.code}
+                joinPath="/draw-the-flower"
+                codeClassName="text-pink-200"
+                buttonClassName="border-pink-400/40 text-pink-200"
+              />
+            </>
+          )}
           <ul className="mt-4 space-y-2 text-sm text-slate-200">
             {roomState.players.map((player) => (
               <li key={player.id}>{player.name}</li>
