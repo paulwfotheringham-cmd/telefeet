@@ -62,10 +62,12 @@ function ensureId(key: string): string {
 
 export function Games311AnalyticsProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() || "/";
+  const onResults = pathname.startsWith("/results");
   const [consent, setConsent] = useState<ConsentValue | null>(null);
   const [ready, setReady] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [popupBusy, setPopupBusy] = useState(false);
+  const [popupError, setPopupError] = useState<string | null>(null);
   const [funQuizInGame, setFunQuizInGame] = useState(false);
   const [funQuizGameId, setFunQuizGameId] = useState<string | null>(null);
 
@@ -102,25 +104,28 @@ export function Games311AnalyticsProvider({ children }: { children: React.ReactN
     return () => window.removeEventListener("games311:funquiz-game", onFunQuizGame as EventListener);
   }, []);
 
-  const flushHeartbeat = useCallback(async (endSession = false) => {
-    if (consent !== "accepted") return;
-    const delta = pendingDeltaRef.current;
-    if (delta <= 0 && !endSession) return;
-    pendingDeltaRef.current = 0;
-    writeStorage(STORAGE_KEYS.activeMs, String(activeMsRef.current));
-    try {
-      await postAnalytics({
-        action: "heartbeat",
-        visitorId: visitorIdRef.current,
-        sessionId: sessionIdRef.current,
-        activeMsDelta: delta,
-        feedbackStatus: feedbackStatusRef.current,
-        endSession,
-      });
-    } catch {
-      pendingDeltaRef.current += delta;
-    }
-  }, [consent]);
+  const flushHeartbeat = useCallback(
+    async (endSession = false) => {
+      if (consent !== "accepted" || onResults) return;
+      const delta = pendingDeltaRef.current;
+      if (delta <= 0 && !endSession) return;
+      pendingDeltaRef.current = 0;
+      writeStorage(STORAGE_KEYS.activeMs, String(activeMsRef.current));
+      try {
+        await postAnalytics({
+          action: "heartbeat",
+          visitorId: visitorIdRef.current,
+          sessionId: sessionIdRef.current,
+          activeMsDelta: delta,
+          feedbackStatus: feedbackStatusRef.current,
+          endSession,
+        });
+      } catch {
+        pendingDeltaRef.current += delta;
+      }
+    },
+    [consent, onResults],
+  );
 
   const markFeedbackStatus = useCallback(
     async (status: FeedbackStatus) => {
@@ -140,9 +145,8 @@ export function Games311AnalyticsProvider({ children }: { children: React.ReactN
     [consent],
   );
 
-  // Start session after consent
   useEffect(() => {
-    if (!ready || consent !== "accepted" || startedRef.current) return;
+    if (!ready || consent !== "accepted" || startedRef.current || onResults) return;
     startedRef.current = true;
     visitorIdRef.current = ensureId(STORAGE_KEYS.visitorId);
     sessionIdRef.current = newUuid();
@@ -164,14 +168,11 @@ export function Games311AnalyticsProvider({ children }: { children: React.ReactN
           writeStorage(STORAGE_KEYS.feedbackStatus, res.feedbackStatus);
         }
       })
-      .catch(() => {
-        /* offline / not configured */
-      });
-  }, [ready, consent, pathname]);
+      .catch(() => undefined);
+  }, [ready, consent, pathname, onResults]);
 
-  // Active time ticks (visibility-aware)
   useEffect(() => {
-    if (consent !== "accepted") return;
+    if (consent !== "accepted" || onResults) return;
 
     function isActiveNow() {
       if (typeof document === "undefined") return false;
@@ -199,7 +200,6 @@ export function Games311AnalyticsProvider({ children }: { children: React.ReactN
         activeMsRef.current += add;
         pendingDeltaRef.current += add;
         writeStorage(STORAGE_KEYS.activeMs, String(activeMsRef.current));
-
         if (
           activeMsRef.current >= ACTIVE_THRESHOLD_MS &&
           (feedbackStatusRef.current === "pending" || feedbackStatusRef.current === "eligible")
@@ -218,7 +218,6 @@ export function Games311AnalyticsProvider({ children }: { children: React.ReactN
     document.addEventListener("visibilitychange", onVis);
     window.addEventListener("focus", onVis);
     window.addEventListener("blur", onVis);
-
     const onHide = () => {
       void flushHeartbeat(true);
     };
@@ -233,11 +232,10 @@ export function Games311AnalyticsProvider({ children }: { children: React.ReactN
       window.removeEventListener("pagehide", onHide);
       void flushHeartbeat(true);
     };
-  }, [consent, flushHeartbeat, markFeedbackStatus]);
+  }, [consent, flushHeartbeat, markFeedbackStatus, onResults]);
 
-  // Game path tracking
   useEffect(() => {
-    if (consent !== "accepted" || !startedRef.current) return;
+    if (consent !== "accepted" || !startedRef.current || onResults) return;
     const pathGame = gameIdFromPath(pathname);
     const nextGame = funQuizInGame ? funQuizGameId || pathGame || "funquiz-session" : pathGame;
 
@@ -265,15 +263,12 @@ export function Games311AnalyticsProvider({ children }: { children: React.ReactN
       }).catch(() => undefined);
       gameActiveStartedRef.current = Date.now();
     }
-    if (!nextGame) {
-      gameActiveStartedRef.current = null;
-    }
+    if (!nextGame) gameActiveStartedRef.current = null;
     currentGameRef.current = nextGame;
-  }, [pathname, funQuizInGame, funQuizGameId, consent]);
+  }, [pathname, funQuizInGame, funQuizGameId, consent, onResults]);
 
-  // Show popup only on selection surface after eligible / already shown
   useEffect(() => {
-    if (consent !== "accepted") return;
+    if (consent !== "accepted" || onResults) return;
     const status = feedbackStatusRef.current;
     if (status === "submitted" || status === "dismissed" || status === "pending") {
       setShowPopup(false);
@@ -285,10 +280,21 @@ export function Games311AnalyticsProvider({ children }: { children: React.ReactN
       return;
     }
     setShowPopup(true);
-    if (status === "eligible") {
-      void markFeedbackStatus("shown");
-    }
-  }, [pathname, funQuizInGame, consent, markFeedbackStatus]);
+    if (status === "eligible") void markFeedbackStatus("shown");
+  }, [pathname, funQuizInGame, consent, markFeedbackStatus, onResults]);
+
+  // Block Escape while popup is open
+  useEffect(() => {
+    if (!showPopup) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [showPopup]);
 
   const onAccept = () => {
     writeStorage(STORAGE_KEYS.consent, "accepted");
@@ -299,39 +305,37 @@ export function Games311AnalyticsProvider({ children }: { children: React.ReactN
     setConsent("declined");
   };
 
-  const currentGame = currentGameRef.current;
-
   return (
     <>
       {children}
-      {ready && consent == null ? (
+      {!onResults && ready && consent == null ? (
         <Games311ConsentBanner onAccept={onAccept} onDecline={onDecline} />
       ) : null}
-      {showPopup && consent === "accepted" ? (
+      {!onResults && showPopup && consent === "accepted" ? (
         <Games311FeedbackPopup
-          gameId={currentGame}
           busy={popupBusy}
-          onDismiss={() => {
-            setShowPopup(false);
-            void markFeedbackStatus("dismissed");
-          }}
-          onSubmit={({ wouldPay, feedbackText }) => {
+          error={popupError}
+          onAnswer={(wouldPay) => {
             setPopupBusy(true);
+            setPopupError(null);
             void postAnalytics({
               action: "feedback",
               visitorId: visitorIdRef.current,
               sessionId: sessionIdRef.current,
               wouldPay,
-              feedbackText,
-              gameId: currentGame,
+              gameId: currentGameRef.current,
             })
               .then(() => {
                 feedbackStatusRef.current = "submitted";
                 writeStorage(STORAGE_KEYS.feedbackStatus, "submitted");
                 setShowPopup(false);
               })
-              .catch(() => {
-                // Still remember locally so we don't spam if the server is down mid-submit retry later
+              .catch((err) => {
+                setPopupError(
+                  err instanceof Error
+                    ? `${err.message} — please try again.`
+                    : "Could not save your answer. Please try again.",
+                );
               })
               .finally(() => setPopupBusy(false));
           }}
