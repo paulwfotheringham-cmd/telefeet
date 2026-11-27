@@ -96,4 +96,5 @@ export type BlackjackAction =
   | { type: "DEALER_STEP" }
   | { type: "FINISH_ROUND" }
   | { type: "NEW_ROUND" }
-  | { type: "RESET_SESSION" };
+  | { type: "RESET_SESSION" }
+  | { type: "BACK_TO_SETUP" };

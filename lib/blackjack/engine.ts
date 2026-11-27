@@ -364,12 +364,13 @@ export function blackjackReducer(
     case "ADD_BET": {
       if (state.phase !== "betting") return state;
       const chip = getSelectedChip();
+      const actorId = state.humanSeatId;
       const seats = state.seats.map((seat) => {
-        if (!seat.isHuman) return seat;
+        if (seat.id !== actorId) return seat;
         const next = Math.min(MAX_BET, Math.min(seat.balance, seat.pendingBet + chip));
         return { ...seat, pendingBet: next, betPlaced: false };
       });
-      const human = seats.find((s) => s.isHuman)!;
+      const human = seats.find((s) => s.id === actorId)!;
       return {
         ...state,
         seats,
@@ -379,17 +380,19 @@ export function blackjackReducer(
     case "REMOVE_BET": {
       if (state.phase !== "betting") return state;
       const chip = getSelectedChip();
+      const actorId = state.humanSeatId;
       const seats = state.seats.map((seat) => {
-        if (!seat.isHuman) return seat;
+        if (seat.id !== actorId) return seat;
         return { ...seat, pendingBet: Math.max(0, seat.pendingBet - chip), betPlaced: false };
       });
-      const human = seats.find((s) => s.isHuman)!;
+      const human = seats.find((s) => s.id === actorId)!;
       return { ...state, seats, banner: human.pendingBet > 0 ? `Bet: $${human.pendingBet}` : "Place your bet" };
     }
     case "CLEAR_BET": {
       if (state.phase !== "betting") return state;
+      const actorId = state.humanSeatId;
       const seats = state.seats.map((seat) =>
-        seat.isHuman ? { ...seat, pendingBet: 0, betPlaced: false } : seat,
+        seat.id === actorId ? { ...seat, pendingBet: 0, betPlaced: false } : seat,
       );
       return { ...state, seats, banner: "Place your bet" };
     }
@@ -400,17 +403,24 @@ export function blackjackReducer(
       if (human.pendingBet > human.balance) return state;
       const afterAi = applyAiBets(state);
       const seats = afterAi.seats.map((seat) => {
-        if (!seat.isHuman) return seat;
+        if (seat.id !== human.id) return seat;
         return {
           ...seat,
           balance: seat.balance - seat.pendingBet,
           betPlaced: true,
         };
       });
-      return { ...afterAi, seats, banner: "Tap Deal" };
+      const humansReady = seats.filter((s) => s.isHuman).every((s) => s.betPlaced && s.pendingBet >= MIN_BET);
+      return {
+        ...afterAi,
+        seats,
+        banner: humansReady ? "Tap Deal" : "Waiting for other players to bet…",
+      };
     }
     case "DEAL": {
       if (state.phase !== "betting") return state;
+      const humans = state.seats.filter((s) => s.isHuman);
+      if (!humans.every((h) => h.betPlaced && h.pendingBet >= MIN_BET)) return state;
       const human = humanSeat(state);
       if (!human.betPlaced || human.pendingBet < MIN_BET) return state;
       const dealt = dealInitial(state);
@@ -623,8 +633,17 @@ export function blackjackReducer(
         state.humanSeatId,
         humanSeat(state).name,
         defaultStats(),
-        state.mode,
-        state.aiSeatCount,
+        "solo",
+        0,
+      );
+    }
+    case "BACK_TO_SETUP": {
+      return createInitialState(
+        state.humanSeatId,
+        humanSeat(state).name,
+        defaultStatsFromState(state),
+        "solo",
+        0,
       );
     }
     default:
