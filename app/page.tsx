@@ -1,5 +1,1 @@
-import { redirect } from "next/navigation";
-
-export default function Home() {
-  redirect("/funquiz");
-}
+export { default, metadata } from "./funquiz/page";
