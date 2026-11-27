@@ -11,23 +11,11 @@ import {
   type Portal,
 } from "@/lib/portal";
 import type { PortalRole } from "@/lib/types/profile";
-import {
-  RESULTS_COOKIE,
-  verifyResultsCookieEdge,
-} from "@/lib/games311/results-auth-edge";
 
 const DASHBOARD_SUFFIX = "/dashboard";
 
 function isDashboardPath(pathname: string, portal: Portal): boolean {
   return pathname === portalDashboardPath(portal);
-}
-
-function isResultsProtected(pathname: string): boolean {
-  if (pathname === "/results/login") return false;
-  if (pathname === "/api/games311/results/login") return false;
-  if (pathname.startsWith("/results")) return true;
-  if (pathname.startsWith("/api/games311/results")) return true;
-  return false;
 }
 
 async function fetchProfileRole(
@@ -72,20 +60,6 @@ async function hasAffiliateProfile(affiliateId: string): Promise<boolean> {
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-
-  if (isResultsProtected(pathname)) {
-    const cookie = request.cookies.get(RESULTS_COOKIE)?.value;
-    const ok = await verifyResultsCookieEdge(cookie);
-    if (!ok) {
-      if (pathname.startsWith("/api/")) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
-      const login = new URL("/results/login", request.url);
-      login.searchParams.set("next", pathname + request.nextUrl.search);
-      return NextResponse.redirect(login);
-    }
-    return NextResponse.next();
-  }
 
   const portal = getPortalFromRequest(request);
 
@@ -165,9 +139,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/results",
-    "/results/:path*",
-    "/api/games311/results/:path*",
     "/client/dashboard",
     "/client/dashboard/:path*",
     "/company/dashboard",
