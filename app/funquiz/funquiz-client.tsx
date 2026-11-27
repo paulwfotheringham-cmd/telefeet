@@ -40,6 +40,7 @@ import { CatchphraseStage } from "@/components/funquiz/catchphrase-stage";
 import { HoldemStage } from "@/components/funquiz/holdem-stage";
 import { MillionaireStage } from "@/components/funquiz/millionaire-stage";
 import { FunQuizScorecardGraph } from "@/components/funquiz/scorecard-graph";
+import { ShareRoomCode } from "@/components/funquiz/share-room-code";
 import {
   GAME_MODE_PLAY_TOGETHER,
   GAME_MODE_SINGLE,
@@ -50,11 +51,7 @@ import {
   GAME_MODE_TAKE_TURNS,
   GAME_MODE_TEXAS_HOLDEM,
 } from "@/lib/funquiz/constants";
-import {
-  formatRoomCodeSpaced,
-  isValidRoomCode,
-  normalizeRoomCode,
-} from "@/lib/funquiz/room-code";
+import { isValidRoomCode, normalizeRoomCode } from "@/lib/funquiz/room-code";
 import { formatClosestInput, parseClosestGuess } from "@/lib/funquiz/closest";
 import { formatPopulation, formatPopulationInput, parsePopulationGuess } from "@/lib/funquiz/population";
 import type { ClientRoomState, GameMode } from "@/lib/funquiz/types";
@@ -1180,21 +1177,7 @@ export function FunQuizClient() {
           <p className="mt-1 text-sm text-slate-300">
             Mode: <strong className="text-violet-200">{gameModeLabel(gameMode)}</strong>
           </p>
-          <p className="mt-2 text-sm text-slate-300">
-            Share code{" "}
-            <span className="select-none font-mono text-lg tracking-[0.2em] text-violet-200">
-              {formatRoomCodeSpaced(roomState.code)}
-            </span>
-            <button
-              type="button"
-              className="ml-2 rounded-lg border border-violet-400/40 px-2 py-0.5 text-xs text-violet-200"
-              onClick={() => {
-                void navigator.clipboard?.writeText(roomState.code);
-              }}
-            >
-              Copy code
-            </button>
-          </p>
+          <ShareRoomCode code={roomState.code} joinPath="/funquiz" />
           <ul className="mt-4 space-y-2 text-sm text-slate-200">
             {players.map((p) => (
               <li key={p.id} className="flex items-center gap-2">
