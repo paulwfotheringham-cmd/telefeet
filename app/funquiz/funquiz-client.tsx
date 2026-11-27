@@ -651,6 +651,22 @@ export function FunQuizClient() {
     setNewGameDifficulty(null);
   };
 
+  useEffect(() => {
+    const inGame = screen === "game";
+    const gameId = inGame
+      ? roomState?.gameMode
+        ? `funquiz-${roomState.gameMode}`
+        : pickedGame
+          ? `funquiz-${pickedGame}`
+          : "funquiz-session"
+      : null;
+    window.dispatchEvent(
+      new CustomEvent("games311:funquiz-game", {
+        detail: { inGame, gameId },
+      }),
+    );
+  }, [screen, roomState?.gameMode, pickedGame]);
+
   const goBack = () => {
     setError(null);
     if (boardStep === "length") {
